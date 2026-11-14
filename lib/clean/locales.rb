@@ -45,8 +45,8 @@ module Clean
         "#{I18n.locale} (" + ::I18n.t('i18n.name') + ')'
       end
 
-      private def translate_or_nil(*args)
-        result = I18n.translate(*args)
+      private def translate_or_nil(key, **options)
+        result = I18n.translate(key, **options)
         (result.to_s =~ /(translation missing|\(\(\()/i ? nil : result)
       end
 

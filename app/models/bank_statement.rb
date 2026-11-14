@@ -270,13 +270,10 @@ class BankStatement < ApplicationRecord
         )
       end
 
-      if saved && reload.save
-        return true
-      else
-        raise ActiveRecord::Rollback
-      end
-    end
-    false
+      raise ActiveRecord::Rollback unless saved && reload.save
+
+      true
+    end || false
   end
 
   private

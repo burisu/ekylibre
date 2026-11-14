@@ -156,11 +156,7 @@ module Geo
       new_srid = Geo::SRS[new_srid] || new_srid
       return self if new_srid.to_i == srid
 
-      database = Geo.srs_database
-      new_proj_entry = database.get(new_srid)
-      raise "Cannot find proj for SRID: #{new_srid}" if new_proj_entry.nil?
-
-      new_feature = RGeo::CoordSys::Proj4.transform(database.get(srid).proj4, feature, new_proj_entry.proj4, Geo.factory(new_srid))
+      new_feature = RGeo::CoordSys::Proj4.transform(Geo.proj(srid), feature, Geo.proj(new_srid), Geo.factory(new_srid))
       Geo.new_geometry(Geo.generate_ewkt(new_feature))
     end
 

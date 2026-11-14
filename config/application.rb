@@ -90,6 +90,18 @@ module Ekylibre
     config.autoload_paths << Rails.root.join('app', 'models', 'lexicon')
     config.eager_load_paths += [Rails.root.join('lib'), Rails.root.join('app', 'models', 'bookkeepers'), Rails.root.join('app', 'models', 'lexicon')]
 
+    # Legacy plugins (plugins/*/Plugfile, see Ekylibre::Plugin): their app/
+    # directories must be known before autoloading is set up
+    unless ENV['PLUGIN'] == 'false' || Rails.env.test?
+      Dir.glob(Rails.root.join('plugins', '*', 'Plugfile')).sort.each do |plugfile|
+        app = File.join(File.dirname(plugfile), 'app')
+        dirs = Dir.glob(File.join(app, '{controllers,exchangers,guides,helpers,inputs,integrations,jobs,mailers,models}'))
+        dirs += Dir.glob(File.join(app, '{controllers,models}', 'concerns'))
+        config.autoload_paths += dirs
+        config.eager_load_paths += dirs
+      end
+    end
+
     # We want to use the structure.sql file
     config.active_record.schema_format = :sql
 

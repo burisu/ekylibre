@@ -105,7 +105,7 @@ class Preference < ApplicationRecord
         nature
       elsif %w[String Symbol NilClass].include? klass
         :string
-      elsif %w[Integer Fixnum Bignum].include? klass
+      elsif klass == 'Integer'
         :integer
       elsif %w[TrueClass FalseClass Boolean].include? klass
         :boolean

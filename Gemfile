@@ -12,11 +12,11 @@ git_source(:gitlab) do |repo_name|
   "https://gitlab.com/#{repo_name}.git"
 end
 
-ruby '>= 2.6.6', '< 3.0.0'
+ruby '>= 3.3', '< 3.4'
 
 gem 'actionpack-xml_parser', '~> 2.0'
 gem 'rack-cors' # CORS policy
-gem 'rails', '~> 6.1.7'
+gem 'rails', '~> 7.0.8'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
@@ -31,12 +31,12 @@ gem 'ffaker', '~> 2.0' # Should not be present in production. Is used to generat
 
 # Database
 gem 'activemodel-serializers-xml', '~> 1.0'
-gem 'activerecord-postgis-adapter', '~> 7.1'
+gem 'activerecord-postgis-adapter', '~> 8.0'
 gem 'pg', '~> 1.0'
 gem 'scenic'
 
 # Multi-tenancy
-gem 'ros-apartment', '~> 2.11', require: 'apartment'
+gem 'ros-apartment', '~> 3.1', require: 'apartment'
 
 # Assets pipeline
 gem 'coffee-rails', '~> 4.1'
@@ -72,14 +72,14 @@ gem 'semantic', '~> 1.6'
 
 # Exception analysis and metrics
 # gem 'elastic-apm', '~> 3.4.0'
-gem 'exception_notification', '~> 4.4'
+gem 'exception_notification', '~> 4.5'
 gem 'redis-namespace', '~> 1.8'
 
 # Manipulate map data
 gem 'geocoder', '~> 1.6'
 gem 'rgeo', '~> 2.2'
 gem 'rgeo-geojson', '~> 2.1'
-gem 'rgeo-proj4', '~> 2.0'
+gem 'rgeo-proj4', '~> 3.1'
 gem 'rgeo-shapefile', '~> 3.0'
 
 # Background jobs
@@ -87,7 +87,8 @@ gem 'sidekiq', '~> 5.2'
 gem 'sidekiq-cron', '~> 1.2'
 
 # Reference data
-gem 'onoma', '~> 0.9.8'
+# Vendored (0.9.8 pins zeitwerk ~> 2.4.0, incompatible with Rails 7)
+gem 'onoma', path: 'vendor/gems/onoma'
 
 # Parse LALR or LR-1 grammars
 gem 'treetop', '~> 1.6'
@@ -99,7 +100,9 @@ gem 'deep_cloneable', '~> 3.2'
 gem 'draper', '~> 4.0'
 gem 'enumerize', '~> 2.4'
 gem 'paranoia', '~> 2.6' # Hide and restore records without actually deleting them
-gem 'state_machines-activerecord', '~> 0.8'
+gem 'state_machines-activerecord', '~> 0.9'
+# 0.100+ runs transitions in fibers, which deadlocks with ActiveRecord's connection lock
+gem 'state_machines', '< 0.100'
 gem 'uuidtools', '~> 2.2'
 
 # Authentication & Authorization
@@ -107,8 +110,9 @@ gem 'devise', '~> 4.8'
 gem 'devise-i18n-views', '~> 0.3.7'
 gem 'devise_invitable', '~> 2.0'
 gem 'googleauth'
-gem 'omniauth', '~> 1.9'
-gem 'omniauth-oauth2', '~> 1.7'
+gem 'omniauth', '~> 2.1'
+gem 'omniauth-rails_csrf_protection', '~> 1.0'
+gem 'omniauth-oauth2', '~> 1.8'
 
 # Attachments
 gem 'paperclip', '~> 5.3' # replaced by Active Storage at Rails 7.2
@@ -141,7 +145,7 @@ gem 'prawn', '~> 2.4'
 gem 'prawn-table'
 gem 'rodf', '~> 1.0'
 gem 'roo', '~> 2.8'
-gem 'rubyzip', '~> 1.3.0'
+gem 'rubyzip', '~> 2.3'
 gem 'sepa_king', '~> 0.12.0'
 gem 'xml_errors_parser', github: 'ekylibre/xsd_errors_parser', branch: 'main'
 
@@ -162,10 +166,14 @@ gem 'gitlab_kramdown', '~> 0.6'
 # for loading lexicon 5 in test mode
 gem 'lexicon-common', '~> 0.2.0'
 
-group :production do
-  # Use puma as the app server
-  gem 'puma', '~> 5.6'
-end
+# Gems removed from the Ruby standard library
+gem 'rss'
+
+# ActiveSupport 7.0 passes quirks_mode, rejected by json 3 (TODO: remove with Rails 7.1)
+gem 'json', '~> 2.7'
+
+# Application server
+gem 'puma', '~> 6.4'
 
 group :development do
   gem 'bullet', '~> 7.0'
@@ -181,10 +189,6 @@ group :development do
   gem 'rubocop', '1.11.0', require: false
   gem 'rubocop-ast', '1.15.0', require: false
 
-  # Webservers
-  gem 'rack-handlers'
-  gem 'unicorn-rails'
-
   # Access an IRB console on exception pages or by using <%= console %> in views
   gem 'web-console', '~> 4.2'
 
@@ -197,9 +201,9 @@ group :development, :test do
 
   gem 'dotenv', '~> 2.7'
 
-  gem 'pry', '~> 0.12.0'
-  gem 'pry-byebug', '~> 3.8'
-  gem 'pry-rails', '~> 0.3.9'
+  gem 'pry', '~> 0.14'
+  gem 'debug', '>= 1.9', require: false
+  gem 'pry-rails', '~> 0.3.11'
 
   # gem 'listen', '>= 3.0.5', '< 3.2' See config/environments/development.rb:68
 
@@ -211,7 +215,7 @@ end
 
 group :test do
   # Freeze time for demo and/or tests
-  gem 'timecop', '~> 0.9.0'
+  gem 'timecop', '~> 0.9'
 
   gem 'shoulda-context', '~> 2.0'
 
@@ -229,8 +233,8 @@ group :test do
 
   gem 'rails-controller-testing', '~> 1.0'
 
-  gem 'vcr', "~> 6.0.0"
-  gem 'webmock', "~> 3.13.0"
+  gem 'vcr', '~> 6.2'
+  gem 'webmock', '~> 3.23'
 end
 
 # Load Gemfile.local, Gemfile.plugins, plugins', and custom Gemfiles

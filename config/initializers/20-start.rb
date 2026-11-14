@@ -54,11 +54,6 @@ Ekylibre.load_integrations
 Ekylibre::Plugin.load unless ENV['PLUGIN'] == 'false' || ENV['RAILS_ENV'] == 'test'
 Ekylibre::Plugin.plug
 
-# TODO: remove these requires with Rails 7 (lib/ is then autoloaded by
-# Zeitwerk during initialization; Rails 6.1 still uses the classic
-# autoloader there, which does not know the XML/SQL... acronyms)
-require 'aggeratio'
-Dir[Rails.root.join('lib', 'aggeratio', '*.rb')].sort.each { |f| require f }
 Aggeratio.load_path += Dir.glob(Rails.root.join('config', 'aggregators', '**', '*.xml'))
 Aggeratio.load
 

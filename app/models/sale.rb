@@ -476,9 +476,8 @@ class Sale < ApplicationRecord
 
       client.add_event(:sales_invoice_creation, updater.person) if updater
 
-      return super
-    end
-    false
+      super
+    end || false
   end
 
   def duplicatable?

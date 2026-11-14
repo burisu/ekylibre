@@ -161,10 +161,7 @@ module Ekylibre
       @initializers = {}
 
       lib = @root.join('lib')
-      if File.directory?(lib)
-        $LOAD_PATH.unshift lib
-        ActiveSupport::Dependencies.autoload_paths += [lib]
-      end
+      $LOAD_PATH.unshift lib if File.directory?(lib)
 
       instance_eval(File.read(plugfile_path), plugfile_path, 1)
 
@@ -214,21 +211,8 @@ module Ekylibre
         ActionMailer::Base.prepend_view_path(@view_path)
       end
 
-      # Adds the app/{controllers,helpers,models} directories of the plugin to the autoload path
-      Dir.glob File.expand_path(@root.join('app', '{controllers,exchangers,guides,helpers,inputs,integrations,jobs,mailers,models}')) do |dir|
-        ActiveSupport::Dependencies.autoload_paths += [dir]
-        $LOAD_PATH.unshift(dir) if Dir.exist?(dir)
-      end
-
-      # Load all exchanger
-      Dir.glob(@root.join('app', 'exchangers', '**', '*.rb')).each do |path|
-        require path
-      end
-
-      # Adds the app/{controllers,helpers,models} concerns directories of the plugin to the autoload path
-      Dir.glob File.expand_path(@root.join('app', '{controllers,models}/concerns')) do |dir|
-        ActiveSupport::Dependencies.autoload_paths += [dir]
-      end
+      # The app/ directories of the plugin are autoloaded (see config/application.rb)
+      # and its exchangers are registered lazily by ActiveExchanger::Base
 
       # Load helpers
       helpers_path = @root.join('app', 'helpers')

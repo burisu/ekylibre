@@ -48,7 +48,7 @@ class ApplicationController < ActionController::Base
       options[:default] << default unless options[:default].include?(default)
       klass = klass.superclass
     end
-    ::I18n.translate(root + action, options)
+    ::I18n.translate(root + action, **options)
   end
 
   helper_method :human_action_name

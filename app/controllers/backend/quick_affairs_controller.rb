@@ -43,14 +43,15 @@ module Backend
       @amount  = @bank_statement_items ? @bank_statement_items.sum(:credit) - @bank_statement_items.sum(:debit) : 0
       @amount *= self.class::Payment.sign_of_amount
 
+      unless @trade.valid? && @payment.valid?
+        @affair = self.class::Trade.affair_class.new
+        @redirect_to = params[:redirect]
+        @trade.items.new if @trade.items.size.zero? && (@trade.is_a?(PurchaseInvoice) || @trade.is_a?(Purchase) || @trade.is_a?(Sale))
+        return render :new
+      end
+
       begin
         @trade.transaction do
-          unless @trade.valid? && @payment.valid?
-            @affair = self.class::Trade.affair_class.new
-            @redirect_to = params[:redirect]
-            @trade.items.new if @trade.items.size.zero? && (@trade.is_a?(PurchaseInvoice) || @trade.is_a?(Purchase) || @trade.is_a?(Sale))
-            return render :new
-          end
           @trade.save!   && @trade.reload
           @payment.save! && @payment.reload
           @affair = @trade.affair

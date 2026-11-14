@@ -77,7 +77,7 @@ module ActiveExchanger
 
       def load_exchangers
         autoloader = Rails.autoloaders.main
-        autoloader.root_dirs.each_key do |root|
+        autoloader.dirs.each do |root|
           next unless root.end_with?('/app/exchangers')
 
           Dir.glob(File.join(root, '**', '*.rb')).sort.each do |path|

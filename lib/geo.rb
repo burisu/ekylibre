@@ -163,8 +163,14 @@ module Geo
       @factories[srid] ||= srid == 4326 ? projected_factory(srid) : geos_factory(srid)
     end
 
-    def srs_database
-      @srs_database ||= RGeo::CoordSys::SRSDatabase::Proj4Data.new('epsg', authority: 'EPSG', cache: true)
+    # PROJ coordinate system of an EPSG SRID (PROJ >= 6 knows them natively)
+    def proj(srid)
+      srid = srid.to_i
+      @projs ||= {}
+      @projs[srid] ||= RGeo::CoordSys::Proj4.create("EPSG:#{srid}")
+      raise ArgumentError.new("Cannot find proj for SRID: #{srid}") if @projs[srid].nil?
+
+      @projs[srid]
     end
 
     # Evaluates a PostGIS expression with named binds and returns the value
@@ -218,7 +224,7 @@ module Geo
         factory = RGeo::Geographic.projected_factory(
           srid: srid,
           projection_srid: 6933,
-          projection_proj4: '+proj=cea +lon_0=0 +lat_ts=30 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs',
+          projection_proj4: 'EPSG:6933',
           **factory_options
         )
         factory.set_property(:uses_lenient_assertions, true) if factory.respond_to?(:set_property)

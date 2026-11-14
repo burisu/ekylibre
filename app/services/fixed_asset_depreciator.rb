@@ -30,9 +30,8 @@ class FixedAssetDepreciator
         dep.update!(accountable: true)
         count += 1
       end
-      return count
-    end
-    0
+      count
+    end || 0
   end
 
   def generate_depreciations(assets)

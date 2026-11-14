@@ -155,28 +155,28 @@ module Aggeratio
         if p.record_list?
           # campaigns
           code << "    if #{params}['#{p.name}'].is_a?(String)\n"
-          code << "      @#{p.name} = #{p.foreign_class.name}.where(:id => #{params}['#{p.name}'].to_s.split(/[\\,\\s]+/))\n"
+          code << "      @#{p.name} = #{p.foreign_class_name}.where(:id => #{params}['#{p.name}'].to_s.split(/[\\,\\s]+/))\n"
           code << "    elsif #{params}['#{p.name}'].is_a?(Hash)\n"
-          code << "      @#{p.name} = #{p.foreign_class.name}.where(:id => #{params}['#{p.name}'].select{|k,v| !v.to_i.zero?}.map(&:first))\n"
+          code << "      @#{p.name} = #{p.foreign_class_name}.where(:id => #{params}['#{p.name}'].select{|k,v| !v.to_i.zero?}.map(&:first))\n"
           code << "    elsif #{params}['#{p.name}'].is_a?(Array)\n"
-          code << "      @#{p.name} = #{p.foreign_class.name}.where(:id => #{params}['#{p.name}'])\n"
+          code << "      @#{p.name} = #{p.foreign_class_name}.where(:id => #{params}['#{p.name}'])\n"
           # # campaign_ids
           # name = p.name.singularize + "_ids"
           # code << "    elsif #{params}['#{name}']\n"
-          # code << "      @#{p.name} = #{p.foreign_class.name}.where(:id => #{params}['#{name}'].to_s.split(/[\\,\\s]+/))\n"
+          # code << "      @#{p.name} = #{p.foreign_class_name}.where(:id => #{params}['#{name}'].to_s.split(/[\\,\\s]+/))\n"
           code << "    else\n"
-          code << "      @#{p.name} = #{p.foreign_class.name}.#{p.default}\n"
+          code << "      @#{p.name} = #{p.foreign_class_name}.#{p.default}\n"
           code << "    end\n"
         elsif p.record?
           # campaign
           code << "    if #{params}['#{p.name}']\n"
-          code << "      @#{p.name} = #{p.foreign_class.name}.find(#{params}['#{p.name}'].to_i)\n"
+          code << "      @#{p.name} = #{p.foreign_class_name}.find(#{params}['#{p.name}'].to_i)\n"
           # # campaign_id
           # name = p.name + "_id"
           # code << "    elsif #{params}['#{name}']\n"
-          # code << "      @#{p.name} = #{p.foreign_class.name}.find(#{params}['#{name}'].to_i)\n"
+          # code << "      @#{p.name} = #{p.foreign_class_name}.find(#{params}['#{name}'].to_i)\n"
           code << "    else\n"
-          code << "      @#{p.name} = #{p.foreign_class.name}.#{p.default}\n"
+          code << "      @#{p.name} = #{p.foreign_class_name}.#{p.default}\n"
           code << "    end\n"
         elsif p.decimal?
           code << "    @#{p.name} = (#{params}['#{p.name}'] ? #{params}['#{name}'].to_f : #{p.default.to_f.inspect})\n"

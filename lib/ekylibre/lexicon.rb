@@ -202,6 +202,12 @@ module Ekylibre
       unless @test_mode
         error('You must use this method only in test mode')
       end
+      # LEXICON_KEEP=true reuses an already loaded test lexicon (faster local runs)
+      if ENV['LEXICON_KEEP'] == 'true' && @current_version.to_s.end_with?('-test')
+        info("Lexicon #{@current_version} is already loaded and activated.")
+        return
+      end
+
       drop_existing_version
       package = load_package('lexicon')
       if package.nil?
@@ -306,7 +312,8 @@ module Ekylibre
         port = db_config['port'] || '5432'
         dbname = db_config['database']
         password = db_config['password']
-        URI.encode("postgresql://#{user}:#{password}@#{host}:#{port}/#{dbname}")
+        enc = ->(part) { ERB::Util.url_encode(part.to_s) }
+        "postgresql://#{enc[user]}:#{enc[password]}@#{host}:#{port}/#{enc[dbname]}"
       end
 
       def db_config

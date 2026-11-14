@@ -38,6 +38,6 @@ module ScopedTranslationHelper
   def stl(unit, **options)
     return unit if unit.is_a?(String) && unit == ''
 
-    t ScopedTranslationHelper.translation_key(ScopedTranslationHelper.i18n_scope, unit), options
+    t ScopedTranslationHelper.translation_key(ScopedTranslationHelper.i18n_scope, unit), **options
   end
 end

@@ -132,38 +132,40 @@ module Backend
 
       def save_and_redirect(record, options = {})
         record.attributes = options[:attributes] if options[:attributes]
-        ApplicationRecord.transaction do
-          can_be_saved =  record.new_record? ? record.createable? : record.updateable?
-          if can_be_saved && (options[:saved] || record.save(context: options[:context]))
-            response.headers['X-Return-Code'] = 'success'
-            response.headers['X-Saved-Record-Id'] = record.id.to_s
-            if params[:dialog]
-              head :ok
-              return true
-            end
-            if options[:notify]
-              model = record.class
-              notify_success(options[:notify],
-                             record: model.model_name.human,
-                             column: model.human_attribute_name(options[:identifier]),
-                             name: record.send(options[:identifier]))
-            end
-            url = options[:url]
+        saved = ApplicationRecord.transaction do
+          can_be_saved = record.new_record? ? record.createable? : record.updateable?
+          raise ActiveRecord::Rollback unless can_be_saved && (options[:saved] || record.save(context: options[:context]))
 
-            if record.class.column_names.include?('type')
-              record = record.becomes(record.type.constantize)
-            end
-            record.reload
-            if url.is_a? Hash
-              url.each do |k, v|
-                url[k] = (v.is_a?(Proc) ? (v.arity.zero? ? record.instance_exec(&v) : v.call(record)) : v)
-              end
-            end
-            url == :back ? redirect_back(fallback_location: root_path) : redirect_to(url)
+          true
+        end
+
+        if saved
+          response.headers['X-Return-Code'] = 'success'
+          response.headers['X-Saved-Record-Id'] = record.id.to_s
+          if params[:dialog]
+            head :ok
             return true
-          else
-            raise ActiveRecord::Rollback
           end
+          if options[:notify]
+            model = record.class
+            notify_success(options[:notify],
+                           record: model.model_name.human,
+                           column: model.human_attribute_name(options[:identifier]),
+                           name: record.send(options[:identifier]))
+          end
+          url = options[:url]
+
+          if record.class.column_names.include?('type')
+            record = record.becomes(record.type.constantize)
+          end
+          record.reload
+          if url.is_a? Hash
+            url.each do |k, v|
+              url[k] = (v.is_a?(Proc) ? (v.arity.zero? ? record.instance_exec(&v) : v.call(record)) : v)
+            end
+          end
+          url == :back ? redirect_back(fallback_location: root_path) : redirect_to(url)
+          return true
         end
 
         notify_error_now :record_cannot_be_saved.tl

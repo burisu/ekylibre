@@ -1,39 +1,59 @@
 require 'tilt/coffee'
 
+# i18n-complements core extensions pass options positionally, which Ruby 3
+# no longer converts to keywords
+[::String, ::Symbol].each do |klass|
+  klass.class_eval do
+    def translate(options = {})
+      ::I18n.translate(self, **options)
+    end
+    alias_method :t, :translate
+  end
+end
+
+[::String, ::TrueClass, ::FalseClass, ::Numeric, ::Date, ::DateTime, ::Time].each do |klass|
+  klass.class_eval do
+    def localize(options = {})
+      ::I18n.localize(self, **options)
+    end
+    alias_method :l, :localize
+  end
+end
+
 if defined? Encoding
   Encoding.default_internal = Encoding::UTF_8
   Encoding.default_external = Encoding::UTF_8
 end
 
 class ::String
-  def tl(*args)
-    ::I18n.translate('labels.' + self, *args)
+  def tl(options = {}, **keywords)
+    ::I18n.translate('labels.' + self, **options, **keywords)
   end
 end
 
 class ::Symbol
-  def tl(*args)
-    ::I18n.translate('labels.' + to_s, *args)
+  def tl(options = {}, **keywords)
+    ::I18n.translate('labels.' + to_s, **options, **keywords)
   end
 
-  def ta(*args)
-    ::I18n.translate('rest.actions.' + to_s, *args)
+  def ta(options = {}, **keywords)
+    ::I18n.translate('rest.actions.' + to_s, **options, **keywords)
   end
 
-  def tn(*args)
-    ::I18n.translate('notifications.messages.' + to_s, *args)
+  def tn(options = {}, **keywords)
+    ::I18n.translate('notifications.messages.' + to_s, **options, **keywords)
   end
 
-  def th(*args)
-    args.each_with_index do |arg, _index|
-      next unless arg.is_a?(Hash)
-      for k, v in arg
-        unless %i[locale scope default].include?(k)
-          arg[k] = (v.html_safe? ? v : ('<em>' + CGI.escapeHTML(v) + '</em>').html_safe)
-        end
+  # Translates with interpolated values emphasized and escaped
+  def th(options = {}, **keywords)
+    options = options.merge(keywords).to_h do |k, v|
+      if %i[locale scope default].include?(k) || v.html_safe?
+        [k, v]
+      else
+        [k, ('<em>' + CGI.escapeHTML(v.to_s) + '</em>').html_safe]
       end
     end
-    tl(*args).html_safe
+    tl(**options).html_safe
   end
 end
 
@@ -120,23 +140,20 @@ end
 module Ekylibre
   module I18n
     module ContextualModelHelpers
-      def tc(*args)
-        args[0] = 'models.' + model_name.singular + '.' + args[0].to_s
-        ::I18n.translate(*args)
+      def tc(key, options = {}, **keywords)
+        ::I18n.translate("models.#{model_name.singular}.#{key}", **options, **keywords)
       end
     end
 
     module ContextualModelInstanceHelpers
-      def tc(*args)
-        args[0] = 'models.' + self.class.model_name.singular + '.' + args[0].to_s
-        ::I18n.translate(*args)
+      def tc(key, options = {}, **keywords)
+        ::I18n.translate("models.#{self.class.model_name.singular}.#{key}", **options, **keywords)
       end
     end
 
     module ContextualHelpers
-      def tl(*args)
-        args[0] = 'labels.' + args[0].to_s
-        ::I18n.translate(*args)
+      def tl(key, options = {}, **keywords)
+        ::I18n.translate("labels.#{key}", **options, **keywords)
       end
     end
   end

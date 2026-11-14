@@ -72,7 +72,7 @@ class MapEditorManager
       shapes = cultivable_zones.collect(&:first)
       properties = cultivable_zones.collect(&:second)
 
-      collection = Charta.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
+      collection = Geo.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
       collection.to_json_feature_collection(properties)
     end
 
@@ -86,7 +86,7 @@ class MapEditorManager
       shapes = land_parcels.collect(&:first)
       properties = land_parcels.collect(&:second)
 
-      collection = Charta.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
+      collection = Geo.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
       collection.to_json_feature_collection(properties)
     end
 
@@ -100,12 +100,12 @@ class MapEditorManager
       shapes = plants.collect(&:first)
       properties = plants.collect(&:second)
 
-      collection = Charta.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
+      collection = Geo.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
       collection.to_json_feature_collection(properties)
     end
 
     def cadastral_parcels_serie(options = {})
-      return Charta::GeometryCollection.empty.to_json_feature_collection if options[:bounding_box].blank?
+      return Geo::GeometryCollection.empty.to_json_feature_collection if options[:bounding_box].blank?
 
       cadastral_items = RegisteredCadastralParcel.in_bounding_box(options[:bounding_box]).map do |item|
         [item.shape.to_text, { name: item.label }]
@@ -114,12 +114,12 @@ class MapEditorManager
       shapes = cadastral_items.collect(&:first)
       properties = cadastral_items.collect(&:second)
 
-      collection = Charta.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
+      collection = Geo.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
       collection.to_json_feature_collection(properties)
     end
 
     def aquatic_nta_serie(distance, options)
-      return Charta::GeometryCollection.empty.to_json_feature_collection if options[:bounding_box].blank?
+      return Geo::GeometryCollection.empty.to_json_feature_collection if options[:bounding_box].blank?
 
       hydro_items = RegisteredHydrographicItem.in_bounding_box(options[:bounding_box]).map do |item|
         [item.geometry.buffer(distance).to_text, { name: item.name, nature: item.nature }]
@@ -128,7 +128,7 @@ class MapEditorManager
       shapes = hydro_items.collect(&:first)
       properties = hydro_items.collect(&:second)
 
-      collection = Charta.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
+      collection = Geo.new_geometry("GEOMETRYCOLLECTION(#{shapes.join(',')})")
       collection.to_json_feature_collection(properties)
     end
 

@@ -155,7 +155,7 @@ module Backend
             record.reload
             if url.is_a? Hash
               url.each do |k, v|
-                url[k] = (v.is_a?(Proc) ? v.call(record) : v)
+                url[k] = (v.is_a?(Proc) ? (v.arity.zero? ? record.instance_exec(&v) : v.call(record)) : v)
               end
             end
             url == :back ? redirect_back(fallback_location: root_path) : redirect_to(url)

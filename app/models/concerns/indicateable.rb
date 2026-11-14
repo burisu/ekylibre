@@ -219,7 +219,7 @@ module Indicateable
       indicator = Onoma::Indicator.find(indicator_name)
       # Perform operation
       value = get(indicator, at: taken_at)
-      value = Charta.new_geometry(value) if indicator.datatype == :shape
+      value = Geo.new_geometry(value) if indicator.datatype == :shape
       if operation == :add
         value += operand_value
       elsif operation == :substract

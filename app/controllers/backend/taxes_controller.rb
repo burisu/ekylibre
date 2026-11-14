@@ -58,7 +58,7 @@ module Backend
       t.column :deduction_isacompta_code, hidden: true
       t.column :fixed_asset_deduction_isacompta_code, hidden: true
       t.column :fixed_asset_collect_isacompta_code, hidden: true
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, hidden: true
     end
 
     def load

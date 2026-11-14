@@ -79,13 +79,13 @@ module Backend
       t.column :work_number, hidden: true
       t.column :nature, hidden: true, url: { controller: '/backend/product_natures' }
       t.column :category, url: { controller: '/backend/product_nature_categories' }
-      t.column :product_account, label_method: 'product_account&.label', hidden: true
-      t.column :charge_account, label_method: 'charge_account&.label', hidden: true
+      t.column :product_account, label_method: ->(record) { record.product_account&.label }, hidden: true
+      t.column :charge_account, label_method: ->(record) { record.charge_account&.label }, hidden: true
       t.column :stock_account, hidden: true
       t.column :stock_movement_account, hidden: true
       t.column :current_stock_displayed, label: :current_stock
       # t.column :current_outgoing_stock_ordered_not_delivered_displayed
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, hidden: true
       t.column :unit_name, label: :unit
       t.column :variety
       t.column :derivative_of
@@ -137,7 +137,7 @@ module Backend
       t.column :tax, hidden: true
       t.column :pretax_amount
       t.column :amount
-      t.column :supplier, label_method: 'supplier.full_name', url: { controller: '/backend/entities', action: :show, id: ->(record) { record.supplier.id } }
+      t.column :supplier, label_method: ->(record) { record.supplier.full_name }, url: { controller: '/backend/entities', action: :show, id: ->(record) { record.supplier.id } }
     end
 
     list(:purchase_order_items, model: :purchase_item, joins: :purchase, conditions: [
@@ -152,7 +152,7 @@ module Backend
       t.column :tax, hidden: true
       t.column :pretax_amount
       t.column :amount
-      t.column :supplier, label_method: 'supplier.full_name', url: { controller: '/backend/entities', action: :show, id: ->(record) { record.supplier.id } }
+      t.column :supplier, label_method: ->(record) { record.supplier.full_name }, url: { controller: '/backend/entities', action: :show, id: ->(record) { record.supplier.id } }
     end
 
     list(:receptions, model: :parcel_item_storings, joins: :parcel_item, conditions: ['parcel_items.variant_id = ?', -> { params[:id] }], order: { created_at: :desc }) do |t|
@@ -164,7 +164,7 @@ module Backend
       t.column :conditioning_quantity
       t.column :conditioning_unit
       t.column :unit_pretax_amount, through: :parcel_item, hidden: true
-      t.column :sender, label_method: 'sender.full_name', through: :parcel_item, label: :supplier, url: { controller: '/backend/entities', action: :show, id: ->(record) { record.parcel_item.sender.id } }
+      t.column :sender, label_method: ->(record) { record.sender.full_name }, through: :parcel_item, label: :supplier, url: { controller: '/backend/entities', action: :show, id: ->(record) { record.parcel_item.sender.id } }
     end
 
     list(:shipments, model: :shipment_items, conditions: { variant_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
@@ -175,7 +175,7 @@ module Backend
       t.column :conditioning_quantity
       t.column :conditioning_unit
       t.column :state, through: :shipment, label_method: :human_state_name
-      t.column :recipient, label_method: 'recipient.full_name', through: :shipment, url: { controller: '/backend/entities' }
+      t.column :recipient, label_method: ->(record) { record.recipient.full_name }, through: :shipment, url: { controller: '/backend/entities' }
     end
 
     list(:suppliers,
@@ -428,7 +428,7 @@ module Backend
       variant = instance_variable_get("@#{controller_name.singularize}")
       handle_maaid(variant, params[:phyto_product_id])
       if save_and_redirect(variant,
-                           url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: -> { id } })),
+                           url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: ->(record) { record.id } })),
                            notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false),
                            identifier: :name)
         if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock]) && variant.storable?
@@ -447,7 +447,7 @@ module Backend
       @product_nature_variant.attributes = permitted_params
       handle_maaid(@product_nature_variant, params[:phyto_product_id])
       if save_and_redirect(@product_nature_variant,
-                           url: params[:redirect] || { action: :show, id: -> { id } },
+                           url: params[:redirect] || { action: :show, id: ->(record) { record.id } },
                            notify: (params[:redirect] ? :record_x_updated : false),
                            identifier: :name )
         if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock]) && @product_nature_variant.storable?
@@ -469,7 +469,7 @@ module Backend
       variant_with_same_name_count = product_nature_variant.class.with_name(variant_name).count
       rank = " (#{variant_with_same_name_count})" if variant_with_same_name_count > 0
       @new_product_nature_variant.name = "#{variant_name}#{rank}"
-      return if save_and_redirect(@new_product_nature_variant, url: { action: :edit, id: -> { id } }, notify: :record_x_created, identifier: :name)
+      return if save_and_redirect(@new_product_nature_variant, url: { action: :edit, id: ->(record) { record.id } }, notify: :record_x_created, identifier: :name)
     end
 
     private

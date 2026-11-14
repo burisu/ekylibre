@@ -48,7 +48,7 @@ module Backend
       t.column :name
       t.column :entity
       t.column :memo
-      t.column :transaction_nature, label_method: "transaction_nature&.t(scope: 'interbank_transaction_codes')"
+      t.column :transaction_nature, label_method: ->(record) { record.transaction_nature&.t(scope: 'interbank_transaction_codes') }
       t.column :letter
       t.column :first_document_name, icon_name: 'cart-plus', url: { controller: :documents, action: :show, id: ->(record) { record.first_document_id } }
       t.column :journal_entry, url: true

@@ -2,9 +2,6 @@
 
 require 'rodf'
 
-Mime::Type.register('text/csv', :xcsv) unless Mime::Type.lookup_by_extension(:xcsv)
-Mime::Type.register('application/vnd.oasis.opendocument.spreadsheet', :ods) unless Mime::Type.lookup_by_extension(:ods)
-
 module ActiveList
   # Builds export files (CSV, Excel CSV, ODS) from a list definition
   class Exporters

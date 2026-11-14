@@ -14,7 +14,11 @@ module ActiveList
 
     attr_reader :table, :view, :state, :query
 
-    delegate :content_tag, :tag, :link_to, :mail_to, :h, :image_tag, :url_for, :safe_join, to: :view
+    delegate :content_tag, :tag, :link_to, :mail_to, :image_tag, :url_for, :safe_join, to: :view
+
+    def h(value)
+      ERB::Util.html_escape(value)
+    end
 
     def initialize(table, view, options = {})
       @table = table
@@ -260,7 +264,7 @@ module ActiveList
           currency = Onoma::Currency.find(column.currency_for(view, record) || 'EUR')
           [currency.symbol.to_s, currency.precision.to_s]
         else
-          [record.public_send(column.value_method).symbol, '2']
+          [column.datum_value(record).symbol, '2']
         end
       end
 
@@ -340,7 +344,7 @@ module ActiveList
           classes << DATATYPE_ABBREVIATION[column.datatype]
           classes << :url if column.options[:url].is_a?(Hash)
           label_method = column.respond_to?(:label_method) ? column.label_method : nil
-          classes << label_method if %i[code color].include?(label_method&.to_sym)
+          classes << label_method if label_method.is_a?(Symbol) && %i[code color].include?(label_method)
           if column.options[:mode] == :download
             classes << :dld
           elsif column.options[:mode] || label_method == :email

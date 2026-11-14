@@ -80,10 +80,10 @@ gem 'exception_notification', '~> 4.4'
 gem 'redis-namespace', '~> 1.8'
 
 # Manipulate map data
-gem 'charta', github: 'ekylibre/charta', branch: 'master'
 gem 'geocoder', '~> 1.6'
 gem 'rgeo', '~> 2.2'
 gem 'rgeo-geojson', '~> 2.1'
+gem 'rgeo-proj4', '~> 2.0'
 gem 'rgeo-shapefile', '~> 3.0'
 
 # Background jobs
@@ -119,7 +119,7 @@ gem 'paperclip', '~> 5.3'
 gem 'paperclip-document', '~> 0.0.11'
 
 # Emailing
-gem 'liquid', '~> 5.4'
+gem 'liquid', '>= 4.0'
 gem 'tinymce-rails'
 gem 'tinymce-rails-langs'
 

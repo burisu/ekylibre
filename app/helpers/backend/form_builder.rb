@@ -344,12 +344,12 @@ module Backend
 
       geom = @object.send(attribute_name)
       if geom.present?
-        geometry = Charta.new_geometry(geom)
+        geometry = Geo.new_geometry(geom)
         editor[:edit] = geometry.to_json_object
         editor[:view] = { center: geometry.centroid, zoom: 16 }
       else
         if sibling = @object.class.where("#{attribute_name} IS NOT NULL").first
-          editor[:view] = { center: Charta.new_geometry(sibling.send(attribute_name)).centroid }
+          editor[:view] = { center: Geo.new_geometry(sibling.send(attribute_name)).centroid }
         elsif zone = CultivableZone.first
           editor[:view] = { center: zone.shape_centroid }
         end
@@ -372,7 +372,7 @@ module Backend
 
     def shape_field(attribute_name = :shape, options = {})
       raise @object.send(attribute_name)
-      geometry = Charta.new_geometry(@object.send(attribute_name) || Charta.empty_geometry)
+      geometry = Geo.new_geometry(@object.send(attribute_name) || Geo.empty_geometry)
       options[:input_html] ||= {}
       options[:input_html][:data] ||= {}
       options[:input_html][:data][:map_editor] ||= {}
@@ -395,7 +395,7 @@ module Backend
     def point(attribute_name, options = {})
       marker = {}
       if geom = @object.send(attribute_name)
-        marker[:marker] = Charta.new_geometry(geom).to_json_object['coordinates'].reverse
+        marker[:marker] = Geo.new_geometry(geom).to_json_object['coordinates'].reverse
         marker[:view] = { center: marker[:marker] }
       else
         siblings = @object.class.where("#{attribute_name} IS NOT NULL").order(id: :desc)
@@ -414,12 +414,12 @@ module Backend
     def point_field(attribute_name, options = {})
       marker = {}
       if geom = @object.send(attribute_name)
-        coordinates = Charta.new_geometry(geom).to_json_object['coordinates']
+        coordinates = Geo.new_geometry(geom).to_json_object['coordinates']
         marker[:marker] = coordinates.reverse if coordinates
         marker[:view] = { center: marker[:marker] }
       else
         if sibling = @object.class.where("#{attribute_name} IS NOT NULL").first
-          marker[:view] = { center: Charta.new_geometry(sibling.send(attribute_name)).centroid }
+          marker[:view] = { center: Geo.new_geometry(sibling.send(attribute_name)).centroid }
         elsif zone = CultivableZone.first
           marker[:view] = { center: zone.shape_centroid }
         end

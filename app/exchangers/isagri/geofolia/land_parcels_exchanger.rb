@@ -32,7 +32,7 @@ module Isagri
               insee_code = record.attributes['CODE_INSEE']
               net_surface_area = record.attributes['SURFACE'].to_d.in(:hectare)
               campaign_harvest_year = record.attributes['CAMPAGNE'].to_i
-              shape = Charta.new_geometry(record.geometry).transform(:WGS84)
+              shape = Geo.new_geometry(record.geometry).transform(:WGS84)
               activity_name = record.attributes['CP_CULTU']
               activity_edi_code = record.attributes['CP_CODCULT']
               variety = record.attributes['VARIETE']

@@ -65,7 +65,7 @@ module Interventions
         Models::Period.parse(intervention_start, intervention_end + usage.applications_frequency)
       end
 
-      # @return [Array<Charta::Geometry>]
+      # @return [Array<Geo::Geometry>]
       def get_targeted_zones
         targets_zone.map(&:shape)
       end

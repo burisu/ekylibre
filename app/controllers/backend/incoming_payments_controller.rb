@@ -84,7 +84,7 @@ module Backend
       t.column :deposit, url: true
       t.column :work_name, through: :affair, label: :affair_number, url: { controller: :sale_affairs }
       t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: ->(record) { record.journal_entry.bank_statements.first.id } }, label: :bank_statement_number
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, hidden: true
     end
   end
 end

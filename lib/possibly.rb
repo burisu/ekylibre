@@ -2,7 +2,7 @@
 
 # Vendored from https://github.com/ekylibre/possibly (rev 483d1028, fork of
 # https://github.com/rap1ds/ruby-possibly), MIT License, Copyright (c) 2014 Mikko Koski.
-# Adapted for Ruby 3+ keyword arguments.
+# method_missing marked ruby2_keywords for Ruby 3+ keyword arguments.
 
 
 
@@ -143,9 +143,10 @@ class Some < Maybe
     other && other.class == self.class && @value === other.get
   end
 
-  def method_missing(method_sym, *args, **kwargs, &block)
-    Maybe(@value.send(method_sym, *args, **kwargs, &block))
+  def method_missing(method_sym, *args, &block)
+    Maybe(@value.send(method_sym, *args, &block))
   end
+  ruby2_keywords(:method_missing) if respond_to?(:ruby2_keywords, true)
 
   def to_s
     "Some(#{@value})"
@@ -217,9 +218,10 @@ class None < Maybe
     raise exception_and_stack
   end
 
-  def method_missing(method_sym, *args, **_kwargs, &block)
+  def method_missing(method_sym, *args, &block)
     None([method_sym, args, block], self.stack)
   end
+  ruby2_keywords(:method_missing) if respond_to?(:ruby2_keywords, true)
 
   def respond_to_missing?(_name, _all)
     true

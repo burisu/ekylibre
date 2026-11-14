@@ -76,7 +76,7 @@ module Backend
         redirect_to backend_documents_path
       else
         @document = resource_model.new(permitted_params)
-        return if save_and_redirect(@document, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: -> { id } })), notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false), identifier: :name)
+        return if save_and_redirect(@document, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: ->(record) { record.id } })), notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false), identifier: :name)
 
         render(locals: { cancel_url: { action: :index }, with_continue: false })
       end

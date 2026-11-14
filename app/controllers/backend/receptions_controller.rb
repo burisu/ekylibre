@@ -142,7 +142,7 @@ module Backend
         notify_error_now :reception_need_at_least_one_item
       else
         return if save_and_redirect(@reception,
-                                    url: (params[:create_and_continue] ? { action: :new, continue: true } : { action: :show, id: -> { id } }),
+                                    url: (params[:create_and_continue] ? { action: :new, continue: true } : { action: :show, id: ->(record) { record.id } }),
                                     notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false),
                                     identifier: :number)
       end

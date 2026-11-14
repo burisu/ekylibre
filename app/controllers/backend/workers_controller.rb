@@ -66,7 +66,7 @@ module Backend
       t.column :stopped_at, datatype: :datetime
       t.column :project_task
       t.column :description
-      t.column :human_duration, on_select: :sum, value_method: 'duration.in(:second).in(:hour)', datatype: :decimal, class: 'center-align'
+      t.column :human_duration, on_select: :sum, value_method: ->(record) { record.duration.in(:second).in(:hour) }, datatype: :decimal, class: 'center-align'
     end
 
     list(:catalog_items, conditions: { product_id: -> { params[:id] } }) do |t|

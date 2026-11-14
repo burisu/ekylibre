@@ -94,7 +94,7 @@ class IssueTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     equipment = Equipment.last
     lat = '44.81850'
     lon = '-0.54426'
-    geolocation = ::Charta.new_point(lat, lon)
+    geolocation = ::Geo.new_point(lat, lon)
 
     geo_issue = Issue.create!(target: equipment, nature: :issue, observed_at: now, geolocation: geolocation)
 

@@ -12,13 +12,13 @@ module Ekylibre
 
           value = if value.is_a?(Hash) || (value.is_a?(String) && value =~ /\A\{.*\}\z/)
                     begin
-                      Charta.from_geojson(value)
+                      Geo.from_geojson(value)
                     rescue => e
                       fixed_geojson = correct_geojson(value, options[:type])
                       value = fixed_geojson.get if fixed_geojson.is_some?
                     end
                   else
-                    Charta.new_geometry(value)
+                    Geo.new_geometry(value)
                   end
 
           fixed_value = correct_shape(value, options[:type])
@@ -38,7 +38,7 @@ module Ekylibre
         end
 
         def correct_geojson(value, type)
-          geojson = Charta::GeoJSON.new(value, "4326")
+          geojson = Geo::GeoJSON.new(value, "4326")
           correct_shape(geojson, type)
         end
 
@@ -64,10 +64,10 @@ module Ekylibre
           plucked_ids = pluck(:id).join(',')
 
           if plucked_ids.blank?
-            Charta.empty_geometry
+            Geo.empty_geometry
           else
             conn = connection
-            Charta.new_geometry(conn.select_value('SELECT ST_MakeValid(ST_AsEWKT(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')'))
+            Geo.new_geometry(conn.select_value('SELECT ST_MakeValid(ST_AsEWKT(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')'))
           end
         end
 
@@ -76,14 +76,14 @@ module Ekylibre
           plucked_ids = pluck(:id).join(',')
 
           if plucked_ids.blank?
-            Charta.empty_geometry
+            Geo.empty_geometry
           else
             conn = connection
-            Charta.new_geometry(conn.select_value('SELECT ST_AsEWKT(ST_Centroid(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')')).feature
+            Geo.new_geometry(conn.select_value('SELECT ST_AsEWKT(ST_Centroid(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')')).feature
           end
         end
 
-        # More robust implementation of to_svg from Charta for multiple objects
+        # More robust implementation of to_svg from Geo for multiple objects
         def compute_svg(column_name, options = {})
           plucked_ids = pluck(:id).join(',')
 
@@ -135,7 +135,7 @@ module Ekylibre
             end
 
             define_method col do
-              self[col].blank? ? nil : Charta.new_geometry(self[col])
+              self[col].blank? ? nil : Geo.new_geometry(self[col])
             end
 
             unless %i[point multi_point line_string multi_line_string].include?(options[:type])
@@ -164,11 +164,11 @@ module Ekylibre
             end
 
             scope col + '_overlapping', lambda { |shape|
-              where('ST_Overlaps(' + col + ', ST_GeomFromEWKT(?))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_Overlaps(' + col + ', ST_GeomFromEWKT(?))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_covering', lambda { |shape, margin = 0|
-              ewkt = ::Charta.new_geometry(shape).to_ewkt
+              ewkt = ::Geo.new_geometry(shape).to_ewkt
               if margin > 0
                 common = 1 - margin
                 where('(ST_Overlaps(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))) / ST_Area(ST_GeomFromEWKT(ST_MakeValid(?))) >= ?)', ewkt, ewkt, ewkt, common)
@@ -178,36 +178,36 @@ module Ekylibre
             }
 
             scope col + '_intersecting', lambda { |shape|
-              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_surface_intersecting', lambda { |shape|
-              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(ST_MakeValid(' + col + '), ST_GeomFromEWKT(ST_MakeValid(?)))) > ?', ::Charta.new_geometry(shape).to_ewkt, ::Charta.new_geometry(shape).to_ewkt, 1E-10)
+              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(ST_MakeValid(' + col + '), ST_GeomFromEWKT(ST_MakeValid(?)))) > ?', ::Geo.new_geometry(shape).to_ewkt, ::Geo.new_geometry(shape).to_ewkt, 1E-10)
             }
 
             scope col + '_covered_by', lambda { |shape|
-              where('ST_CoveredBy(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_CoveredBy(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_within', lambda { |shape|
-              where('ST_Within(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_Within(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_matching', lambda { |shape, margin = 0.05|
-              ewkt = ::Charta.new_geometry(shape).to_ewkt
+              ewkt = ::Geo.new_geometry(shape).to_ewkt
               common = 1 - margin
               where('ST_Equals(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) OR (ST_Overlaps(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))) / ST_Area(' + col + ') >= ? AND ST_Area(ST_Intersection(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))) / ST_Area(ST_GeomFromEWKT(ST_MakeValid(?))) >= ?)', ewkt, ewkt, ewkt, common, ewkt, ewkt, common)
             }
 
             scope col + '_near', lambda { |shape, max_distance_in_meter = 5000|
-              c = ::Charta.new_geometry(shape).buffer(max_distance_in_meter)
-              ewkt = ::Charta.new_geometry(c).to_ewkt
+              c = ::Geo.new_geometry(shape).buffer(max_distance_in_meter)
+              ewkt = ::Geo.new_geometry(c).to_ewkt
               where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ewkt)
             }
 
             scope col + '_nearest_of_and_within', lambda { |shape, max_distance_in_meter = 5000|
-              c = ::Charta.new_geometry(shape).buffer(max_distance_in_meter)
-              ewkt = ::Charta.new_geometry(c).to_ewkt
+              c = ::Geo.new_geometry(shape).buffer(max_distance_in_meter)
+              ewkt = ::Geo.new_geometry(c).to_ewkt
               where( col + ' IN (?)', select(col)
                                       .where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ewkt)
                                       .order('ST_Distance(' + col + ', ST_Centroid(\'' + ewkt + '\')) ASC')
@@ -287,7 +287,7 @@ module Ekylibre
             code << "def #{indicator}_svg(options = {})\n"
             code << "  options[:srid] ||= 2154\n"
             code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  geom = Charta.new_geometry(self.#{indicator})\n"
+            code << "  geom = Geo.new_geometry(self.#{indicator})\n"
             code << "  geom = geom.transform(options[:srid]) if options[:srid]\n"
             code << "  return geom.to_svg(options)\n"
             # code << "  options[:srid] ||= 2154\n"
@@ -307,7 +307,7 @@ module Ekylibre
             %i[x_min x_max y_min y_max to_svg to_svg_path to_gml to_kml to_geojson to_text to_binary to_ewkt centroid point_on_surface].each do |attr|
               code << "def #{indicator}_#{attr.to_s.downcase}(options = {})\n"
               code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-              code << "  geometry = Charta.new_geometry(reading.#{column})\n"
+              code << "  geometry = Geo.new_geometry(reading.#{column})\n"
               code << "  geometry = geometry.transform(options[:srid]) if options[:srid]\n"
               code << "  return geometry.#{attr}\n"
               code << "end\n"
@@ -315,7 +315,7 @@ module Ekylibre
 
             code << "def #{indicator}_area(options = {})\n"
             code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  geometry = Charta.new_geometry(reading.#{column})\n"
+            code << "  geometry = Geo.new_geometry(reading.#{column})\n"
             code << "  geometry = geometry.transform(options[:srid]) if options[:srid]\n"
             code << "  return geometry.area.in_square_meter\n"
             code << "end\n"

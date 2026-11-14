@@ -185,7 +185,7 @@ module Backend
       url = if params[:create_and_continue]
               { action: :new, continue: true }
             else
-              { action: :show, id: -> { id } }
+              { action: :show, id: ->(record) { record.id } }
             end
 
       if @purchase_invoice.items.blank?

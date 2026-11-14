@@ -137,13 +137,13 @@ module Backend
       t.column :human_activities_names
       t.column :started_at
       t.column :stopped_at, hidden: true
-      t.column :human_working_duration, on_select: :sum, value_method: 'working_duration.in(:second).in(:hour)', datatype: :decimal
+      t.column :human_working_duration, on_select: :sum, value_method: ->(record) { record.working_duration.in(:second).in(:hour) }, datatype: :decimal
       t.status
       t.column :pfi_intervention, hidden: true, class: 'center'
       t.column :state_label, hidden: true
       t.column :human_target_names
       t.column :human_working_zone_area, on_select: :sum, datatype: :decimal
-      t.column :total_cost, label_method: 'costing&.decorate&.human_total_cost', currency: true, datatype: :decimal
+      t.column :total_cost, label_method: ->(record) { record.costing&.decorate&.human_total_cost }, currency: true, datatype: :decimal
       t.column :nature
       t.column :issue, url: true
       t.column :trouble_encountered, hidden: true
@@ -384,7 +384,7 @@ module Backend
             elsif URI(request.referer).path == '/backend/schedulings/new_detailed_intervention'
               backend_schedulings_path
             else
-              params[:redirect] || { action: :show, id: -> { id } }
+              params[:redirect] || { action: :show, id: ->(record) { record.id } }
             end
 
       notify = params[:intervention_proposal] ? :record_x_planned : :record_x_created

@@ -32,7 +32,7 @@ module Backend
         centroid = mail_address.mail_geolocation
       elsif CultivableZone.any?
         c = CultivableZone.first.shape_centroid
-        centroid = ::Charta.new_point(c[0], c[1])
+        centroid = ::Geo.new_point(c[0], c[1])
       end
       stations = if postal_code.present? && country.present?
                    RegisteredWeatherStation.of_country(country).of_country_zone(postal_code[0..1])

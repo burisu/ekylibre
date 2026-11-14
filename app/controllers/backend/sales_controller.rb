@@ -85,7 +85,7 @@ module Backend
       t.column :client, url: true
       t.column :responsible, hidden: true
       t.column :description, hidden: true
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', sort: :provider_vendor, hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, sort: :provider_vendor, hidden: true
       t.status
       t.column :state_label
       t.column :pretax_amount, currency: true, on_select: :sum

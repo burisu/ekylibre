@@ -40,7 +40,7 @@ module Interventions
       end
 
       setup do
-        @targets_area = { "0" => { shape: Charta.new_geometry("SRID=4326;GeometryCollection (Polygon ((-0.78234864413389 45.80315394565934, -0.7814045065606479 45.80410007498097, -0.7775850409234408 45.80380838465042, -0.778599307523109 45.80205583444929, -0.78234864413389 45.80315394565934)))") } }
+        @targets_area = { "0" => { shape: Geo.new_geometry("SRID=4326;GeometryCollection (Polygon ((-0.78234864413389 45.80315394565934, -0.7814045065606479 45.80410007498097, -0.7775850409234408 45.80380838465042, -0.778599307523109 45.80205583444929, -0.78234864413389 45.80315394565934)))") } }
         @service = RegisteredPhytosanitaryUsageDoseComputation.build
       end
 

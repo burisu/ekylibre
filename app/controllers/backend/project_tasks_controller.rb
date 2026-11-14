@@ -68,7 +68,7 @@ module Backend
       t.column :started_at, datatype: :datetime
       t.column :stopped_at, datatype: :datetime
       t.column :description
-      t.column :human_duration, on_select: :sum, value_method: 'duration.in(:second).in(:hour)', datatype: :decimal, class: 'center-align'
+      t.column :human_duration, on_select: :sum, value_method: ->(record) { record.duration.in(:second).in(:hour) }, datatype: :decimal, class: 'center-align'
       t.column :travel_expense, hidden: true
       t.column :travel_expense_details, hidden: true
     end

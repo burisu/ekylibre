@@ -74,7 +74,7 @@ module Backend
 
       t3e(@product_nature.attributes)
       @product_nature.attributes = permitted_params
-      return if save_and_redirect(@product_nature, url: params[:redirect] || { action: :show, id: -> { id } }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
+      return if save_and_redirect(@product_nature, url: params[:redirect] || { action: :show, id: ->(record) { record.id } }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
 
       @form_url = backend_product_nature_path(@product_nature)
       @key = 'product_nature'

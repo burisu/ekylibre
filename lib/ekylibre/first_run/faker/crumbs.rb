@@ -49,7 +49,7 @@ module Ekylibre
           members = cultivable_zone.current_cultivations(issue_observed_at) if cultivable_zone
           plant = members if members.any?
           if plant.nil?
-            cultivable_zone_shape = Charta.new_geometry(cultivable_zone.shape) if cultivable_zone.shape
+            cultivable_zone_shape = Geo.new_geometry(cultivable_zone.shape) if cultivable_zone.shape
             if cultivable_zone_shape && product_around = Plant.shape_within(cultivable_zone_shape).first
               plant = product_around
             end

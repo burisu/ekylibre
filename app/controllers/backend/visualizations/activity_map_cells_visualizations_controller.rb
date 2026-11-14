@@ -111,7 +111,7 @@ module Backend
                 final_items = AnalysisItem.where(indicator_name: ind.name, analysis_id: rainfall_geo_analyses.collect(&:id))
                 # compute distance between sensor and intervention shape
                 sensor_position = rainfall_geo_analyses.take.geolocation
-                shape = Charta.new_geometry(support_shape.to_rgeo.simplify(0))
+                shape = Geo.new_geometry(support_shape.to_rgeo.simplify(0))
                 distance = Measure.new(shape.distance(sensor_position), :meter)
                 cumulated_rainfall = final_items.map(&:value).compact.sum
                 # build popup

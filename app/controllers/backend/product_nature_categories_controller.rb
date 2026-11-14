@@ -56,7 +56,7 @@ module Backend
       t.column :stock_account, if: :storable?, url: { controller: '/backend/accounts' }
       t.column :depreciable, hidden: true
       t.column :fixed_asset_account, if: :depreciable?, url: { controller: '/backend/accounts' }
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, hidden: true
       t.column :variants_count, hidden: true
     end
 
@@ -106,7 +106,7 @@ module Backend
 
       t3e(@product_nature_category.attributes)
       @product_nature_category.attributes = permitted_params
-      return if save_and_redirect(@product_nature_category, url: params[:redirect] || { action: :show, id: -> { id } }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
+      return if save_and_redirect(@product_nature_category, url: params[:redirect] || { action: :show, id: ->(record) { record.id } }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
 
       @form_url = backend_product_nature_category_path(@product_nature_category)
       @key = 'product_nature_category'

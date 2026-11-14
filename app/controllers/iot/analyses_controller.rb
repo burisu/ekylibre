@@ -27,7 +27,7 @@ module Iot
 
       # Get geolocation expected as WGS84
       if report[:latlon]
-        attributes[:geolocation] = Charta.new_point(*report.delete(:latlon))
+        attributes[:geolocation] = Geo.new_point(*report.delete(:latlon))
       end
 
       # Get indicators
@@ -56,9 +56,9 @@ module Iot
         when :measure
           value = Measure.new(value)
         when :point
-          value = Charta.new_point(*value)
+          value = Geo.new_point(*value)
         when :geometry
-          value = Charta.new_geometry(value)
+          value = Geo.new_geometry(value)
         end
         items << { indicator_name: name, value: value }
       end

@@ -19,7 +19,7 @@ module Rides
                else
                  points_from_rides_shapes
                end
-      line = ::Charta.make_line(points).to_rgeo
+      line = ::Geo.make_line(points).to_rgeo
       line.buffer( tool_width / 2 )
     end
 

@@ -95,7 +95,7 @@ module Backend
     list(:items, model: :parcel_items, conditions: { parcel_id: -> { params[:id] } }) do |t|
       t.column :source_product, url: true
       t.column :product, url: true, hidden: true
-      t.column :container, through: :product, label_method: 'container&.name'
+      t.column :container, through: :product, label_method: ->(record) { record.container&.name }
       t.column :product_work_number, through: :product, label_method: :work_number, hidden: true
       t.column :product_identification_number, hidden: true
       t.column :conditioning_quantity, class: 'left-align'

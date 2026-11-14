@@ -104,8 +104,8 @@ module Interventions
         end
 
         def compute_target_working_zone(target_shape)
-          computed_working_zones = Charta.new_geometry(target_shape.intersection(@working_zone))
-          if computed_working_zones.instance_of?(Charta::Polygon)
+          computed_working_zones = Geo.new_geometry(target_shape.intersection(@working_zone))
+          if computed_working_zones.instance_of?(Geo::Polygon)
             computed_working_zones.to_json_feature.with_indifferent_access
           else
             computed_working_zones.to_json_feature_collection.with_indifferent_access

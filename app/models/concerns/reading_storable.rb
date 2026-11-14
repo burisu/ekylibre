@@ -75,7 +75,7 @@ module ReadingStorable
       end
     end
     if datatype == :geometry || datatype == :multi_polygon || datatype == :point
-      object = Charta.new_geometry(object)
+      object = Geo.new_geometry(object)
     end
     send("#{datatype}_value=", object)
   end

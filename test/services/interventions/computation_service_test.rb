@@ -8,7 +8,7 @@ module Interventions
 
       ewkt = "SRID=4326;MultiPolygon (((-1.017533540725708 44.23605999218229, -1.0204195976257324 44.236744122959124, -1.0197114944458008 44.238758034804555, -1.0165786743164062 44.238143107200145, -1.017533540725708 44.23605999218229)))"
 
-      target_product = create(:corn_plant, initial_shape: Charta.new_geometry(ewkt))
+      target_product = create(:corn_plant, initial_shape: Geo.new_geometry(ewkt))
 
       tool_product = create(:tractor)
 
@@ -71,7 +71,7 @@ module Interventions
       ## land parcel
       ewkt = "SRID=4326;MultiPolygon (((-1.017533540725708 44.23605999218229, -1.0204195976257324 44.236744122959124, -1.0197114944458008 44.238758034804555, -1.0165786743164062 44.238143107200145, -1.017533540725708 44.23605999218229)))"
 
-      target_product = create(:land_parcel, initial_shape: Charta.new_geometry(ewkt))
+      target_product = create(:land_parcel, initial_shape: Geo.new_geometry(ewkt))
 
       ## tractor
       tool_product = create(:tractor)

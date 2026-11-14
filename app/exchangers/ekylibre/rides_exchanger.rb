@@ -34,8 +34,8 @@ module Ekylibre
           if record.geometry
             # because Multiline has to be converted in Line
             w.info "Original geometry : #{record.geometry.inspect}"
-            extracted_line_geom = Charta.new_geometry(record.geometry).to_rgeo.first
-            clean_shape = Charta.new_geometry(extracted_line_geom)
+            extracted_line_geom = Geo.new_geometry(record.geometry).to_rgeo.first
+            clean_shape = Geo.new_geometry(extracted_line_geom)
             w.info "Clean geometry : #{clean_shape.inspect}"
 
             h_start = record.attributes['hour_start'].split(':')
@@ -148,7 +148,7 @@ module Ekylibre
           points << ride.shape.points
         end
         w.info "Points : #{points.inspect}"
-        ride_set_compiled_shape = Charta.make_line(points.flatten!).to_rgeo.buffer(tool_width(ride_set))
+        ride_set_compiled_shape = Geo.make_line(points.flatten!).to_rgeo.buffer(tool_width(ride_set))
         w.info "New line : #{ride_set_compiled_shape.inspect}"
         ride_set.update!(shape: ride_set_compiled_shape)
       end

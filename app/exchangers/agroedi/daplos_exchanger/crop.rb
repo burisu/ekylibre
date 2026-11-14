@@ -295,7 +295,7 @@ module Agroedi
                 srid = 2154
               end
               # build factory from source srid
-              factory = ::Charta::Geometry.factory(srid)
+              factory = ::Geo.factory(srid)
               points = []
               # compute points from lat / lon
               c_area.crop_spatial_coordinates.each do |p|
@@ -325,7 +325,7 @@ module Agroedi
         end
 
         def transform_geometry(geometry, srid)
-          geom = ::Charta.new_geometry(geometry, srid).transform(:WGS84)
+          geom = ::Geo.new_geometry(geometry, srid).transform(:WGS84)
           if !geom.simple?
             # fix_geom = shape_corrector.extract_geometries(corrected_geom.or_raise.to_ewkt, 'polygon')
             fix_geom = shape_corrector.extract_polygon_and_one_ring(geom.to_ewkt)

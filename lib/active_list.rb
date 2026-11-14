@@ -2,6 +2,9 @@
 
 require 'csv'
 
+Mime::Type.register('text/csv', :xcsv) unless Mime::Type.lookup_by_extension(:xcsv)
+Mime::Type.register('application/vnd.oasis.opendocument.spreadsheet', :ods) unless Mime::Type.lookup_by_extension(:ods)
+
 # In-app replacement of the ekylibre/active_list gem.
 #
 # Lists are declared in controllers with the same DSL as before:

@@ -10,7 +10,7 @@ class ShapeValidator < ActiveModel::EachValidator
 
   private
 
-    # @param [Charta::Geometry] shape
+    # @param [Geo::Geometry] shape
     # @return [Boolean]
     def valid?(shape)
       pg_res = ApplicationRecord.connection.execute <<~SQL

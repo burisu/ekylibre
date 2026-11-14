@@ -138,9 +138,12 @@ module ActiveList
 
       def initialize(table, name, options = {})
         super(table, name, options)
-        @label_method = (options[:label_method] || @name).to_sym
+        @label_method = options[:label_method] || @name
+        @label_method = @label_method.to_sym unless @label_method.is_a?(Proc)
         @value_method = if options[:value_method].present?
-                          options[:value_method].to_sym
+                          options[:value_method].is_a?(Proc) ? options[:value_method] : options[:value_method].to_sym
+                        elsif @label_method.is_a?(Proc)
+                          @label_method
                         else
                           @label_method.to_s.gsub('human_', '').to_sym
                         end
@@ -150,11 +153,11 @@ module ActiveList
       end
 
       def datum(record)
-        record.public_send(@label_method)
+        @label_method.is_a?(Proc) ? @label_method.call(record) : record.public_send(@label_method)
       end
 
       def datum_value(record)
-        record.public_send(@value_method)
+        @value_method.is_a?(Proc) ? @value_method.call(record) : record.public_send(@value_method)
       end
 
       # Controller of the record for URL building
@@ -239,7 +242,7 @@ module ActiveList
           raise ArgumentError.new(":label_method option must be given for association #{name}.") unless @label_method
         end
         @sort_column = @options.delete(:sort)
-        @sort_column ||= if columns_def.include?(@label_method)
+        @sort_column ||= if !@label_method.is_a?(Proc) && columns_def.include?(@label_method)
                            @label_method
                          else
                            LABELS_COLUMNS.detect { |m| columns_def.include?(m) } || :id
@@ -248,7 +251,9 @@ module ActiveList
 
       def datum(record)
         associated = record.public_send(@reflection.name)
-        associated&.public_send(@label_method)
+        return nil if associated.nil?
+
+        @label_method.is_a?(Proc) ? @label_method.call(associated) : associated.public_send(@label_method)
       end
 
       def datum_value(record)
@@ -344,7 +349,7 @@ module ActiveList
             next unless current == expected
 
             url = record_url(context, record, url.dup)
-            return context.link_to(context.content_tag(:i) + context.h(url[:action].t(scope: 'rest.actions')), url, link_options)
+            return context.link_to(context.content_tag(:i) + ERB::Util.html_escape(url[:action].t(scope: 'rest.actions')), url, link_options)
           end
           nil
         else
@@ -352,7 +357,7 @@ module ActiveList
           url[:controller] ||= (@options[:controller] || ->(r) { r.class.name.tableize })
           url[:action] ||= @name.to_s
           url = record_url(context, record, url)
-          context.link_to(context.content_tag(:i) + context.h(' ' + @name.t(scope: 'rest.actions')), url, link_options)
+          context.link_to(context.content_tag(:i) + ERB::Util.html_escape(' ' + @name.t(scope: 'rest.actions')), url, link_options)
         end
       end
 

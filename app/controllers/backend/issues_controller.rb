@@ -68,7 +68,7 @@ module Backend
       }
 
       if params[:lat].present? && params[:lon].present?
-        geolocation = ::Charta.new_point(params[:lat], params[:lon])
+        geolocation = ::Geo.new_point(params[:lat], params[:lon])
         options[:geolocation] = geolocation
       end
 

@@ -133,7 +133,7 @@ class EntityAddress < ApplicationRecord
   def geolocate_address
     if mail_line_4.present? && mail_line_6.present? && mail_country.present?
       self.geocode
-      c = ::Charta.new_point(latitude, longitude) if latitude && longitude
+      c = ::Geo.new_point(latitude, longitude) if latitude && longitude
       self.mail_geolocation = c if c.present?
     end
   end

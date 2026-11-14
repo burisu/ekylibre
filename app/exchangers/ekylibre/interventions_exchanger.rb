@@ -506,7 +506,7 @@ module Ekylibre
         plant = nil
         if options[:support] && options[:support].storage && options[:support].storage.shape
           # try to find the current plant on cultivable zone if exist
-          cultivable_zone_shape = Charta.new_geometry(options[:support].storage.shape)
+          cultivable_zone_shape = Geo.new_geometry(options[:support].storage.shape)
           if cultivable_zone_shape && product_around = Plant.within_shape(cultivable_zone_shape)
             plant = Plant.where(id: product_around.map(&:id)).availables.first
           end
@@ -529,7 +529,7 @@ module Ekylibre
           plant_ids = []
           options[:support].each do |support|
             # try to find the current plants on cultivable zone if exists
-            support_shape = Charta.new_geometry(support.shape)
+            support_shape = Geo.new_geometry(support.shape)
             w.debug "support_shape : #{support_shape.to_geojson}".to_s
             w.debug "plant count : #{Plant.count}"
             w.debug "plant count : #{Plant.pluck(:name).to_sentence}"

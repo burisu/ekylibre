@@ -46,7 +46,7 @@ module Backend
       @import = resource_model.new(permitted_params)
       if save_and_redirect(
         @import,
-        url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: -> { id } })),
+        url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: ->(record) { record.id } })),
         identifier: :id
       )
         notify(:import_creation_successful_suggest_execute)

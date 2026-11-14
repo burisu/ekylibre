@@ -3,12 +3,12 @@
 class ReadingsCoder
   SERIALIZE = Hash.new { proc { |_, value| value } }
                   .tap { |h| h[Measure] = proc { |_, value| value.to_s } }
-                  .tap { |h| h[Charta::Point] = proc { |_, value| value.to_ewkt } }
-                  .tap { |h| h[Charta::MultiPolygon] = proc { |_, value| value.to_ewkt } }
+                  .tap { |h| h[Geo::Point] = proc { |_, value| value.to_ewkt } }
+                  .tap { |h| h[Geo::MultiPolygon] = proc { |_, value| value.to_ewkt } }
 
   UNSERIALIZE = Hash.new { proc { |klass, value| klass.new(value) } }
-                    .tap { |h| h[Charta::MultiPolygon] = proc { |_, value| Charta.new_geometry(value) } }
-                    .tap { |h| h[Charta::Point] = proc { |_, value| Charta.new_geometry(value) } }
+                    .tap { |h| h[Geo::MultiPolygon] = proc { |_, value| Geo.new_geometry(value) } }
+                    .tap { |h| h[Geo::Point] = proc { |_, value| Geo.new_geometry(value) } }
                     .tap { |h| h[FalseClass] = proc { |_, _| false } }
                     .tap { |h| h[TrueClass] = proc { |_, _| true } }
                     .tap { |h| h[Integer] = proc { |_, value| value.to_i } }
@@ -18,6 +18,12 @@ class ReadingsCoder
                     .tap { |h| h[Float] = proc { |_, value| value.to_f } }
                     .tap { |h| h[BigDecimal] = proc { |_, value| BigDecimal(value) } }
                     .freeze
+
+  # Class names stored by former versions (charta gem)
+  LEGACY_CLASS_NAMES = {
+    'Charta::MultiPolygon' => 'Geo::MultiPolygon',
+    'Charta::Point' => 'Geo::Point'
+  }.freeze
 
   class << self
     def load(json)
@@ -30,7 +36,7 @@ class ReadingsCoder
              end
 
       hash.transform_values do |(klass, value)|
-        klass = klass.constantize
+        klass = LEGACY_CLASS_NAMES.fetch(klass, klass).constantize
 
         UNSERIALIZE[klass][klass, value]
       end

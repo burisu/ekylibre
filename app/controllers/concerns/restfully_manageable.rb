@@ -198,7 +198,7 @@ module RestfullyManageable
         creation_t3e = config.options[:creation_t3e].is_a?(TrueClass)
         new_columns = config.new_columns
         mod.define_method(:new) do
-          values = new_columns.index_with { |attr| params[attr] }
+          values = new_columns.map { |attr| [attr, params[attr]] }.to_h
           values.merge!(new_defaults.transform_values { |v| restfully_value(v) })
           record = resource_model.new(values)
           instance_variable_set("@#{record_name}", record)
@@ -218,7 +218,7 @@ module RestfullyManageable
           record = resource_model.new(permitted_params)
           instance_variable_set("@#{record_name}", record)
           url = if params[:create_and_continue]
-                  { action: :new, continue: true }.merge(continue_attributes.index_with { |attr| record.public_send(attr) })
+                  { action: :new, continue: true }.merge(continue_attributes.map { |attr| [attr, record.public_send(attr)] }.to_h)
                 else
                   params[:redirect] || restfully_url(config.after_save_url, record)
                 end

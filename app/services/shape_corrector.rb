@@ -17,16 +17,16 @@ class ShapeCorrector
     @change_threshold = change_threshold
   end
 
-  # @param [Charta::Geometry] shape
+  # @param [Geo::Geometry] shape
   # @param [Hash] opts options
   # @option opts [Symbol] :geometry_type type of expected geometry
-  # @return [Maybe<Charta::Geometry>]
+  # @return [Maybe<Geo::Geometry>]
   def try_fix(shape, geometry_type: nil)
-    try_fix_ewkt(shape.to_ewkt).fmap { |ewkt| Charta.new_geometry(ewkt) }
+    try_fix_ewkt(shape.to_ewkt).fmap { |ewkt| Geo.new_geometry(ewkt) }
   rescue => e
     if geometry_type.present?
       try_complex_fix_ewkt(shape.to_ewkt, geometry_type: geometry_type)
-        .fmap { |ewkt| Charta.new_geometry(ewkt) }
+        .fmap { |ewkt| Geo.new_geometry(ewkt) }
     else
       raise
     end
@@ -58,11 +58,11 @@ class ShapeCorrector
   # @return [Maybe<String>]
   def extract_geometries(ewkt, geometry_type)
     postgis_geometries_extraction(ewkt, geometry_type)
-      .fmap { |ewkt| Charta.new_geometry(ewkt) }
+      .fmap { |ewkt| Geo.new_geometry(ewkt) }
   end
 
   def extract_polygon_and_one_ring(ewkt)
-    postgis_polygon_extraction(ewkt).fmap { |ewkt| Charta.new_geometry(ewkt) }
+    postgis_polygon_extraction(ewkt).fmap { |ewkt| Geo.new_geometry(ewkt) }
   end
 
   private
@@ -186,8 +186,8 @@ class ShapeCorrector
       end
     end
 
-    # @param [Charta::Geometry] original_shape
-    # @param [Charta::Geometry] new_shape
+    # @param [Geo::Geometry] original_shape
+    # @param [Geo::Geometry] new_shape
     # @return [Maybe<Number>]
     def area_ratio(original_shape, new_shape)
       original_area = original_shape.area

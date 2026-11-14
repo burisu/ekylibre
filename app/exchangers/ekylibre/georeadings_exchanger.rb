@@ -42,7 +42,7 @@ module Ekylibre
             georeading = Georeading.create_with(attributes)
                                    .find_or_initialize_by(attributes.slice(:number))
 
-            georeading.content = Charta.new_geometry(record.geometry)
+            georeading.content = Geo.new_geometry(record.geometry)
             georeading.save!
           end
 

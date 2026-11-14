@@ -109,9 +109,9 @@ module Backend
     # Lists contained products of the current product
     list(:contained_products, model: :product_localizations, joins: { product: :variant }, conditions: { product_nature_variants: { active: true }, container_id: -> { params[:id] }, stopped_at: nil }, order: { started_at: :desc }) do |t|
       t.column :product, url: true
-      t.column :variant, label_method: "product.variant.name"
+      t.column :variant, label_method: ->(record) { record.product.variant.name }
       t.column :population, through: :product
-      t.column :unit_name, label_method: "product.conditioning_unit.name"
+      t.column :unit_name, label_method: ->(record) { record.product.conditioning_unit.name }
       t.column :started_at, datatype: :datetime
       t.column :stopped_at, datatype: :datetime
       t.column :nature, hidden: true

@@ -999,7 +999,7 @@ class Product < ApplicationRecord
   end
 
   def initial_shape_area
-    ::Charta.new_geometry(initial_shape).area.in_square_meter
+    ::Geo.new_geometry(initial_shape).area.in_square_meter
   end
 
   def get(indicator, *args)

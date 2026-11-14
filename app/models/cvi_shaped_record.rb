@@ -10,11 +10,11 @@ class CviShapedRecord < ApplicationRecord
   }
 
   def shape
-    Charta.new_geometry(self[:shape])
+    Geo.new_geometry(self[:shape])
   end
 
   def shape_changed?
-    Charta.new_geometry(shape_before_last_save) != shape
+    Geo.new_geometry(shape_before_last_save) != shape
   end
 
   def set_calculated_area

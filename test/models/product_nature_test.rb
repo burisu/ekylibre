@@ -75,7 +75,7 @@ class ProductNatureTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
         begin
           n.abilities_list.check!
         rescue WorkingSet::InvalidExpression => e
-          puts "Invalid abilities list: #{e.message}".red
+          puts "Invalid abilities list: #{e.message}"
           next
         end
         expr << ' and (' + n.abilities_list.map { |a| "can #{a}" }.join(' and ') + ')'

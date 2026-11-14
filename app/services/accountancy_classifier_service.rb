@@ -35,7 +35,7 @@ class AccountancyClassifierService
     activity_list = Activity.all.pluck(:name).to_sentence
     c = Clients::Mistral::Ner.new
     result = c.extract_accountancy_metadata(data, :accountancy_classification, activity_list)
-    puts result.inspect.yellow
+    puts result.inspect
     @log_result[:items_classified] = 0
     if result.is_a?(Hash) && result[:error].present?
       @log_result[:error] = result[:error]
@@ -47,13 +47,13 @@ class AccountancyClassifierService
       matching_item = result.find { |item| item[:id] == entry_item.id.to_s }
       next unless matching_item.present?
 
-      puts entry_item.name.inspect.yellow
-      puts matching_item.inspect.red
+      puts entry_item.name.inspect
+      puts matching_item.inspect
       if matching_item[:classification].present? && matching_item[:classification] != "nil"
         act = Activity.find_by(name: matching_item[:classification])
         next unless act
 
-        puts act.inspect.green
+        puts act.inspect
         # if month before production stopped_on
         # harvest_year = printed_on.year
         if (entry_item.printed_on.month < act.production_stopped_on.month)

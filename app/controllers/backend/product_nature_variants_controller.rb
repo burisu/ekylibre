@@ -429,8 +429,8 @@ module Backend
                            url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: 'id'.c })),
                            notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false),
                            identifier: :name)
-        if params[:create_zero_intial_stock].to_boolean && variant.storable?
-          ::Variants::CreateProductService.call(variant: variant) if params[:create_zero_intial_stock].to_boolean
+        if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock]) && variant.storable?
+          ::Variants::CreateProductService.call(variant: variant) if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock])
         end
         return
       end
@@ -448,7 +448,7 @@ module Backend
                            url: params[:redirect] || { action: :show, id: 'id'.c },
                            notify: (params[:redirect] ? :record_x_updated : false),
                            identifier: :name )
-        if params[:create_zero_intial_stock].to_boolean && @product_nature_variant.storable?
+        if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock]) && @product_nature_variant.storable?
           ::Variants::CreateProductService.call(variant: @product_nature_variant)
         end
         return

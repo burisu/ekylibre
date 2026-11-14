@@ -125,7 +125,7 @@ class ActivityBudget < ApplicationRecord
       ratio = 0.0
       if b.activity.distribution_key == :gross_margin
         ratio = gross_margin_ratio
-        # puts gross_margin_ratio.to_f.inspect.yellow
+        # puts gross_margin_ratio.to_f.inspect
 
       elsif b.activity.distribution_key == :percentage
         # compute ratio with opened activities
@@ -137,7 +137,7 @@ class ActivityBudget < ApplicationRecord
         ratio = 1.0 / main_budgets_count
       end
       h[b] = ratio
-      # puts h.inspect.red
+      # puts h.inspect
     end
   end
 

@@ -292,7 +292,7 @@ class User < ApplicationRecord
     end
     list = Ekylibre::Access.rights_of(key)
     if list.empty?
-      logger.debug "Unable to check access for action: #{key}. #{url.inspect}".yellow
+      logger.debug "Unable to check access for action: #{key}. #{url.inspect}"
       return true
     end
     list &= resource_actions

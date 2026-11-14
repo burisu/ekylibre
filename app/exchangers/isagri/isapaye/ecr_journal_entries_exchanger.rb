@@ -17,18 +17,18 @@ module Isagri
         isapaye = SVF::Isapaye.parse(file)
         isapaye.folder.entries.each do |entry|
           if entry.printed_on.blank?
-            w.error "Errors on printed_on (#{entry.printed_on})".red
+            w.error "Errors on printed_on (#{entry.printed_on})"
             valid = false
           end
 
           fy_start = FinancialYear.at(entry.printed_on)
           unless fy_start
-            w.error "FinancialYear does not exist for #{entry.label}".red
+            w.error "FinancialYear does not exist for #{entry.label}"
             valid = false
           end
           entry.lines.each do |line|
             if line.account.blank? || line.label.blank? || line.debit.blank? || line.credit.blank?
-              w.error "One line on #{entry.label} is invalid".red
+              w.error "One line on #{entry.label} is invalid"
               valid = false
             end
           end
@@ -76,7 +76,7 @@ module Isagri
         # create entry
         entries.values.each do |entry|
           j = JournalEntry.create!(entry)
-          w.info "JE created: #{j.number} | #{j.printed_on}".inspect.yellow
+          w.info "JE created: #{j.number} | #{j.printed_on}".inspect
           w.check_point
         end
         true

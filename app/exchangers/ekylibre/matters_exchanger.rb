@@ -18,7 +18,7 @@ module Ekylibre
       w.count = rows.size
       rows.each_with_index do |row, index|
         line_number = index + 2
-        prompt = "L#{line_number.to_s.yellow}"
+        prompt = "L#{line_number.to_s}"
         next if row[0].blank?
 
         r = {

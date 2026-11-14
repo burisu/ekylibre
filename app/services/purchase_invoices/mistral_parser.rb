@@ -17,7 +17,7 @@ module PurchaseInvoices
     def parse_and_create_invoice
       supplier = find_supplier || create_supplier
       unless supplier
-        puts "No supplier found and error on created".inspect.red
+        puts "No supplier found and error on created".inspect
         return nil
       end
       if @data.invoice[:invoiced_on].present? && @data.invoice[:invoiced_on].size < 10
@@ -29,7 +29,7 @@ module PurchaseInvoices
       end
 
       unless invoiced_at
-        puts "Purchase date not present".inspect.red
+        puts "Purchase date not present".inspect
         return nil
       end
       purchase = PurchaseInvoice.new(
@@ -51,7 +51,7 @@ module PurchaseInvoices
         purchase.attachments.create!(document: @document)
         purchase.id
       else
-        puts purchase.errors.full_messages.inspect.red
+        puts purchase.errors.full_messages.inspect
         nil
       end
     end
@@ -61,7 +61,7 @@ module PurchaseInvoices
       items = []
       if @data.items.any?
         @data.items.each do |line|
-          puts line.inspect.yellow
+          puts line.inspect
           # :name=>nil,
           # :quantity=>nil,
           # :unit_amount=>19.99,
@@ -95,9 +95,9 @@ module PurchaseInvoices
     end
 
     def guess_line_info(product_code: nil, description:, vat_percentage:, supplier:, category:)
-      puts description.inspect.yellow
-      puts supplier.inspect.yellow
-      puts category.inspect.yellow
+      puts description.inspect
+      puts supplier.inspect
+      puts category.inspect
       variant = guess_variant(description, supplier, category)
       if variant.present?
         infos = {

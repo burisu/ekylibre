@@ -81,7 +81,7 @@ class Event < ApplicationRecord
   }
 
   # protect(on: :destroy) do
-  #   puts self.destroyed_by_association.inspect.red
+  #   puts self.destroyed_by_association.inspect
   #   return self.intervention.present? unless self.destroyed_by_association
   #   return false
   # end

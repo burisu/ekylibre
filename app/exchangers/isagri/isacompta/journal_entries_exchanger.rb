@@ -103,7 +103,7 @@ module Isagri
           # get or create asset account
           if r.account_number && r.account_name
             account = Account.find_or_create_by_number(r.account_number, name: r.account_name)
-            w.info "account : #{account.label.inspect.red}"
+            w.info "account : #{account.label.inspect}"
           end
 
           name = r.entry_description
@@ -122,9 +122,9 @@ module Isagri
 
         w.reset!(entries.keys.size)
         entries.values.each do |entry|
-          w.info "JE : #{entry}".inspect.yellow
+          w.info "JE : #{entry}".inspect
           j = JournalEntry.create!(entry)
-          w.info "JE created: #{j.number} | #{j.printed_on}".inspect.yellow
+          w.info "JE created: #{j.number} | #{j.printed_on}".inspect
           w.check_point
         end
       end

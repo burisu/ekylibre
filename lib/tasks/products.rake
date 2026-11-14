@@ -4,7 +4,7 @@ namespace :products do
   desc 'Change product natures with a CSV file. First column: product nature id, second column : variety to replace, third column: derivative of to replace'
   task change_product_natures: :environment do
     if ENV['TENANT'].blank?
-      puts 'You must specify tenant in env variable TENANT'.red
+      puts 'You must specify tenant in env variable TENANT'
       exit 1
     end
     Ekylibre::Tenant.switch! ENV['TENANT']
@@ -18,7 +18,7 @@ namespace :products do
   desc 'Change product natures variants with a CSV file. First column: product nature variant id, second column : variety to replace, third column: derivative of to replace'
   task change_product_natures_variants: :environment do
     if ENV['TENANT'].blank?
-      puts 'You must specify tenant in env variable TENANT'.red
+      puts 'You must specify tenant in env variable TENANT'
       exit 1
     end
     Ekylibre::Tenant.switch! ENV['TENANT']

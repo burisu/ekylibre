@@ -358,7 +358,7 @@ module Ekylibre
             if record.save(attributes)
               @records[records][identifier.to_s] = record
             else
-              w.error "\nError on #{record.inspect.red}: #{record.errors.full_messages.to_sentence}"
+              w.error "\nError on #{record.inspect}: #{record.errors.full_messages.to_sentence}"
               raise ActiveRecord::RecordInvalid.new(record)
             end
           end

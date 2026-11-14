@@ -101,7 +101,7 @@ module Fixturing
                 record[attribute] = convert_value(value, type.to_sym)
               end
             else
-              puts "Cannot find column '#{attribute}' in #{table}. Run `rake clean:schema`.".red
+              puts "Cannot find column '#{attribute}' in #{table}. Run `rake clean:schema`."
             end
           end
           records["#{table}_#{row['id'].rjust(3, '0')}"] = record
@@ -169,7 +169,7 @@ module Fixturing
           if references.is_a?(Symbol)
             # Standard reflection case
             foreign_model = references.to_s.camelcase.constantize
-            puts references.inspect.red unless data[foreign_model.table_name]
+            puts references.inspect unless data[foreign_model.table_name]
             data[table.to_s].each do |record, attributes|
               reflection = column.to_s.gsub(/\_id\z/, '')
               next unless fixture_id = attributes[reflection]
@@ -246,7 +246,7 @@ module Fixturing
           if references.is_a?(Symbol)
             # Standard reflection case
             foreign_model = references.to_s.camelcase.constantize
-            puts references.inspect.red unless data[foreign_model.table_name]
+            puts references.inspect unless data[foreign_model.table_name]
             data[table.to_s].each do |record, attributes|
               next unless fixture_id = attributes[column.to_s]
 
@@ -365,7 +365,7 @@ module Fixturing
               elsif type == :json || type == :jsonb
                 JSON.parse(value)
               else
-                puts "Unknown type to parse in fixtures: #{type.inspect}".red unless %i[text string uuid].include?(type)
+                puts "Unknown type to parse in fixtures: #{type.inspect}" unless %i[text string uuid].include?(type)
                 return value unless value =~ /\A\-\-\-(\s+|\z)/
 
                 YAML.safe_load(

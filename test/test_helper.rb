@@ -221,11 +221,11 @@ module ActionController
 
         code << "def beautify(value, back = true)\n"
         code << "  if value.is_a?(Hash)\n"
-        code << "    (back ? \"\\n\" : '') + value.map{|k,v| \"\#{k.to_s.yellow}: \#{beautify(v)}\"}.join(\"\\n\").dig\n"
+        code << "    (back ? \"\\n\" : '') + value.map{|k,v| \"\#{k.to_s}: \#{beautify(v)}\"}.join(\"\\n\").dig\n"
         code << "  elsif value.is_a?(Array)\n"
         code << "    (back ? \"\\n\" : '') + value.map{|v| \"- \#{beautify(v)}\"}.join(\"\\n\").dig\n"
         code << "  elsif value.is_a?(ActiveRecord::Base)\n"
-        code << "    \"\#{value.class.name} #\#{value.id}\" + (value.errors.any? ? '. Errors: ' + value.errors.full_messages.to_sentence.red : '')"
+        code << "    \"\#{value.class.name} #\#{value.id}\" + (value.errors.any? ? '. Errors: ' + value.errors.full_messages.to_sentence : '')"
         code << "  else\n"
         code << "    value.inspect\n"
         code << "  end\n"
@@ -242,7 +242,7 @@ module ActionController
         infos = []
         infos << '"Response code: " + @response.response_code.to_s'
         infos << '"Locale: " + I18n.locale.to_s'
-        infos << '(flash[:notifications].is_a?(Hash) ? "Notifications are:\n" + flash[:notifications].collect{|k,v| "[#{k.to_s.upcase.yellow}] " + v.to_sentence(locale: :eng)}.join("\n").dig : "No notifications.")'
+        infos << '(flash[:notifications].is_a?(Hash) ? "Notifications are:\n" + flash[:notifications].collect{|k,v| "[#{k.to_s.upcase}] " + v.to_sentence(locale: :eng)}.join("\n").dig : "No notifications.")'
         infos << '(assigns.any? ? "Assigns are:" + beautify(assigns) : "No assigns.")'
 
         code << "def show_context\n"
@@ -467,7 +467,7 @@ module ActionController
           code << "test '#{action} action"
           code << " in #{mode}" if action != mode
           code << "' do\n"
-          # code << "  puts '#{controller_path.to_s.yellow}##{action.to_s.red}'\n"
+          # code << "  puts '#{controller_path.to_s}##{action.to_s}'\n"
           code << test_code.dig
           code << "end\n\n"
         end

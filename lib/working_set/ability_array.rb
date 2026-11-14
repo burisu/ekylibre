@@ -16,14 +16,14 @@ module WorkingSet
             end
           end
         end
-        # puts "#{string.inspect} => #{array.inspect}".blue
+        # puts "#{string.inspect} => #{array.inspect}"
         array
       end
 
       # Convert SymbolArray to DB format (string)
       def dump(array)
         string = [array].flatten.map(&:to_s).sort.join(', ')
-        # puts "#{string.inspect} <= #{array.inspect}".red
+        # puts "#{string.inspect} <= #{array.inspect}"
         string
       end
     end

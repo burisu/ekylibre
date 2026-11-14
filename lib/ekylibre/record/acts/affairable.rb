@@ -257,7 +257,7 @@ module Ekylibre
               end
             RUBY
 
-            # code.split("\n").each_with_index{|x, i| puts((i+1).to_s.rjust(4).white + ": " + x.blue)}
+            # code.split("\n").each_with_index{|x, i| puts((i+1).to_s.rjust(4) + ": " + x)}
 
             class_eval(code)
           end

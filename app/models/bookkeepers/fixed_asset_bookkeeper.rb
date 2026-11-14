@@ -60,7 +60,7 @@ class FixedAssetBookkeeper < Ekylibre::Bookkeeper
     end
 
     def bookkeep_purchase_item_link
-      # puts "with purchase".inspect.red
+      # puts "with purchase".inspect
       journal_entry(journal, printed_on: started_on, if: (in_use? && asset_account)) do |entry|
         amount = []
         purchase_items.each do |p_item|
@@ -82,7 +82,7 @@ class FixedAssetBookkeeper < Ekylibre::Bookkeeper
 
     def bookkeep_in_use
       if FinancialYear.at(started_on)&.opened?
-        # puts "without purchase".inspect.green
+        # puts "without purchase".inspect
         if waiting_journal_entry
           waiting_account_id = waiting_asset_account_id || @generic_waiting_asset_account.id
           journal_entry(journal, printed_on: started_on, if: (in_use? && asset_account)) do |entry|

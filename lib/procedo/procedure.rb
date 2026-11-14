@@ -106,7 +106,7 @@ module Procedo
     # Adds category to procedure
     def add_category(name)
       category = Onoma::ProcedureCategory.find(name)
-      raise "Invalid category: #{name.inspect}".red unless category
+      raise "Invalid category: #{name.inspect}" unless category
 
       @categories << category unless @categories.include?(category)
     end
@@ -124,7 +124,7 @@ module Procedo
     # Adds action to procedure
     def add_action(name, optional = false)
       action = Onoma::ProcedureAction.find(name)
-      raise "Invalid action: #{name.inspect}".red unless action
+      raise "Invalid action: #{name.inspect}" unless action
 
       actions = optional ? @optional_actions : @mandatory_actions
       actions << action unless actions.include?(action)
@@ -185,7 +185,7 @@ module Procedo
     # Adds variety scope of procedure
     def add_variety(name)
       variety = Onoma::Variety.find(name)
-      raise "Invalid variety: #{name.inspect}".red unless variety
+      raise "Invalid variety: #{name.inspect}" unless variety
 
       @varieties << variety unless @varieties.include?(variety)
     end

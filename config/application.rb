@@ -6,6 +6,9 @@ require 'rails/all'
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+require_relative '../lib/possibly'
+require_relative '../lib/ekylibre/middleware/maintenance'
+
 module Ekylibre
   class Application < Rails::Application
     # @return [Array<Ekylibre::Plugin::Base>]
@@ -69,6 +72,8 @@ module Ekylibre
 
     # APM
     # config.elastic_apm.service_name = ENV.fetch('APM_SERVICE_NAME', 'Ekylibre')
+
+    config.middleware.insert_before 0, Ekylibre::Middleware::Maintenance
 
     config.middleware.use Rack::Cors do
       allow do

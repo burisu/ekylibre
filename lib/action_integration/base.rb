@@ -56,7 +56,7 @@ module ActionIntegration
             to_execute = block || send(method_name).method(:execute)
             to_execute.call
           rescue ServiceNotIntegrated
-            Rails.logger.info "Integration not present on tenant #{Ekylibre::Tenant.current}".yellow
+            Rails.logger.info "Integration not present on tenant #{Ekylibre::Tenant.current}"
           end
         end
         Ekylibre::Hook.subscribe("every_#{every}", proc)

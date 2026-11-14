@@ -7,7 +7,7 @@ module ActiveSensor
     class << self
       # Register an equipment in global base
       def register(vendor, model, options = {})
-        # puts "Register #{vendor.to_s.yellow} #{model.to_s.green}"
+        # puts "Register #{vendor.to_s} #{model.to_s}"
         if ActiveSensor::Equipment.find(vendor, model)
           Rails.logger.warn "Equipment #{vendor}:#{model} already exists. Will be overriden"
           erase(vendor, model)

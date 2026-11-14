@@ -30,7 +30,7 @@ module Procedo
       end
 
       details = invalids.map do |invalid|
-        "#{invalid[:expression].inspect.yellow}: #{invalid[:exception].message}"
+        "#{invalid[:expression].inspect}: #{invalid[:exception].message}"
       end.join("\n")
 
       assert invalids.empty?, "#{invalids.count} formulas have invalid syntax:\n" + details.dig
@@ -52,7 +52,7 @@ module Procedo
       end
 
       details = invalids.map do |invalid|
-        "#{invalid[:expression].inspect.yellow}: #{invalid[:exception].message}"
+        "#{invalid[:expression].inspect}: #{invalid[:exception].message}"
       end.join("\n")
 
       assert invalids.empty?, "#{invalids.count} formulas have invalid syntax:\n" + details.dig

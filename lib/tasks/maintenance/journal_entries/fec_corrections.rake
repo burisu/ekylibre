@@ -8,12 +8,12 @@ namespace :maintenance do
 
       if tenant
         Ekylibre::Tenant.switch(tenant) do
-          puts "Switching to tenant #{tenant}".blue
+          puts "Switching to tenant #{tenant}"
           fix_datas(started_on, stopped_on)
         end
       else
         Ekylibre::Tenant.switch_each do |tenant|
-          puts "Switching to tenant #{tenant}".blue
+          puts "Switching to tenant #{tenant}"
           fix_datas(started_on, stopped_on)
         end
       end
@@ -32,7 +32,7 @@ namespace :maintenance do
           end
         end
 
-        puts "There are #{entries.count} to process".red
+        puts "There are #{entries.count} to process"
 
         # Problem on entry name where there are unwanted special caracters
         # Entry name depends on it's items name so first, we update the items name then we save the entry which will have a new name
@@ -73,13 +73,13 @@ namespace :maintenance do
 
         # Log
         if replace_by
-          puts "Processing change of '#{unwanted_caracter}' in items name by a '#{replace_by}'".inspect.green
+          puts "Processing change of '#{unwanted_caracter}' in items name by a '#{replace_by}'".inspect
         else
-          puts "Processing removal of '#{unwanted_caracter}' in items name".inspect.green
+          puts "Processing removal of '#{unwanted_caracter}' in items name".inspect
         end
 
         items_with_error = items.where("name ~* ?", unwanted_caracter)
-        puts "#{items_with_error.count} items have a '#{unwanted_caracter}' in their name".inspect.blue
+        puts "#{items_with_error.count} items have a '#{unwanted_caracter}' in their name".inspect
         return if items_with_error.empty?
 
         # Update all invalid items name

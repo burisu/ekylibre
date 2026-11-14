@@ -13,17 +13,17 @@ namespace :journal_entry_error do
     find_invalid_journal_entries
     @invalids.each do |invalid|
       result = invalid.update(number: invalid.journal.next_number)
-      puts "Update JournalEntry : #{invalid.id}".green if result
-      puts "Error when update JournalEntry : #{invalid.id}, number: #{invalid.number}, message: #{invalid.errors.full_messages}".red unless result
+      puts "Update JournalEntry : #{invalid.id}" if result
+      puts "Error when update JournalEntry : #{invalid.id}, number: #{invalid.number}, message: #{invalid.errors.full_messages}" unless result
     end
   end
 
   private
 
     def set_journal_parmeters
-      puts 'Enter tenant name :'.blue
+      puts 'Enter tenant name :'
       @tenant = STDIN.gets.chomp
-      puts Ekylibre::Tenant.switch!(@tenant).to_s.yellow
+      puts Ekylibre::Tenant.switch!(@tenant).to_s
     end
 
     def find_invalid_journal_entries

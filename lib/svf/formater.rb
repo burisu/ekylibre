@@ -31,7 +31,7 @@ module SVF
       code << "    end\n"
       code << "    def self.parse_line(line, _number)\n"
       code << "      return nil if line.nil?\n"
-      # code << "      puts line.gsub(/\\r\\n$/, '').yellow + '$'.green\n"
+      # code << "      puts line.gsub(/\\r\\n$/, '') + '$'\n"
       code << '      '
       @lines.values.each do |line|
         code << "if line =~ /^#{line.key.gsub(' ', '\\ ')}/\n"
@@ -42,9 +42,9 @@ module SVF
             "  #{c.parse_value}"
           end.join(",\n") + "\n)\n"
           line_code << "rescue Exception => e\n"
-          line_code << "  puts \"[Line #\#{_number + 1}][\#{e.inspect}] Cannot parse #{line.name}: \" + line.inspect.cyan\n"
+          line_code << "  puts \"[Line #\#{_number + 1}][\#{e.inspect}] Cannot parse #{line.name}: \" + line.inspect\n"
           line.cells.each do |c|
-            line_code << "  puts '#{c.start.to_s.rjust(3)}:#{c.stop.to_s.rjust(3)}:#{c.name.to_s.rjust(20)}: ' + line[#{c.start}..#{c.stop}].to_s.inspect.cyan\n"
+            line_code << "  puts '#{c.start.to_s.rjust(3)}:#{c.stop.to_s.rjust(3)}:#{c.name.to_s.rjust(20)}: ' + line[#{c.start}..#{c.stop}].to_s.inspect\n"
           end
           line_code << "  raise SVF::InvalidSyntax, e.message\n"
           line_code << "end\n"
@@ -83,7 +83,7 @@ module SVF
       code << "  end\n\n"
 
       code << "end\n"
-      # list = code.split("\n"); list.each_index { |x| puts((x + 1).to_s.rjust(4).yellow + ': ' + list[x].blue) }
+      # list = code.split("\n"); list.each_index { |x| puts((x + 1).to_s.rjust(4) + ': ' + list[x]) }
       code.gsub(/\ +\n/, "\n")
     end
 

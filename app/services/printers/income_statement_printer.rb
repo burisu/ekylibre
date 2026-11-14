@@ -25,7 +25,7 @@ module Printers
         current_value = current_compute.sum_entry_items_by_line(document_scope, item)
         previous_value = previous_compute.sum_entry_items_by_line(document_scope, item) if @financial_year.previous
         g1[:items] << { name: item.to_s.tl, current_value: current_value, previous_value: previous_value }.with_indifferent_access
-        # puts g1.inspect.yellow
+        # puts g1.inspect
       end
       g1[:sum_name] = "Total I"
       g1[:current_sum] = current_compute.sum_entry_items_by_line(document_scope, :products_subtotal)
@@ -68,7 +68,7 @@ module Printers
         current_value = current_compute.sum_entry_items_by_line(document_scope, item)
         previous_value = previous_compute.sum_entry_items_by_line(document_scope, item) if @financial_year.previous
         g3[:items] << { name: item.to_s.tl, current_value: current_value, previous_value: previous_value }.with_indifferent_access
-        # puts g3.inspect.yellow
+        # puts g3.inspect
       end
       g3[:sum_name] = "Total III"
       g3[:current_sum] = current_compute.sum_entry_items_by_line(document_scope, :financial_products_subtotal)
@@ -85,7 +85,7 @@ module Printers
         current_value = current_compute.sum_entry_items_by_line(document_scope, item)
         previous_value = previous_compute.sum_entry_items_by_line(document_scope, item) if @financial_year.previous
         g4[:items] << { name: item.to_s.tl, current_value: current_value, previous_value: previous_value }.with_indifferent_access
-        # puts g4.inspect.yellow
+        # puts g4.inspect
       end
       g4[:sum_name] = "Total IV"
       g4[:current_sum] = current_compute.sum_entry_items_by_line(document_scope, :financial_expenses_subtotal)
@@ -113,7 +113,7 @@ module Printers
         current_value = current_compute.sum_entry_items_by_line(document_scope, item)
         previous_value = previous_compute.sum_entry_items_by_line(document_scope, item) if @financial_year.previous
         g6[:items] << { name: item.to_s.tl, current_value: current_value, previous_value: previous_value }.with_indifferent_access
-        # puts g6.inspect.yellow
+        # puts g6.inspect
       end
       g6[:sum_name] = "Total V"
       g6[:current_sum] = current_compute.sum_entry_items_by_line(document_scope, :exceptional_products_subtotal)
@@ -130,7 +130,7 @@ module Printers
         current_value = current_compute.sum_entry_items_by_line(document_scope, item)
         previous_value = previous_compute.sum_entry_items_by_line(document_scope, item) if @financial_year.previous
         g7[:items] << { name: item.to_s.tl, current_value: current_value, previous_value: previous_value }.with_indifferent_access
-        # puts g7.inspect.yellow
+        # puts g7.inspect
       end
       g7[:sum_name] = "Total VI"
       g7[:current_sum] = current_compute.sum_entry_items_by_line(document_scope, :exceptional_expenses_subtotal)
@@ -150,7 +150,7 @@ module Printers
         current_value = current_compute.sum_entry_items_by_line(document_scope, item)
         previous_value = previous_compute.sum_entry_items_by_line(document_scope, item) if @financial_year.previous
         g8[:items] << { name: item.to_s.tl, current_value: current_value, previous_value: previous_value }.with_indifferent_access
-        # puts g8.inspect.yellow
+        # puts g8.inspect
       end
       g8[:sum_name] = ""
       g8[:current_sum] = ""

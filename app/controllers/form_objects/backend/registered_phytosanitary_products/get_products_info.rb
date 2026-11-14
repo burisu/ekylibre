@@ -52,7 +52,7 @@ module FormObjects
         end
 
         def live_data?
-          products_data.any? { |pu| pu[:live_data].to_boolean }
+          products_data.any? { |pu| ActiveModel::Type::Boolean.new.cast(pu[:live_data]) }
         end
 
         def modified?

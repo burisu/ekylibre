@@ -153,7 +153,7 @@ module Ekylibre
       def load_imports
         @imports.each do |name, import|
           import[:nature] ||= name
-          puts "Import #{import[:nature].to_s.yellow} from #{import[:file].to_s.blue}"
+          puts "Import #{import[:nature].to_s} from #{import[:file].to_s}"
           Import.launch!(import[:nature], path.join('imports', import[:file]))
           @progress.increment!
         end

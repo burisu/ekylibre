@@ -53,7 +53,7 @@ module BordeauxSciencesAgro
             valid = false
           end
 
-          w.info "#{line_number} - #{valid}".green
+          w.info "#{line_number} - #{valid}"
         end
         valid
       end
@@ -101,7 +101,7 @@ module BordeauxSciencesAgro
             if r.account_number.start_with?(client_account_radix, supplier_account_radix)
               find_or_create_entity(r.printed_on, account, r.entry_name)
             end
-            w.info "account : #{account.label.inspect.red}"
+            w.info "account : #{account.label.inspect}"
           end
 
           id = (entries[number][:items_attributes].keys.max || 0) + 1
@@ -117,9 +117,9 @@ module BordeauxSciencesAgro
 
         w.reset!(entries.keys.size)
         entries.values.each do |entry|
-          w.info "JE : #{entry}".inspect.yellow
+          w.info "JE : #{entry}".inspect
           j = JournalEntry.create!(entry)
-          w.info "JE created: #{j.number} | #{j.printed_on}".inspect.yellow
+          w.info "JE created: #{j.number} | #{j.printed_on}".inspect
           w.check_point
         end
       end

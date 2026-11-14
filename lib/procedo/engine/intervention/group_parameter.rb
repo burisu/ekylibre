@@ -23,7 +23,7 @@ module Procedo
             next unless params[param_name]
 
             params[param_name].each do |id, attributes|
-              # puts "Add #{param_name}: #{id} (#{attributes.inspect})".magenta
+              # puts "Add #{param_name}: #{id} (#{attributes.inspect})"
               add(param_name, id, attributes)
             end
           end

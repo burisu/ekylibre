@@ -86,31 +86,31 @@ module Ekylibre
         # check cash presence
         cash = Cash.where("name ILIKE ?", row.cash_name + '%')
         unless cash.any?
-          w.error "No cash are present in DB : #{row.cash_name} in line : #{line_number}.You must create it before importing loans".red
+          w.error "No cash are present in DB : #{row.cash_name} in line : #{line_number}.You must create it before importing loans"
           valid = false
         end
 
         # check correct insurance_repayment_method
         if row.insurance_repayment_method.present? && !row.insurance_repayment_method.in?(Loan.insurance_repayment_method.values)
-          w.error "Errors on insurance_repayment_method : #{row.insurance_repayment_method} in line : #{line_number}. Values msut be one of #{Loan.insurance_repayment_method.values}".red
+          w.error "Errors on insurance_repayment_method : #{row.insurance_repayment_method} in line : #{line_number}. Values msut be one of #{Loan.insurance_repayment_method.values}"
           valid = false
         end
 
         # check correct repayment_method
         if row.repayment_method.present? && !row.repayment_method.in?(Loan.repayment_method.values)
-          w.error "Errors on insurance_repayment_method : #{row.repayment_method} in line : #{line_number}. Values msut be one of #{Loan.repayment_method.values}".red
+          w.error "Errors on insurance_repayment_method : #{row.repayment_method} in line : #{line_number}. Values msut be one of #{Loan.repayment_method.values}"
           valid = false
         end
 
         # check correct shift_method
         if row.shift_method.present? && !row.shift_method.in?(Loan.shift_method.values)
-          w.error "Errors on shift_method : #{row.shift_method} in line : #{line_number}. Values msut be one of #{Loan.shift_method.values}".red
+          w.error "Errors on shift_method : #{row.shift_method} in line : #{line_number}. Values msut be one of #{Loan.shift_method.values}"
           valid = false
         end
 
         # check correct repayment_period
         if row.repayment_period.present? && !row.repayment_period.in?(Loan.repayment_period.values)
-          w.error "Errors on shift_method : #{row.repayment_period} in line : #{line_number}. Values msut be one of #{Loan.repayment_period.values}".red
+          w.error "Errors on shift_method : #{row.repayment_period} in line : #{line_number}. Values msut be one of #{Loan.repayment_period.values}"
           valid = false
         end
 
@@ -134,10 +134,10 @@ module Ekylibre
           end
         end
 
-        w.info "#{line_number} - #{valid}".green
+        w.info "#{line_number} - #{valid}"
         w.check_point
       end
-      w.info "End validation : #{valid}".yellow
+      w.info "End validation : #{valid}"
       valid
     end
 
@@ -147,7 +147,7 @@ module Ekylibre
 
       rows.each_with_index do |row, index|
         line_number = index + 2
-        w.info "Loan started : #{row.number} | #{row.name.inspect.yellow}"
+        w.info "Loan started : #{row.number} | #{row.name.inspect}"
 
         # computed state link to started on and Financial year
         # ongoing if started_on before a financial year opened
@@ -212,12 +212,12 @@ module Ekylibre
         # Update, Nothing or Create asset
         if loan && loan.updateable?
           loan.update!(loan_attributes)
-          w.info "Loan updated : #{loan.name.inspect.yellow}"
+          w.info "Loan updated : #{loan.name.inspect}"
         elsif loan && !loan.updateable?
-          w.info "Loan are not updateable : #{loan.name.inspect.red}"
+          w.info "Loan are not updateable : #{loan.name.inspect}"
         else
           loan = Loan.create!(loan_attributes)
-          w.info "Loan created : #{loan.name.inspect.green}"
+          w.info "Loan created : #{loan.name.inspect}"
         end
 
         w.check_point

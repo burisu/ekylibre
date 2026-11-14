@@ -722,9 +722,9 @@ class ActivityProduction < ApplicationRecord
     end
 
     total_weighted_average_harvest_yield = global_coef_harvest_yield.compact.sum / coef_area.compact.sum if coef_area.compact.sum.to_d != 0.0
-    # puts "total_weighted_average_harvest_yield : #{total_weighted_average_harvest_yield}".inspect.red
+    # puts "total_weighted_average_harvest_yield : #{total_weighted_average_harvest_yield}".inspect
     m = Measure.new(total_weighted_average_harvest_yield.to_f, harvest_yield_unit_name)
-    # puts "m : #{m}".inspect.red
+    # puts "m : #{m}".inspect
     m.round(2)
   end
 
@@ -856,6 +856,9 @@ class ActivityProduction < ApplicationRecord
   private def stopped_on_after_last_intervention
     return if interventions.none?
 
-    validates_date :stopped_on, after: ->{ interventions.order(:stopped_at).pluck(:stopped_at).last.to_date }
+    last_stopped_on = interventions.maximum(:stopped_at)&.to_date
+    return if stopped_on.nil? || last_stopped_on.nil? || stopped_on > last_stopped_on
+
+    errors.add(:stopped_on, :after, restriction: I18n.localize(last_stopped_on))
   end
 end

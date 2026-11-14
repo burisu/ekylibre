@@ -163,7 +163,7 @@ module RestfullyManageable
 
       if actions.include?(:create)
         code << "def create\n"
-        # code << "  raise params.inspect.red\n"
+        # code << "  raise params.inspect\n"
         code << "  @#{record_name} = resource_model.new(permitted_params)\n"
         continue_url_options = { action: :new, continue: true }
         if options[:continue].is_a?(Array)

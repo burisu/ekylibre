@@ -4,13 +4,13 @@ namespace :accountancy do
   desc 'Change journal entry items account number by another'
   task merge_accounts: :environment do
     if ENV['TENANT'].blank?
-      puts 'You must specify tenant in env variable TENANT'.red
+      puts 'You must specify tenant in env variable TENANT'
       exit 1
     end
     Ekylibre::Tenant.switch! ENV['TENANT']
 
     if ENV['TARGET_NUMBER'].blank?
-      puts 'You must specify target account number in env variable TARGET_NUMBER'.red
+      puts 'You must specify target account number in env variable TARGET_NUMBER'
       exit 3
     end
     target_account = Account.find_by(number: ENV['TARGET_NUMBER'])
@@ -28,20 +28,20 @@ namespace :accountancy do
       account
     end
     if doubles.empty?
-      puts 'You must specify account numbers to replace in env variable ACCOUNT_NUMBER'.red
+      puts 'You must specify account numbers to replace in env variable ACCOUNT_NUMBER'
       exit 2
     end
 
     doubles.each do |account|
       target_account.merge_with(account)
     end
-    puts 'All accounts have been merged.'.green
+    puts 'All accounts have been merged.'
   end
 
   desc 'Similar to merge_accounts task but with a CSV file. First column: account number to replace, second column: targetted account'
   task merge_accounts_with_file: :environment do
     if ENV['TENANT'].blank?
-      puts 'You must specify tenant in env variable TENANT'.red
+      puts 'You must specify tenant in env variable TENANT'
       exit 1
     end
     Ekylibre::Tenant.switch! ENV['TENANT']

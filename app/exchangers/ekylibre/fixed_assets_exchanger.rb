@@ -109,43 +109,43 @@ module Ekylibre
 
         # check correct states method
         if row.state.present? && STATES[row.state].nil?
-          w.error "Errors on state : #{row.state} in line : #{line_number} - #{valid}".red
+          w.error "Errors on state : #{row.state} in line : #{line_number} - #{valid}"
           valid = false
         end
 
         # check correct depreciation method
         if row.depreciation_method.present? && DEPRECIATION_METHODS[row.depreciation_method].nil?
-          w.error "Errors on depreciation_method : #{row.depreciation_method} in line : #{line_number} - #{valid}".red
+          w.error "Errors on depreciation_method : #{row.depreciation_method} in line : #{line_number} - #{valid}"
           valid = false
         end
 
         # check correct depreciation period
         if row.depreciation_period.present? && DEPRECIATION_PERIODS[row.depreciation_period].nil?
-          w.error "Errors on depreciation_period : #{row.depreciation_period} in line : #{line_number} - #{valid}".red
+          w.error "Errors on depreciation_period : #{row.depreciation_period} in line : #{line_number} - #{valid}"
           valid = false
         end
 
         # check depreciation_period present if row.depreciation_method != none
         if row.depreciation_method.present? && DEPRECIATION_METHODS[row.depreciation_method] != :none && !row.depreciation_period.present?
-          w.error "Missing depreciation_period in line : #{line_number} - #{valid}".red
+          w.error "Missing depreciation_period in line : #{line_number} - #{valid}"
           valid = false
         end
 
         # check depreciation_percentage present if row.depreciation_method != none
         if row.depreciation_method.present? && DEPRECIATION_METHODS[row.depreciation_method] != :none && row.depreciation_percentage == 0.0
-          w.error "Missing depreciation_percentage in line : #{line_number} - #{valid}".red
+          w.error "Missing depreciation_percentage in line : #{line_number} - #{valid}"
           valid = false
         end
 
         # check accounts present if row.depreciation_method != none
         if row.depreciation_method.present? && DEPRECIATION_METHODS[row.depreciation_method] != :none && (!row.allocation_account_number.present? || !row.expenses_account_number.present?)
-          w.error "Missing expenses or allocation accounts number in line : #{line_number} - #{valid}".red
+          w.error "Missing expenses or allocation accounts number in line : #{line_number} - #{valid}"
           valid = false
         end
 
         # check depreciation_fiscal_coefficient present if row.depreciation_method == regressive
         if row.depreciation_method.present? && DEPRECIATION_METHODS[row.depreciation_method] == :regressive && !row.depreciation_fiscal_coefficient.present?
-          w.error "Missing depreciation_fiscal_coefficient in line : #{line_number} - #{valid}".red
+          w.error "Missing depreciation_fiscal_coefficient in line : #{line_number} - #{valid}"
           valid = false
         end
 
@@ -169,9 +169,9 @@ module Ekylibre
           end
         end
 
-        w.info "#{line_number} - #{valid}".green
+        w.info "#{line_number} - #{valid}"
       end
-      w.info "End validation : #{valid}".yellow
+      w.info "End validation : #{valid}"
       valid
     end
 
@@ -186,7 +186,7 @@ module Ekylibre
 
       rows.each_with_index do |row, index|
         line_number = index + 2
-        w.info "Fixed asset started : #{row.number} | #{row.name.inspect.yellow}"
+        w.info "Fixed asset started : #{row.number} | #{row.name.inspect}"
         journal = find_or_create_journal(row.journal_code, row.journal_name, 'fixed_assets')
 
         # add general asset attributes
@@ -236,12 +236,12 @@ module Ekylibre
         # Update, Nothing or Create asset
         if asset && asset.updateable?
           asset.update!(asset_attributes)
-          w.info "Fixed asset updated : #{asset.name.inspect.yellow}"
+          w.info "Fixed asset updated : #{asset.name.inspect}"
         elsif asset && !asset.updateable?
-          w.info "Fixed asset are not updateable : #{asset.name.inspect.red}"
+          w.info "Fixed asset are not updateable : #{asset.name.inspect}"
         else
           asset = FixedAsset.create!(asset_attributes)
-          w.info "Fixed asset created : #{asset.name.inspect.green}"
+          w.info "Fixed asset created : #{asset.name.inspect}"
         end
       end
     end

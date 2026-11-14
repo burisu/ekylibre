@@ -41,17 +41,17 @@ class FinancialYearClose
 
   def say(message)
     now = Time.now
-    moment = '[' + sprintf('%.1f', now - @start).rjust(6).red + ' '
-    # puts @counts.stringify_keys.to_yaml.cyan if @counts
+    moment = '[' + sprintf('%.1f', now - @start).rjust(6) + ' '
+    # puts @counts.stringify_keys.to_yaml if @counts
 
     if @previous_now
-      moment << sprintf('%.2f', now - @previous_now).rjust(6).green
+      moment << sprintf('%.2f', now - @previous_now).rjust(6)
     else
       moment << '—' * 6
     end
     moment << '] '
 
-    t = moment + message.yellow
+    t = moment + message
     # puts t
     Rails.logger.info(t)
     now
@@ -69,13 +69,13 @@ class FinancialYearClose
 
   def benchmark(message)
     start = Time.now
-    moment = '[' + format('%.1f', start - @start).rjust(6).red + '] '
-    Rails.logger.info(moment + message.yellow + '...')
-    # puts moment + message.yellow + '...'
+    moment = '[' + format('%.1f', start - @start).rjust(6) + '] '
+    Rails.logger.info(moment + message + '...')
+    # puts moment + message + '...'
     yield
     stop = Time.now
-    # puts moment + message.yellow + " (done in #{sprintf('%.2f', stop - start).green}s)"
-    Rails.logger.info(moment + message.yellow + " (done in #{format('%.2f', stop - start).green}s)")
+    # puts moment + message + " (done in #{sprintf('%.2f', stop - start)}s)"
+    Rails.logger.info(moment + message + " (done in #{format('%.2f', stop - start)}s)")
   end
 
   def execute

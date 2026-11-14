@@ -61,7 +61,7 @@ module PurchaseInvoices
                 begin
                   attach_pdf = CombinePDF.load(pdf_attachment_path, allow_optional_content: true)
                 rescue
-                  puts "Error on merging PDF".inspect.yellow
+                  puts "Error on merging PDF".inspect
                 end
                 pdf << attach_pdf
               end

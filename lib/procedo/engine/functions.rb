@@ -81,12 +81,12 @@ module Procedo
         # procedure = vine_complanting
         def computed_complanted_plant_by_target(set, parameter, inputs)
           # get sum of all working zone
-          puts "set [siblings(SELF, plant)] : #{set}".inspect.red
-          puts "parameter [SELF] : #{parameter}".inspect.yellow
+          puts "set [siblings(SELF, plant)] : #{set}".inspect
+          puts "parameter [SELF] : #{parameter}".inspect
           working_zones_area = sum_working_zone_areas(set)
-          puts "working_zones_area : #{working_zones_area}".inspect.green
+          puts "working_zones_area : #{working_zones_area}".inspect
           working_zone_area = parameter.working_zone.area
-          puts "working_zone_area : #{working_zone_area}".inspect.red
+          puts "working_zone_area : #{working_zone_area}".inspect
           # sum of population of inputs
           list = set.map do |input_parameter|
             unless input_parameter.is_a?(Procedo::Engine::Intervention::ProductParameter)

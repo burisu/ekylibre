@@ -19,7 +19,7 @@ module Ekylibre
 
       rows.each_with_index do |row, index|
         line_number = index + 2
-        prompt = "L#{line_number.to_s.yellow}"
+        prompt = "L#{line_number.to_s}"
         r = {
           invoiced_at:        (row[0].blank? ? nil : Date.parse(row[0].to_s)),
           payee_full_name:    (row[1].blank? ? nil : row[1].to_s.strip),
@@ -48,7 +48,7 @@ module Ekylibre
         # Check outgoing payment mode
         payment_mode = OutgoingPaymentMode.find_or_create_by(name: r.outgoing_payment_mode_name)
         unless payment_mode
-          w.error "Cannot find outgoing payment mode #{r.outgoing_payment_mode_name} at line #{line_number.to_s.yellow}"
+          w.error "Cannot find outgoing payment mode #{r.outgoing_payment_mode_name} at line #{line_number.to_s}"
           valid = false
         end
 

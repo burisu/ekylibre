@@ -53,7 +53,7 @@ module Ekylibre
         sentence << (options[:hard] ? ' without global transaction' : ' inside global transaction')
         sentence << '.'
         Rails.logger.info sentence
-        puts sentence.yellow if options[:verbose]
+        puts sentence if options[:verbose]
         secure_tenant(name) do
           if manifest['version'] == 2
             Folder.new(path, options).run

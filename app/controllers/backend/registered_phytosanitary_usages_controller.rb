@@ -35,7 +35,7 @@ module Backend
       inspector = ::Interventions::Phytosanitary::ParametersInspector.new
 
       modified = inspector.relevant_parameters_modified?(
-        live_data: params[:live_data].to_boolean,
+        live_data: ActiveModel::Type::Boolean.new.cast(params[:live_data]),
         intervention: intervention,
         targets_ids: targets_data.map { |v| v[:id].to_i },
         inputs_data: [{ input: input, product_id: params[:product_id].to_i, usage_id: params[:id] }]
@@ -71,7 +71,7 @@ module Backend
       inspector = ::Interventions::Phytosanitary::ParametersInspector.new
 
       modified = inspector.relevant_parameters_modified?(
-        live_data: params[:live_data].to_boolean,
+        live_data: ActiveModel::Type::Boolean.new.cast(params[:live_data]),
         intervention: intervention,
         targets_ids: targets_data.to_unsafe_h.map { |_k, v| v[:id].to_i },
         inputs_data: [{ input: input, product_id: params[:product_id].to_i, usage_id: params[:id] }]

@@ -15,7 +15,7 @@ module Ekylibre
       w.count = rows.size
       rows.each_with_index do |row, index|
         line_number = index + 2
-        prompt = "L#{line_number.to_s.yellow}"
+        prompt = "L#{line_number.to_s}"
         r = parse_row(row)
         if row[0].blank?
           w.info "#{prompt} Skipped"
@@ -153,7 +153,7 @@ module Ekylibre
         line_number = _index + 2
         r = parse_row(row)
 
-        puts r.intervention_number.inspect.yellow
+        puts r.intervention_number.inspect
 
         # Check duration
         if r.intervention_duration_in_hour.hours
@@ -174,7 +174,7 @@ module Ekylibre
           p_ids = []
           ap = ActivityProduction.of_campaign(r.campaign).at(r.intervention_started_at)
           r.supports.each do |support|
-            puts support.inspect.green
+            puts support.inspect
             # case A1 : CZ
             if support.is_a?(CultivableZone)
               # find by variety, campaign and cultivable zone id
@@ -197,21 +197,21 @@ module Ekylibre
                   aps = ap.support_shape_intersecting(support.shape)
                 end
               end
-              puts aps.inspect.red
+              puts aps.inspect
               if aps.any?
                 ps = aps.map(&:support)
               else
                 ps = []
               end
-              w.info "case A1 : CZ #{ps}".inspect.blue
+              w.info "case A1 : CZ #{ps}".inspect
             # case A2 : Product
             elsif support.is_a?(Product) || support.is_a?(LandParcel)
               ps = [support]
-              w.info "case A2 : Product #{ps}".inspect.blue
+              w.info "case A2 : Product #{ps}".inspect
             end
             p_ids += ps.map(&:id) if ps.any?
           end
-          w.debug "Intervention #{r.intervention_number}".inspect.blue
+          w.debug "Intervention #{r.intervention_number}".inspect
           supports = Product.find(p_ids)
         # r.production_supports = ActivityProduction.of_campaign(r.campaign).find(ps_ids)
         # Case B
@@ -224,27 +224,27 @@ module Ekylibre
           production = ActivityProduction.where(activity: activity, campaign: r.campaign).first if activity && r.campaign
         end
 
-        w.debug supports.inspect.yellow
+        w.debug supports.inspect
 
         raise "stop #{r.intervention_number}" unless supports.any?
 
         # case 1 supports exists
         if supports.any?
           # w.info r.to_h.to_yaml
-          w.info "----------- L#{line_number.to_s.yellow} : #{r.intervention_number} / #{supports.map(&:name).to_sentence} -----------".blue
-          w.info ' procedure : ' + r.procedure_name.inspect.green
-          w.info ' started_at : ' + r.intervention_started_at.inspect.yellow if r.intervention_started_at
-          w.info ' first product : ' + r.first.product.name.inspect.red if r.first.product
-          w.info ' first product quantity : ' + r.first.product.input_population.to_s + ' ' + r.first.product.input_unit_name.to_s.inspect.red if r.first.product_input_population
-          w.info ' second product : ' + r.second.product.name.inspect.red if r.second.product
-          w.info ' third product : ' + r.third.product.name.inspect.red if r.third.product
-          w.info ' target variety : ' + r.target_variety.inspect.yellow if r.target_variety
-          w.info ' supports : ' + supports.map(&:name).to_sentence.inspect.yellow if supports
-          w.info ' workers_name : ' + r.workers.map(&:name).inspect.yellow if r.workers
-          w.info ' equipments_name : ' + r.equipments.map(&:name).inspect.yellow if r.equipments
+          w.info "----------- L#{line_number.to_s} : #{r.intervention_number} / #{supports.map(&:name).to_sentence} -----------"
+          w.info ' procedure : ' + r.procedure_name.inspect
+          w.info ' started_at : ' + r.intervention_started_at.inspect if r.intervention_started_at
+          w.info ' first product : ' + r.first.product.name.inspect if r.first.product
+          w.info ' first product quantity : ' + r.first.product.input_population.to_s + ' ' + r.first.product.input_unit_name.to_s.inspect if r.first.product_input_population
+          w.info ' second product : ' + r.second.product.name.inspect if r.second.product
+          w.info ' third product : ' + r.third.product.name.inspect if r.third.product
+          w.info ' target variety : ' + r.target_variety.inspect if r.target_variety
+          w.info ' supports : ' + supports.map(&:name).to_sentence.inspect if supports
+          w.info ' workers_name : ' + r.workers.map(&:name).inspect if r.workers
+          w.info ' equipments_name : ' + r.equipments.map(&:name).inspect if r.equipments
 
           # plants = find_plants(support: support, variety: r.target_variety, at: r.intervention_started_at)
-          # w.info ' #{plants.count} plants : ' + plants.map(&:name).inspect.yellow if plants
+          # w.info ' #{plants.count} plants : ' + plants.map(&:name).inspect if plants
           targets = supports
 
           intervention = qualify_intervention(r, targets, procedures_transcode)
@@ -258,9 +258,9 @@ module Ekylibre
           intervention.description ||= ''
           intervention.description += ' - ' + information_import_context + ' - N° : ' + r.intervention_number.to_s
           intervention.save!
-          w.info "Intervention n°#{intervention.id} - #{intervention.name} has been created".green
+          w.info "Intervention n°#{intervention.id} - #{intervention.name} has been created"
         else
-          w.warn 'Intervention is in a black hole'.red
+          w.warn 'Intervention is in a black hole'
         end
 
         w.check_point
@@ -275,7 +275,7 @@ module Ekylibre
       # convert measure to variant unit and divide by variant_indicator
       def measure_conversion(_product, population, unit, unit_target_dose)
         value = population
-        w.debug value.inspect.yellow
+        w.debug value.inspect
         nomen_unit = nil
         # concat units if needed
         if unit.present? && unit_target_dose.present?
@@ -325,11 +325,11 @@ module Ekylibre
         end
         unit = unit.to_sym if unit
         nomen_unit = Onoma::Unit[unit] if unit
-        w.debug value.inspect.yellow
+        w.debug value.inspect
         if value >= 0.0 && nomen_unit
           measure = Measure.new(value, unit)
-          w.info "Method population_conversion - measure : #{measure.inspect.yellow}"
-          w.info "Method population_conversion - variant : #{variant.name.inspect.yellow}"
+          w.info "Method population_conversion - measure : #{measure.inspect}"
+          w.info "Method population_conversion - variant : #{variant.name.inspect}"
           if measure.dimension == :volume
             variant_indicator = variant.send(:net_volume)
             if variant_indicator.value.to_f != 0.0
@@ -359,9 +359,9 @@ module Ekylibre
           # case population
         end
         if working_area && working_area.to_d(:square_meter) > 0.0 && unit_target_dose
-          w.info " Working area : #{working_area.inspect.green}"
-          w.info " Variant indicator : #{variant_indicator.inspect.green}"
-          w.info " Population value : #{population_value.inspect.red}"
+          w.info " Working area : #{working_area.inspect}"
+          w.info " Variant indicator : #{variant_indicator.inspect}"
+          w.info " Population value : #{population_value.inspect}"
           global_intrant_value = population_value.to_d * working_area.to_d(unit_target_dose.to_sym)
           return global_intrant_value
         else
@@ -447,14 +447,14 @@ module Ekylibre
           r.campaign = Campaign.create!(name: r.campaign_code, harvest_year: r.campaign_code)
         end
         # Get supports
-        w.debug "Support code in method parse_row #{r.support_codes}".inspect.green
+        w.debug "Support code in method parse_row #{r.support_codes}".inspect
         r.supports = parse_record_list(r.support_codes, CultivableZone, :work_number)
-        w.info "Support for CZ in method parse_row #{r.supports}".inspect.yellow
+        w.info "Support for CZ in method parse_row #{r.supports}".inspect
         r.supports = parse_record_list(r.support_codes, LandParcel, :work_number) unless r.supports.any?
-        w.info "Support for LP in method parse_row #{r.supports}".inspect.yellow
+        w.info "Support for LP in method parse_row #{r.supports}".inspect
         r.supports ||= parse_record_list(r.support_codes.delete_if { |s| %w[EXPLOITATION].include?(s) }, Product, :work_number) unless r.supports.any?
-        w.info "Support for Others in method parse_row #{r.supports}".inspect.yellow
-        w.info "Support in method parse_row #{r.supports}".inspect.yellow
+        w.info "Support for Others in method parse_row #{r.supports}".inspect
+        w.info "Support in method parse_row #{r.supports}".inspect
         # Get equipments
         r.equipments = parse_record_list(r.equipment_codes, Equipment, :work_number)
         # Get workers
@@ -525,16 +525,16 @@ module Ekylibre
       def find_plants(options = {})
         plants = nil
         if options[:support]
-          w.debug "supports for finding plant : #{options[:support]}".inspect.blue
+          w.debug "supports for finding plant : #{options[:support]}".inspect
           plant_ids = []
           options[:support].each do |support|
             # try to find the current plants on cultivable zone if exists
             support_shape = Charta.new_geometry(support.shape)
-            w.debug "support_shape : #{support_shape.to_geojson}".to_s.red
-            w.debug "plant count : #{Plant.count}".red
-            w.debug "plant count : #{Plant.pluck(:name).to_sentence}".white
+            w.debug "support_shape : #{support_shape.to_geojson}".to_s
+            w.debug "plant count : #{Plant.count}"
+            w.debug "plant count : #{Plant.pluck(:name).to_sentence}"
             product_around = Plant.shape_within(support_shape)
-            w.debug "product_around : #{product_around}".inspect.blue
+            w.debug "product_around : #{product_around}".inspect
             if product_around.any?
               plant_ids << Plant.where(id: product_around.map(&:id)).pluck(:id)
             end
@@ -566,7 +566,7 @@ module Ekylibre
 
       def check_indicator_presence(object, indicator, type = nil)
         nature = object.is_a?(ProductNature) ? object : object.nature
-        w.debug nature.indicators.inspect.red
+        w.debug nature.indicators.inspect
         unless nature.indicators.include?(indicator)
           type ||= :frozen if object.is_a?(ProductNatureVariant)
           if type == :frozen
@@ -614,7 +614,7 @@ module Ekylibre
           }
         }
 
-        w.debug "targets : #{targets.map(&:name)}".inspect.yellow
+        w.debug "targets : #{targets.map(&:name)}".inspect
 
         ## grab varieties of targets
         activity_ids = ActivityProduction.where(id: targets.pluck(:activity_production_id).compact.uniq).pluck(:activity_id).compact.uniq
@@ -623,8 +623,8 @@ module Ekylibre
         ## targets
         targets.each_with_index do |target, index|
           procedure.parameters_of_type(:target).each do |support|
-            w.info "support : #{support}".inspect.red
-            w.info "target : #{target}".inspect.red
+            w.info "support : #{support}".inspect
+            w.info "target : #{target}".inspect
             # next unless target.of_expression(support.filter)
             attributes[:targets_attributes] ||= {}
             attributes[:targets_attributes][index.to_s] = {
@@ -759,7 +759,7 @@ module Ekylibre
           # target
           # output r.target_variant
           w.debug targets.inspect
-          w.debug procedure.parameters_of_type(:group).inspect.red
+          w.debug procedure.parameters_of_type(:group).inspect
 
           targets.each_with_index do |target, index|
             procedure.parameters_of_type(:group).each do |group|
@@ -801,11 +801,11 @@ module Ekylibre
             intervention.impact_with!(updater)
           end
 
-          w.debug 'SOWING'.inspect.red
+          w.debug 'SOWING'.inspect
 
           ## save
           ::Intervention.create!(intervention.to_attributes)
-          w.debug "############################# #{Plant.count}".blue
+          w.debug "############################# #{Plant.count}"
           w.debug ''
 
         ###############################
@@ -840,7 +840,7 @@ module Ekylibre
           updaters = []
 
           [r.first, r.second, r.third].each_with_index do |actor, index|
-            w.debug 'actor : #{actor}'.inspect.red
+            w.debug 'actor : #{actor}'.inspect
             next if actor.variant.nil?
 
             procedure.parameters_of_type(:output).each do |output|
@@ -890,7 +890,7 @@ module Ekylibre
             intervention.impact_with!(updater)
           end
 
-          w.debug 'HARVESTING'.inspect.red
+          w.debug 'HARVESTING'.inspect
 
           ## save
           ::Intervention.create!(intervention.to_attributes)

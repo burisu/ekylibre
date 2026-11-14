@@ -18,10 +18,10 @@ namespace :tenant do
   task drop: :environment do
     name = ENV['TENANT'] || ENV['name']
     if Ekylibre::Tenant.exist?(name)
-      puts "Drop tenant: #{name.inspect.red}"
+      puts "Drop tenant: #{name.inspect}"
       Ekylibre::Tenant.drop(name)
     else
-      puts "Unknown tenant: #{name.inspect.red}"
+      puts "Unknown tenant: #{name.inspect}"
     end
   end
 
@@ -60,7 +60,7 @@ namespace :tenant do
       Preference.set! :currency, currency ? currency.name : 'EUR'
       Preference.set! :map_measure_srs, ENV['MAP_MEASURE_SRS'] || ENV['SRS'] || 'WGS84'
       Preference.set!(:sales_conditions, '')
-      puts "#{tenant.inspect.green} - Preference set (default is language: fra, country: fr, currency: EUR, SRS: WGS84)."
+      puts "#{tenant.inspect} - Preference set (default is language: fra, country: fr, currency: EUR, SRS: WGS84)."
       # Load default data
       ::I18n.locale = Preference[:language]
       Preference.set! :accounting_system, 'fr_pcga2023'
@@ -75,7 +75,7 @@ namespace :tenant do
       Journal.load_defaults
       SaleNature.load_defaults
       PurchaseNature.load_defaults
-      puts "#{tenant.inspect.green} - Default configuration loaded (default is accounting: fr_pcga2023, fy: #{fy.name})."
+      puts "#{tenant.inspect} - Default configuration loaded (default is accounting: fr_pcga2023, fy: #{fy.name})."
 
       attributes = {
         language: 'fra',
@@ -89,12 +89,12 @@ namespace :tenant do
       company = Entity.create!(attributes)
       company.addresses.create!(canal: :mail, mail_line_4: '8 rue du bouil bleu')
       company.addresses.create!(canal: :mail, mail_line_6: '17250 SAINT-PORCHAIRE')
-      puts "#{tenant.inspect.green} - Default company created."
+      puts "#{tenant.inspect} - Default company created."
       # Add user
       email = ENV['EMAIL'] || 'admin@ekylibre.org'
       user = User.find_by(email: email)
       if user
-        puts "#{tenant.inspect.yellow} - No user created. Already initialized."
+        puts "#{tenant.inspect} - No user created. Already initialized."
       else
         attributes = {
           email: email,
@@ -105,8 +105,8 @@ namespace :tenant do
         }
         attributes[:password_confirmation] = attributes[:password]
         User.create!(attributes)
-        puts "#{tenant.inspect.green} - User created with email #{email.inspect.yellow}"
-        puts "#{tenant.inspect.green} - User created with password #{attributes[:password].inspect.yellow}" unless ENV['PASSWORD']
+        puts "#{tenant.inspect} - User created with email #{email.inspect}"
+        puts "#{tenant.inspect} - User created with password #{attributes[:password].inspect}" unless ENV['PASSWORD']
       end
     end
   end
@@ -118,7 +118,7 @@ namespace :tenant do
     if Ekylibre::Tenant.exist?(old)
       Ekylibre::Tenant.rename(old, new)
     else
-      puts "Unknown tenant: #{old.inspect.red}"
+      puts "Unknown tenant: #{old.inspect}"
     end
   end
 
@@ -141,16 +141,16 @@ namespace :tenant do
     path_to_archive = options[:path] && options[:path].join("#{tenant}.zip")
     if path_to_archive && path_to_archive.exist? && ENV['FORCE'].to_i.zero?
       unless confirm("An archive #{path_to_archive.relative_path_from(Rails.root)} already exists. Do you want to overwrite it?", false)
-        puts 'Nothing dumped'.yellow
+        puts 'Nothing dumped'
         exit(0)
       end
     end
-    puts "Dumping #{tenant}".yellow
+    puts "Dumping #{tenant}"
     Ekylibre::Tenant.dump(tenant, options)
   end
 
   def confirm(question, default)
-    puts question.yellow + ' Y/N'.red
+    puts question + ' Y/N'
     STDOUT.flush
     input = STDIN.gets.chomp
     case input.upcase
@@ -166,12 +166,12 @@ namespace :tenant do
   task enable_support: :environment do
     tenant = ENV['TENANT']
     unless tenant.present?
-      puts "TENANT varibale need to be set".yellow
+      puts "TENANT varibale need to be set"
       exit(1)
     end
 
     unless Ekylibre::Tenant.exist?(tenant)
-      puts "TENANT #{tenant} does not exist.".yellow
+      puts "TENANT #{tenant} does not exist."
       exit(1)
     end
 
@@ -193,7 +193,7 @@ namespace :tenant do
           User.create!(email: "support@ekylibre.com", language: :fra, administrator: true, first_name: first_name, last_name: last_name, password: password, person: person)
         end
       end
-      puts "Support enabled. Password: ".green + password.red
+      puts "Support enabled. Password: " + password
     end
   end
 
@@ -224,11 +224,11 @@ namespace :tenant do
         choice && confirm(question, false)
       end
       unless confirmed
-        puts 'Nothing restored'.yellow
+        puts 'Nothing restored'
         exit(0)
       end
     end
-    puts "Restoring #{tenant}".yellow
+    puts "Restoring #{tenant}"
     Ekylibre::Tenant.restore(archive, options)
   end
 
@@ -236,10 +236,10 @@ namespace :tenant do
     task easy_login: :restore do
       Ekylibre::Tenant.switch!(ENV['TENANT'] || ENV['name'])
       puts
-      puts '== ' + 'Modifying User'.yellow + '=' * 61
+      puts '== ' + 'Modifying User' + '=' * 61
       User.first.update!(email: 'admin@ekylibre.org', password: '12345678')
       puts
-      puts 'Done!'.yellow
+      puts 'Done!'
       puts
     end
   end

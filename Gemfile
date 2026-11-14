@@ -17,23 +17,18 @@ ruby '>= 2.6.6', '< 3.0.0'
 gem 'actionpack-xml_parser', '~> 2.0'
 gem 'rack-cors' # CORS policy
 gem 'rails', '5.2.8.1'
-gem 'turnout', '~> 2.5' # Maintenance mode
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 
 # IRB and CLI
-gem 'colored' # , require: false
 gem 'fiddle'
 gem 'irb', '~> 1.3'
 gem 'rake', '~> 12.0'
 
 # TO REMOVE ASAP
-gem 'browser', '~> 5.2' # Only used in ApplicationController to check for IE
 gem 'ffaker', '~> 2.0' # Should not be present in production. Is used to generate names for Products.
 gem 'rjb', '1.6.2' # Version 1.6.4 segfaults on test server, jasper repors should be trashed anyway....
-gem 'time_diff', '~> 0.3.0' # Only used in InterventionWorkingPeriod
-gem 'wannabe_bool', '~> 0.7.1' # This Gem is a JOKE
 
 # Database
 gem 'activemodel-serializers-xml', '~> 1.0'
@@ -62,15 +57,12 @@ gem 'font-awesome-sass', '~> 5.15'
 gem 'cocoon', '~> 1.2'
 gem 'jquery-rails', '~> 4.4'
 gem 'jquery-ui-rails', '~> 6.0'
-gem 'momentjs-rails', '>= 2.9.0'
 gem 'simple_calendar', '~> 2.4.0'
-gem 'therubyracer', platforms: :ruby
 gem 'turbolinks', '~> 5.2.1'
 gem 'twitter-typeahead-rails', '~> 0.11.1'
 
 # Front
 gem 'active_list', github: 'ekylibre/active_list', branch: 'master'
-gem 'formize', '~> 2.1.0'
 gem 'kaminari', '~> 1.1'
 gem 'remotipart', '~> 1.2'
 gem 'simple_form', '~> 4.0'
@@ -82,11 +74,9 @@ gem 'jbuilder', '~> 2.0'
 
 # Ruby extensions
 gem 'code_string', '~> 0.0.1'
-gem 'possibly', github: 'ekylibre/possibly', branch: 'master'
 gem 'semantic', '~> 1.6'
 
 # Exception analysis and metrics
-gem 'binding_of_caller', '~> 1.0'
 # gem 'elastic-apm', '~> 3.4.0'
 gem 'exception_notification', '~> 4.4'
 gem 'redis-namespace', '~> 1.8'
@@ -101,7 +91,6 @@ gem 'rgeo-shapefile', '~> 3.0'
 # Background jobs
 gem 'sidekiq', '~> 4.0'
 gem 'sidekiq-cron', '~> 1.1'
-gem 'sidekiq-unique-jobs', '~> 4.0'
 
 # Reference data
 gem 'onoma', '~> 0.9.8'
@@ -118,7 +107,6 @@ gem 'enumerize', '~> 2.4'
 gem 'paranoia', '~> 2.2' # Hide and restore records without actually deleting them
 gem 'state_machine', '~> 1.2'
 gem 'uuidtools', '~> 2.2'
-gem 'validates_timeliness', '~> 4'
 
 # Authentication & Authorization
 gem 'devise', '~> 4.7'
@@ -133,8 +121,7 @@ gem 'paperclip', '~> 5.3'
 gem 'paperclip-document', '~> 0.0.11'
 
 # Emailing
-gem 'liquid-rails'
-gem "panoramic"
+gem 'liquid', '~> 5.4'
 gem 'tinymce-rails'
 gem 'tinymce-rails-langs'
 
@@ -165,7 +152,7 @@ gem 'ekylibre-ofx-parser', '~> 1.2'
 gem 'gpgme', '~> 2.0'
 gem 'holidays' # Deal with statutory and other holidays
 gem 'luhn', '~> 1.0'
-gem 'mimemagic', '~> 0.3.5'
+gem 'marcel', '~> 1.0'
 gem 'nokogiri', '~> 1.8'
 gem 'odf-report', github: 'ekylibre/odf-report', branch: 'master'
 gem 'prawn', '~> 2.4'
@@ -180,9 +167,7 @@ gem 'xml_errors_parser', github: 'ekylibre/xsd_errors_parser', branch: 'main'
 gem 'faraday', '~> 2.5'
 gem 'google-cloud-bigquery'
 gem 'mechanize', '~> 2.7'
-gem 'rest-client', '~> 2.0'
 gem 'rubyntlm', '>= 0.3.2'
-gem 'ruby-trello'
 gem 'savon', '2.12'
 gem 'stripe'
 
@@ -204,6 +189,7 @@ group :development do
   gem 'bullet', '~> 5.7.0'
 
   gem 'better_errors', '~> 2.9'
+  gem 'binding_of_caller', '~> 1.0'
   gem 'rack-mini-profiler'
   # Get the time of a process
   gem 'ruby-prof', '~> 1.4'

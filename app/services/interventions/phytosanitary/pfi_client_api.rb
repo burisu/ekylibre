@@ -36,7 +36,7 @@ module Interventions
       def down?
         begin
           pfi_client.down?
-        rescue RestClient::ExceptionWithResponse => e
+        rescue Clients::Http::Error
           true
         end
       end
@@ -46,9 +46,9 @@ module Interventions
       def get_campaign(harvest_year)
         begin
           pfi_client.get_campaign(harvest_year)
-        rescue RestClient::ExceptionWithResponse => e
-          message = :pfi_campaign_not_opened_yet.tl(campaign_harvest_year: harvest_year) if e.http_code == 404
-          url = e.response.request.url
+        rescue Clients::Http::Error => e
+          message = :pfi_campaign_not_opened_yet.tl(campaign_harvest_year: harvest_year) if Clients::Http.status(e) == 404
+          url = Clients::Http.url(e)
           notify_api_error_to_creator(error: e, log: url, message: message)
           nil
         end
@@ -73,9 +73,9 @@ module Interventions
               notify_api_warnings_to_creator(warning: response[:iftTraitement][:avertissement][:libelle])
             end
             response
-          rescue RestClient::ExceptionWithResponse => e
-            url = e.response.request.url
-            headers = e.response.request.headers
+          rescue Clients::Http::Error => e
+            url = Clients::Http.url(e)
+            headers = e.response&.dig(:request, :headers)
             notify_api_error_to_creator(error: e, log: "headers: #{headers}, url: #{url}")
             nil
           end
@@ -99,8 +99,7 @@ module Interventions
         begin
           response = pfi_client.compute_report(grab_harvest_year, report_title, body)
           { status: true, body: response.body }
-          # RestClient::Request.execute(method: :post, url: url, payload: body, headers: params)
-        rescue RestClient::ExceptionWithResponse => err
+        rescue Clients::Http::Error => err
           { status: false, body: err.message }
         end
       end

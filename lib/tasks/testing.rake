@@ -38,7 +38,7 @@ namespace :test do
               []
             end
     if files.empty?
-      puts "No test file to run!".red
+      puts "No test file to run!"
     else
       Rails::TestUnit::Runner.rake_run(["test/#{p}"])
     end

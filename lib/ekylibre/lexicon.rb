@@ -338,15 +338,15 @@ module Ekylibre
       end
 
       def info(message)
-        puts "-- #{message}".cyan
+        puts "-- #{message}"
       end
 
       def success(message)
-        puts "[ OK ] #{message}".green
+        puts "[ OK ] #{message}"
       end
 
       def error(message)
-        puts "[ NOK ] #{message}".red
+        puts "[ NOK ] #{message}"
         exit(false)
       end
 

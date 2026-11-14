@@ -187,7 +187,7 @@ class InterventionInput < InterventionProductParameter
           end
         end
       end
-      # puts reglementary_doses.inspect.green
+      # puts reglementary_doses.inspect
 
       reglementary_doses
 

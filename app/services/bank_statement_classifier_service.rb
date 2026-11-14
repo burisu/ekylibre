@@ -39,7 +39,7 @@ class BankStatementClassifierService
     # call Mistral Ner service (::Ner)
     c = Clients::Mistral::Ner.new
     result = c.extract_metadata(data, :bank_statement)
-    puts result.inspect.yellow
+    puts result.inspect
     return result[:error] if result[:error].present?
 
     @log_result[:items_classified] = 0

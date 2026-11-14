@@ -93,7 +93,7 @@ class Import < ApplicationRecord
   end
 
   def run(&block)
-    run_result(&block).to_bool
+    run_result(&block).success?
   end
 
   def file_size

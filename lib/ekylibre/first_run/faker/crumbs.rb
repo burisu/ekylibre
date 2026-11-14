@@ -229,7 +229,7 @@ module Ekylibre
           ##
           path = self.path('demo_spraying', 'ticsad_simulation.shp')
           if path.exist? && intervention && sprayer = intervention.product_parameters.find_by(reference_name: 'sprayer')
-            # puts "ticsad import OK".inspect.green
+            # puts "ticsad import OK".inspect
             count :ticsad_simulation do |_w|
               #############################################################################
               read_at = Time.new(2014, 6, 5, 10, 0, 0, '+00:00')
@@ -265,7 +265,7 @@ module Ekylibre
               end
             end
           else
-            puts 'Cannot import ticsad simulation'.red
+            puts 'Cannot import ticsad simulation'
           end
         end
       end

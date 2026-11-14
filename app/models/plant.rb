@@ -272,7 +272,7 @@ class Plant < Bioproduct
           value = value.round(round) if round
           [get_name.call(grouping_crit), value]
         end
-        Rails.logger.info pairs.inspect.red
+        Rails.logger.info pairs.inspect
         pairs_to_hash(pairs)
       end
 

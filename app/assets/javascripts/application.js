@@ -34,7 +34,6 @@
 //= require wice_grid/settings
 //= require ekylibre
 //= require form/dialog
-//= require formize/observe
 //= require form/scope
 //= require form/dependents
 //= require form/toggle

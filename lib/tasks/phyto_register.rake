@@ -9,16 +9,16 @@ namespace :phyto_register do
 
     Ekylibre::Tenant.load!
     tenants = tenant_name.present? ? [tenant_name] : Ekylibre::Tenant.list
-    puts "Enqueuing phytosanitary register archive (year=#{year}, format=#{format}) for #{tenants.size} tenants".yellow
+    puts "Enqueuing phytosanitary register archive (year=#{year}, format=#{format}) for #{tenants.size} tenants"
 
     tenants.each do |tenant|
       begin
         Ekylibre::Tenant.switch(tenant) do
           PhytosanitaryRegisterArchiveJob.perform_later(year: year, format: format)
-          puts "[#{tenant}] enqueued".green
+          puts "[#{tenant}] enqueued"
         end
       rescue StandardError => e
-        warn "[#{tenant}] failed: #{e.message}".red
+        warn "[#{tenant}] failed: #{e.message}"
       end
     end
   end
@@ -43,24 +43,24 @@ namespace :phyto_register do
           path = doc.file.path
           if path.nil? || !File.exist?(path)
             missing += 1
-            warn "[#{tenant}] #{doc.id} #{doc.name}: file missing on disk".red
+            warn "[#{tenant}] #{doc.id} #{doc.name}: file missing on disk"
             next
           end
           recomputed = Digest::SHA256.hexdigest(File.read(path))
           if stored.blank?
             missing += 1
-            warn "[#{tenant}] #{doc.id} #{doc.name}: no stored sha256 (legacy doc)".yellow
+            warn "[#{tenant}] #{doc.id} #{doc.name}: no stored sha256 (legacy doc)"
           elsif stored != recomputed
             bad += 1
-            warn "[#{tenant}] #{doc.id} #{doc.name}: INTEGRITY MISMATCH (stored=#{stored[0, 12]}… recomputed=#{recomputed[0, 12]}…)".red
+            warn "[#{tenant}] #{doc.id} #{doc.name}: INTEGRITY MISMATCH (stored=#{stored[0, 12]}… recomputed=#{recomputed[0, 12]}…)"
           else
-            puts "[#{tenant}] #{doc.id} #{doc.name}: OK".green
+            puts "[#{tenant}] #{doc.id} #{doc.name}: OK"
           end
         end
       end
     end
 
-    puts "\nSummary: #{total} documents, #{total - bad - missing} OK, #{bad} mismatched, #{missing} missing/legacy".yellow
+    puts "\nSummary: #{total} documents, #{total - bad - missing} OK, #{bad} mismatched, #{missing} missing/legacy"
     exit(1) if bad.positive?
   end
 
@@ -75,7 +75,7 @@ namespace :phyto_register do
 
     Ekylibre::Tenant.switch(tenant_name) do
       document = PhytosanitaryRegisterArchiveJob.perform_now(year: year, format: format)
-      puts "Archived #{document.name}".green
+      puts "Archived #{document.name}"
     end
   end
 end

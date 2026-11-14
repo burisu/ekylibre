@@ -24,7 +24,6 @@ class ApplicationController < ActionController::Base
   before_action :set_locale
   before_action :set_time_zone
   before_action :set_mailer_host
-  before_action :check_browser
 
   rescue_from PG::UndefinedTable, Apartment::TenantNotFound, with: :configure_application
   rescue_from ActionController::InvalidAuthenticityToken, with: :handle_invalid_authenticity_token
@@ -131,11 +130,6 @@ class ApplicationController < ActionController::Base
     # Sets mailer host on each request to ensure to get the valid domain
     def set_mailer_host
       ActionMailer::Base.default_url_options = { host: request.host_with_port }
-    end
-
-    def check_browser
-      browser = Browser.new(request.headers['HTTP_USER_AGENT'], accept_language: request.headers['HTTP_ACCEPT_LANGUAGE'])
-      notify_warning_now :incompatible_browser if browser.ie?
     end
 
     def configure_application(exception)

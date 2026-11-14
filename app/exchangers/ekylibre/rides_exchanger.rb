@@ -86,9 +86,9 @@ module Ekylibre
         provider: provider_value(id: attributes[:group])
       )
       if ride_set.present?
-        w.info "RideSet : #{ride_set.inspect}".green
+        w.info "RideSet : #{ride_set.inspect}"
       else
-        w.error "No RideSet present or created".red
+        w.error "No RideSet present or created"
       end
       ride_set
     end
@@ -109,9 +109,9 @@ module Ekylibre
         provider: provider_value(id: attributes[:number], machine_equipment_tool_width: 2.0)
       )
       if ride.present?
-        w.info "Ride : #{ride.inspect}".green
+        w.info "Ride : #{ride.inspect}"
       else
-        w.error "No Ride present or created".red
+        w.error "No Ride present or created"
       end
     end
 
@@ -141,15 +141,15 @@ module Ekylibre
     def update_shape_on_ride_set
       RideSet.of_provider_name(self.class.vendor, provider_name).each do |ride_set|
         points = []
-        w.info "RideSet to update : #{ride_set.inspect}".green
+        w.info "RideSet to update : #{ride_set.inspect}"
         ride_set.rides.order(:started_at).each do |ride|
-          w.info "Ride shape to extract : #{ride.shape.inspect}".yellow
-          w.info "Ride points : #{ride.shape.points.inspect}".yellow
+          w.info "Ride shape to extract : #{ride.shape.inspect}"
+          w.info "Ride points : #{ride.shape.points.inspect}"
           points << ride.shape.points
         end
-        w.info "Points : #{points.inspect}".yellow
+        w.info "Points : #{points.inspect}"
         ride_set_compiled_shape = Charta.make_line(points.flatten!).to_rgeo.buffer(tool_width(ride_set))
-        w.info "New line : #{ride_set_compiled_shape.inspect}".yellow
+        w.info "New line : #{ride_set_compiled_shape.inspect}"
         ride_set.update!(shape: ride_set_compiled_shape)
       end
     end

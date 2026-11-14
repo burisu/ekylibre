@@ -45,7 +45,6 @@
 class EmailTemplate < ApplicationRecord
   refers_to :nature, class_name: 'DocumentNature'
   refers_to :language
-  store_templates
 
   validates :nature, inclusion: { in: nature.values }
 

@@ -71,7 +71,7 @@ module Clients
         end
 
         def get_request(url, headers: {})
-          call = RestClient.get(url, { 'X-INSEE-Api-Key-Integration' => api_key, accept: 'application/json' }.merge(headers))
+          call = Clients::Http.get(url, headers: { 'X-INSEE-Api-Key-Integration' => api_key, 'Accept' => 'application/json' }.merge(headers))
           JSON.parse(call.body).deep_symbolize_keys
         end
     end

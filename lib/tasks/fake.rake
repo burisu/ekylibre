@@ -8,7 +8,7 @@ module Ekylibre
 
         def load(env = 'default')
           @list = []
-          puts "Load #{env} variants".red
+          puts "Load #{env} variants"
           CSV.read(Pathname.new(__FILE__).dirname.join('fake', env + '.csv'), headers: true)
              .map { |row| add(row.to_hash.symbolize_keys) }
         end
@@ -91,7 +91,7 @@ module Ekylibre
 
     def self.run(options = {})
       Variant.load(options[:env])
-      puts 'Gooooo!'.red
+      puts 'Gooooo!'
       Base.new(options).run
     end
 
@@ -615,13 +615,13 @@ module Ekylibre
             sale = create_sale(client: client)
             next unless sale
 
-            print 's'.yellow
+            print 's'
             if sale.invoice? && rand > 0.2
-              print 'k'.yellow if create_outgoing_parcel(sale: sale)
+              print 'k' if create_outgoing_parcel(sale: sale)
             end
             if rand > 0.3
               create_incoming_payment(payer: client, affair: sale.affair, amount: sale.amount)
-              print 'w'.yellow
+              print 'w'
             end
           end
         end
@@ -632,13 +632,13 @@ module Ekylibre
         #     next unless rand > 0.7
         #     client = self.find_or_create_entity(client: true, country: [:us, :ca, :jp].sample)
         #     self.create_sale(client: client, currency: [:USD, :JPY].sample)
-        #     print 'i'.yellow
+        #     print 'i'
         #   end
         # end
 
         # Inventory of end of year
         if month == current_financial_year.stopped_on.month && mday > 17 && mday <= 24 && friday?
-          print 'h'.red if create_inventory
+          print 'h' if create_inventory
         end
 
         if monday?
@@ -648,31 +648,31 @@ module Ekylibre
 
             if sale.estimate? && rand > 0.75
               sale.abort!
-              print 'a'.cyan
+              print 'a'
             end
             if sale.estimate? && rand > 0.5
               sale.confirm!
-              print 'c'.cyan
+              print 'c'
             end
             if sale.order? && rand > 0.5
               sale.invoice!
-              print 'i'.cyan
+              print 'i'
             end
             if sale.invoice? && rand > 0.93
               sale.build_credit.save!
-              print 'r'.cyan
+              print 'r'
             end
           end
 
           Sale.where(state: :invoice).where('updated_at >= ?', Time.zone.now - 30.days).find_each do |sale|
             if sale.parcels.empty? && rand > 0.6
-              print 'k'.cyan if create_outgoing_parcel(sale: sale)
+              print 'k' if create_outgoing_parcel(sale: sale)
             end
             next if sale.affair.credit >= sale.affair.debit # sale.affair.closed?
 
             if rand > 0.5
               create_incoming_payment(payer: sale.client, affair: sale.affair, amount: sale.amount)
-              print 'w'.cyan
+              print 'w'
             end
           end
 
@@ -681,38 +681,38 @@ module Ekylibre
 
             if purchase.can_abort? && rand > 0.5
               purchase.abort!
-              print 'x'.cyan
+              print 'x'
             end
             if purchase.can_correct? && rand > 0.9
               purchase.correct!
-              print 'z'.cyan
+              print 'z'
             end
             if purchase.can_invoice? && rand > 0.4
               purchase.invoice!
-              print 'y'.cyan
+              print 'y'
             end
           end
           Purchase.where(state: :invoice).where('updated_at >= ?', Time.zone.now - 30.days).find_each do |purchase|
             if purchase.parcels.empty? && rand > 0.4
-              print 'q'.cyan if create_incoming_parcel(purchase: purchase)
+              print 'q' if create_incoming_parcel(purchase: purchase)
             end
             next if purchase.affair.credit <= purchase.affair.debit # purchase.affair.closed?
 
             if rand > 0.5
               create_purchase_payment(payee: purchase.supplier, affair: purchase.affair, amount: purchase.amount)
-              print 'o'.cyan
+              print 'o'
             end
           end
 
           # # Add deposit
           # 1.times do
           #   next unless rand > 0.6
-          #   print 'd'.green
+          #   print 'd'
           # end
         end
 
         if tuesday?
-          print 'j'.red if create_delivery
+          print 'j' if create_delivery
         end
 
         if (1..6).cover?(wday) && bank_balance > @cash_minimum
@@ -724,13 +724,13 @@ module Ekylibre
             purchase = create_purchase(supplier: supplier)
             next unless purchase
 
-            print 'p'.red
+            print 'p'
             if (purchase.order? || purchase.invoice?) && rand > 0.1
-              print 'q'.red if create_incoming_parcel(purchase: purchase)
+              print 'q' if create_incoming_parcel(purchase: purchase)
             end
             if rand > 0.05 && purchase.invoice?
               create_purchase_payment(payee: supplier, affair: purchase.affair, amount: purchase.amount)
-              print 'o'.red
+              print 'o'
             end
           end
         end
@@ -741,7 +741,7 @@ module Ekylibre
         #   end
         #   stopped_on = (self.on - 7.months).end_of_month
         #   self.create_financial_year_exchange(started_on: stopped_on.beginning_of_month, stopped_on: stopped_on)
-        #   print 'x'.magenta
+        #   print 'x'
         # end
       end
     end

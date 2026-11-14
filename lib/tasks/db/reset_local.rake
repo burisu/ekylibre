@@ -25,22 +25,22 @@ namespace :db do
 
     ENV['DISABLE_DATABASE_ENVIRONMENT_CHECK'] = '1'
 
-    puts "Drop database #{db.inspect}".yellow
+    puts "Drop database #{db.inspect}"
     Rake::Task['db:drop'].invoke
 
-    puts "Create database #{db.inspect}".yellow
+    puts "Create database #{db.inspect}"
     Rake::Task['db:create'].invoke
 
-    puts 'Drop auto-created public schema (postgis schema/extension are kept — installed by db:extensions)'.yellow
+    puts 'Drop auto-created public schema (postgis schema/extension are kept — installed by db:extensions)'
     psql.call(sql: 'DROP SCHEMA IF EXISTS public CASCADE;')
 
     structure_path = Rails.root.join('db', 'structure.sql')
-    puts "Load #{structure_path} (without ON_ERROR_STOP — the duplicate CREATE SCHEMA postgis is benign)".yellow
+    puts "Load #{structure_path} (without ON_ERROR_STOP — the duplicate CREATE SCHEMA postgis is benign)"
     psql.call(sql: nil, on_error_stop: false, file: structure_path.to_s)
 
-    puts 'Load lexicon'.yellow
+    puts 'Load lexicon'
     Rake::Task['lexicon:load'].invoke
 
-    puts 'db:reset_local done'.green
+    puts 'db:reset_local done'
   end
 end

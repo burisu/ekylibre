@@ -414,7 +414,7 @@ class Intervention < ApplicationRecord
         ip.update(estimated_date: date)
       end
     end
-    # puts self.inspect.green
+    # puts self.inspect
     targets.find_each do |target|
       if target.new_container_id
         ProductLocalization.find_or_create_by(product: target.product, container: Product.find(target.new_container_id), intervention_id: target.intervention_id, started_at: working_periods.maximum(:stopped_at))

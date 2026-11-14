@@ -29,7 +29,7 @@ module BordeauxSciencesAgro
 
         rows.each_with_index do |row, index|
           line_number = index + 2
-          prompt = "L#{line_number.to_s.yellow}"
+          prompt = "L#{line_number.to_s}"
           r = {
             printed_on: Date.parse(row[0].to_s.strip),
             account_number: row[1].to_s.strip,
@@ -44,7 +44,7 @@ module BordeauxSciencesAgro
 
           fy = FinancialYear.at(r.printed_on)
           unless fy
-            w.error "FinancialYear does not exist for #{r.printed_on} in line : #{line_number} - #{valid}".red
+            w.error "FinancialYear does not exist for #{r.printed_on} in line : #{line_number} - #{valid}"
             valid = false
           end
 
@@ -69,7 +69,7 @@ module BordeauxSciencesAgro
 
         rows.each_with_index do |row, index|
           line_number = index + 2
-          prompt = "L#{line_number.to_s.yellow}"
+          prompt = "L#{line_number.to_s}"
           r = {
             printed_on: Date.parse(row[0].to_s.strip),
             account_number: row[1].to_s.strip,
@@ -99,7 +99,7 @@ module BordeauxSciencesAgro
               r.account_number = r.account_number[0..2] + '01000'
             end
             account = Account.find_or_create_by_number(r.account_number, name: r.account_name)
-            w.info "account : #{account.label.inspect.red}"
+            w.info "account : #{account.label.inspect}"
           end
 
           if r.start_debit_amount > 0.0
@@ -144,9 +144,9 @@ module BordeauxSciencesAgro
 
         w.reset!(entries.keys.size)
         entries.values.each do |entry|
-          w.info "JE : #{entry}".inspect.yellow
+          w.info "JE : #{entry}".inspect
           j = JournalEntry.create!(entry)
-          w.info "JE created: #{j.number} | #{j.printed_on}".inspect.yellow
+          w.info "JE created: #{j.number} | #{j.printed_on}".inspect
           w.check_point
         end
       end

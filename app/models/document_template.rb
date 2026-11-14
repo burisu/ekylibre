@@ -46,7 +46,9 @@
 # Sources are stored in :private/reporting/:id/content.xml
 class DocumentTemplate < ApplicationRecord
   enumerize :archiving, in: %i[none_of_template first_of_template last_of_template none first last], default: :none, predicates: { prefix: true }
-  enumerize :file_extension, in: %i[xml odt], default: :xml, predicates: true
+  # html: Liquid HTML template rendered by WeasyPrint
+  # odt, xml: legacy odf-report and Jasper templates (no longer printable)
+  enumerize :file_extension, in: %i[html xml odt], default: :html, predicates: true
   refers_to :language
   refers_to :nature, class_name: 'DocumentNature'
   has_many :documents, class_name: 'Document', foreign_key: :template_id, dependent: :nullify, inverse_of: :template
@@ -85,7 +87,7 @@ class DocumentTemplate < ApplicationRecord
     self.signed ||= DocumentTemplate.where(nature: nature, managed: true).any? { |e| e.signed }
     # Set file_extension to odt if source content type == odt
 
-    self.file_extension = :odt if (file = source_file).present? && Printers::MimeTypeGuesser.new.guess(file) == 'application/vnd.oasis.opendocument.text'
+    self.file_extension = :html if source_file.present?
 
     # Check that given formats are all known
     unless formats.empty?
@@ -304,17 +306,17 @@ class DocumentTemplate < ApplicationRecord
       end
     end
 
+    # Stores the template as Liquid HTML. ODT templates (odf-report) are
+    # converted with bin/odt2liquid.
     def import_template_file(template_file)
-      if file_extension.odt?
-        import_odt template_file
-      else
-        import_jasper template_file
-      end
-    end
-
-    def import_odt(template_file)
       FileUtils.mkdir_p(source_dir)
-      FileUtils.cp(template_file, source_path)
+      content = if Printers::MimeTypeGuesser.new.guess(template_file) == 'application/vnd.oasis.opendocument.text'
+                  Ekylibre::DocumentManagement::OdtConverter.new.convert(template_file.path)
+                else
+                  template_file.rewind
+                  template_file.read.force_encoding('UTF-8')
+                end
+      File.write(source_path, content)
     end
 
     def import_jasper(template_file)

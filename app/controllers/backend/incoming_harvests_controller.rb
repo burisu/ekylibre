@@ -92,18 +92,6 @@ module Backend
           notify_success(:document_in_preparation)
           redirect_to backend_incoming_harvests_path
         }
-        format.odt {
-          return unless (template = find_and_check :document_template, params[:template])
-
-          if params[:period] == 'interval' && (params[:started_on].blank? || params[:stopped_on].blank?)
-            notify_error(:missing_dates_for_interval_period)
-            redirect_to(backend_incoming_harvests_path) and return
-          end
-
-          printer = Printers::HarvestReceptionPrinter.new(template: template, **dataset_params)
-          g = Ekylibre::DocumentManagement::DocumentGenerator.build
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
-        }
       end
     end
 

@@ -11,7 +11,7 @@ module Geo
       # Minimal SVG document with one path
       def document(path_attributes, svg_attributes)
         attributes = ->(hash) { hash.map { |k, v| %(#{k.to_s.tr('_', '-')}="#{ERB::Util.html_escape(v)}") }.join(' ') }
-        %(<svg xmlns="http://www.w3.org/2000/svg" #{attributes.call(svg_attributes)}><path #{attributes.call(path_attributes)}/></svg>)
+        +%(<svg xmlns="http://www.w3.org/2000/svg" #{attributes.call(svg_attributes)}><path #{attributes.call(path_attributes)}/></svg>)
       end
 
       private

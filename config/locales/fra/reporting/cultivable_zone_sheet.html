@@ -1,0 +1,36 @@
+{% comment %}Cultivable zone sheet. Data: cultivable zone serialized by CultivableZonesController#show (s0){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }} .shape svg { width: 5cm; height: 5cm; }</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-header">
+  <div>
+    <div class="doc-title">{{ s0.name | escape }}</div>
+    <table class="doc-meta">
+      <tr><td class="label">N° de travail</td><td>{{ s0.work_number | escape }}</td></tr>
+      <tr><td class="label">Surface</td><td>{{ s0.human_shape_area | escape }}</td></tr>
+      <tr><td class="label">N° PAC</td><td>{{ s0.cap_number | escape }}</td></tr>
+    </table>
+    {% if s0.description != blank %}<p>{{ s0.description | escape | newline_to_br }}</p>{% endif %}
+  </div>
+  <div class="shape">{{ s0.shape_svg }}</div>
+</div>
+{% for production in s0.activity_productions %}
+<div class="doc-subtitle">{{ production.name | escape }}</div>
+<table class="doc-meta">
+  <tr><td class="label">Début</td><td>{{ production.started_on }}</td><td class="label">Fin</td><td>{{ production.stopped_on }}</td><td class="label">Usage</td><td>{{ production.usage | escape }}</td></tr>
+  <tr><td class="label">Implantée le</td><td>{{ production.implanted_at }}</td><td class="label">Récoltée le</td><td>{{ production.harvested_at }}</td><td class="label">Taille</td><td>{{ production.size_value }} {{ production.size_unit_name | escape }}</td></tr>
+  <tr><td class="label">Irriguée</td><td>{% if production.irrigated == "true" %}Oui{% else %}Non{% endif %}</td><td class="label">Piège à nitrates</td><td>{% if production.nitrate_fixing == "true" %}Oui{% else %}Non{% endif %}</td><td></td><td></td></tr>
+</table>
+<table class="data">
+  <thead><tr><th>Début</th><th>Intervention</th><th>Durée</th><th>Zone travaillée</th><th>Intrants</th></tr></thead>
+  <tbody>
+  {% for intervention in production.interventions %}
+    <tr><td>{{ intervention.started_at }}</td><td>{{ intervention.name | escape }}</td><td>{{ intervention.human_working_duration | escape }}</td><td>{{ intervention.human_working_zone_area | escape }}</td><td>{{ intervention.human_input_quantity_names | escape }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endfor %}
+</body>
+</html>

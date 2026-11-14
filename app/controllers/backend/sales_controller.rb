@@ -176,7 +176,7 @@ module Backend
         format.pdf do
           document_template = DocumentTemplate.find(params[:template])
 
-          if document_template.file_extension.odt?
+          if document_template.file_extension.html?
             generate_n_send_pdf_for(@sale, document_template) || redirect_to_back(fallback_location: backend_sale_path(@sale))
           else
             create_response
@@ -390,7 +390,7 @@ module Backend
       end
 
       existing_document = Document.of(nature.to_s, @sale.number).reorder(:created_at)
-      document_template = DocumentTemplate.find_active_template(nature, 'odt')
+      document_template = DocumentTemplate.find_active_template(nature, 'html')
 
       if existing_document.any?
         document = existing_document.last

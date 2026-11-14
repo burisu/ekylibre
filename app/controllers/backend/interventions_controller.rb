@@ -215,13 +215,6 @@ module Backend
           notify_success(:document_in_preparation)
           redirect_to backend_interventions_path
         }
-        format.odt do
-          return unless template = DocumentTemplate.find_by_nature(params[:document_nature_name])
-
-          printer = Printers::PhytosanitaryApplicatorSheetPrinter.new(template: template, **dataset_params)
-          g = Ekylibre::DocumentManagement::DocumentGenerator.build
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
-        end
       end
     end
 
@@ -242,8 +235,8 @@ module Backend
       g = Ekylibre::DocumentManagement::DocumentGenerator.build
 
       respond_to do |format|
-        format.odt do
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
+        format.pdf do
+          send_data g.generate_pdf(template: template, printer: printer), filename: "#{printer.document_name}.pdf", type: 'application/pdf'
         end
       end
 

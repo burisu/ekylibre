@@ -152,7 +152,6 @@ gem 'holidays' # Deal with statutory and other holidays
 gem 'luhn', '~> 1.0'
 gem 'marcel', '~> 1.0'
 gem 'nokogiri', '~> 1.8'
-gem 'odf-report', github: 'ekylibre/odf-report', branch: 'master'
 gem 'prawn', '~> 2.4'
 gem 'prawn-table'
 gem 'rodf', '~> 1.0'

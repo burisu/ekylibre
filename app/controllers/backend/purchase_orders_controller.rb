@@ -91,12 +91,6 @@ module Backend
         format.html do
           t3e @purchase_order.attributes, supplier: @purchase_order.supplier.full_name, state: @purchase_order.state_label, label: @purchase_order.label
         end
-        format.odt do
-          return unless template = DocumentTemplate.find_active_template(:purchases_order, 'odt')
-
-          printed = print(template: template, format: :odt)
-          send_data printed[:data], filename: "#{printed[:name]}.odt"
-        end
         format.pdf do
           return unless template = find_and_check(:document_template, params[:template])
 
@@ -176,7 +170,7 @@ module Backend
     def email_supplier
       return unless @purchase_order = find_and_check
 
-      return unless template = DocumentTemplate.find_active_template(:purchases_order, 'odt')
+      return unless template = DocumentTemplate.find_active_template(:purchases_order, 'html')
 
       if @purchase_order.supplier.default_email_address
         printed = print(template: template, format: :pdf, archived: true)
@@ -193,11 +187,7 @@ module Backend
     def print(template:, format: :pdf, archived: true)
       printer = Printers::PurchaseOrderPrinter.new(template: template, purchase_order: @purchase_order)
       generator = Ekylibre::DocumentManagement::DocumentGenerator.build
-      if format == :pdf
-        data = generator.generate_pdf(template: template, printer: printer)
-      elsif format == :odt
-        data = generator.generate_odt(template: template, printer: printer)
-      end
+      data = generator.generate_pdf(template: template, printer: printer)
       if archived == true && format == :pdf
         archiver = Ekylibre::DocumentManagement::DocumentArchiver.build
         document = archiver.archive_document(pdf_content: data, template: template, key: printer.key, name: printer.document_name)

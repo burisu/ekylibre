@@ -2,7 +2,8 @@
 
 module Ekylibre
   module DocumentManagement
-    # This service is responsible to build an ODT document given a DocumentTemplate and a PrinterBase and is able, using a PdfConverter to convert it in PDF
+    # Builds a document (HTML rendered from a Liquid template) given a
+    # DocumentTemplate and a PrinterBase, and converts it to PDF with WeasyPrint.
     class DocumentGenerator
       class << self
         def build
@@ -11,38 +12,33 @@ module Ekylibre
                       else
                         Ekylibre::DocumentManagement::PdfConverter.build
                       end
-          new(
-            template_provider: Ekylibre::DocumentManagement::TemplateFileProvider.build,
-            pdf_converter: converter
-          )
+          new(renderer: Ekylibre::DocumentManagement::HtmlRenderer.build, pdf_converter: converter)
         end
       end
 
-      # @return [TemplateFileProvider]
-      attr_reader :template_provider
+      # @return [HtmlRenderer]
+      attr_reader :renderer
 
       # @return [PdfConverter]
       attr_reader :pdf_converter
 
-      def initialize(template_provider:, pdf_converter:)
-        @template_provider = template_provider
+      def initialize(renderer:, pdf_converter:)
+        @renderer = renderer
         @pdf_converter = pdf_converter
       end
 
       # @param [DocumentTemplate] template
       # @param [PrinterBase] printer
-      # @return [Array<byte>]
-      def generate_odt(template:, printer:)
-        ODFReport::Report
-          .new(template_provider.find_by_template(template)) { |r| printer.generate(r) }
-          .generate
+      # @return [String] HTML
+      def generate_html(template:, printer:)
+        renderer.render(template: template, printer: printer)
       end
 
       # @param [DocumentTemplate] template
       # @param [PrinterBase] printer
-      # @return [Array<byte>]
+      # @return [String] PDF bytes
       def generate_pdf(template:, printer:)
-        pdf_converter.convert_data(generate_odt(template: template, printer: printer))
+        pdf_converter.convert_html(generate_html(template: template, printer: printer))
       end
     end
   end

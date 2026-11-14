@@ -26,7 +26,7 @@ module Ekylibre
       # @param [String] nature
       # @return [Pathname, nil]
       def find_by_nature(nature)
-        [*odt_paths(nature), *jasper_paths(nature)].detect(&:exist?)
+        html_paths(nature).detect(&:exist?)
       end
 
       # @param [DocumentTemplate] template
@@ -43,23 +43,8 @@ module Ekylibre
 
       private
 
-        def odt_paths(nature)
-          [
-            root_path.join(locale, 'reporting', "#{nature}.odt"),
-            root_path.join('eng', 'reporting', "#{nature}.odt"),
-            root_path.join('fra', 'reporting', "#{nature}.odt")
-          ]
-        end
-
-        def jasper_paths(nature)
-          [
-            root_path.join(locale, 'reporting', "#{nature}.xml"),
-            root_path.join(locale, 'reporting', "#{nature}.jrxml"),
-            root_path.join('eng', 'reporting', "#{nature}.xml"),
-            root_path.join('eng', 'reporting', "#{nature}.jrxml"),
-            root_path.join('fra', 'reporting', "#{nature}.xml"),
-            root_path.join('fra', 'reporting', "#{nature}.jrxml")
-          ]
+        def html_paths(nature)
+          [locale, 'eng', 'fra'].uniq.map { |l| root_path.join(l, 'reporting', "#{nature}.html") }
         end
     end
   end

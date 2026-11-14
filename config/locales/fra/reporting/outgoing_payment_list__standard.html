@@ -1,0 +1,97 @@
+{% comment %}Converted from outgoing_payment_list__standard.odt by odt2liquid. Data scope: s0 (document), s1.. (tables/sections).{% endcomment %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@page { size: 8.2701in 11.6902in; margin: calc(0in + calc(3.4in + 0.2in + 0.8cm)) 0in calc(0in + calc(0.4in + 0.2in + 0.8cm)) 0in; @top-center { content: element(page-header); width: 100% }; @bottom-center { content: element(page-footer); width: 100% } }
+{{ base_css }}
+.s-Caption { font-style: italic; font-size: 12pt; margin-top: 0.0835in; margin-bottom: 0.0835in }
+.s-Graphics { display: block; margin: 0 auto }
+.s-Heading { font-size: 14pt; font-family: 'Liberation Sans', sans-serif; margin-top: 0.1665in; margin-bottom: 0.0835in }
+.s-List { margin-top: 0in; margin-bottom: 0.0972in; line-height: 120% }
+.s-MP1 { font-size: 8pt; text-align: right }
+.s-MP2 { font-size: 8pt; text-align: left }
+.s-MP3 { font-size: 12pt }
+.s-MP4 { font-size: 2pt; text-align: right }
+.s-MT2 { font-size: 12pt }
+.s-Mfr1 { display: block; margin: 0 auto }
+.s-P1 { font-size: 8pt; text-align: right }
+.s-P10 { font-size: 10pt; text-align: center }
+.s-P11 { font-size: 10pt; text-align: right }
+.s-P12 { font-size: 2pt; break-before: page }
+.s-P13 { font-size: 2pt; text-align: right }
+.s-P15 { font-size: 16pt; color: #333366; font-family: 'Liberation Sans', sans-serif }
+.s-P16 { text-align: center }
+.s-P17 { text-align: right }
+.s-P18 { font-size: 12pt; text-align: right }
+.s-P19 { font-size: 12pt }
+.s-P2 { font-size: 8pt; text-align: left }
+.s-P20 { text-align: left }
+.s-P21 { text-align: left }
+.s-P5 { font-size: 6pt }
+.s-P6 { font-size: 2pt }
+.s-P7 { font-size: 2pt }
+.s-P8 { font-size: 2pt; text-align: right }
+.s-P9 { text-align: center }
+.s-T2 { font-size: 16pt; color: #333366; font-family: 'Liberation Sans', sans-serif }
+.s-T3 { font-size: 12pt }
+.s-T4 { font-weight: bold }
+.s-T5 { font-size: 6pt }
+.s-Table1 { width: 7.5694in; margin-left: 0.35in }
+.s-Table1_A1 { background-color: #eeeeee; border-top: 0.05pt solid #000000; border-bottom: 0.05pt solid #000000; border-left: 0.05pt solid #000000; border-right: none; padding: 0.0382in }
+.s-Table1_E1 { background-color: #eeeeee; border: 0.05pt solid #000000; padding: 0.0382in }
+.s-Table2 { width: 7.5694in; margin-left: 0.35in }
+.s-Table2_A1 { border-top: 0.05pt solid #000000; border-bottom: 0.05pt solid #000000; border-left: 0.05pt solid #000000; border-right: none; padding: 0.0382in; vertical-align: middle }
+.s-Table2_E1 { border: 0.05pt solid #000000; padding: 0.0382in; vertical-align: middle }
+.s-Table_20_Heading { font-weight: bold; text-align: center }
+.s-Text_20_body { margin-top: 0in; margin-bottom: 0.0972in; line-height: 120% }
+.s-fr1 { display: block; margin: 0 auto }
+</style>
+</head>
+<body>
+<div class="page-header"><p class="s-MP1">&nbsp;</p>
+<p class="s-MP1"><span class="s-MT1">{{ s0.printed_at | escape | newline_to_br }} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s-MT1"><span class="page-number"></span></span></p>
+<p class="s-MP2">{% if s0.company_logo %}<img class="s-Mfr1 frame" src="{{ s0.company_logo }}" style="width: 1.0783in; height: 1.0783in; position: absolute; left: 0.3457in; top: 0in; object-fit: contain">{% endif %}<span class="s-Mgr1 frame" style="display: block; width: 2.9795in; height: 0.1925in; position: absolute; left: 0.3in; top: 1.2244in"><span class="p" style="display: block"><span class="s-MT2">{{ s0.company_address | escape | newline_to_br }}</span></span></span><span class="s-Mgr1 frame" style="display: block; width: 2.7606in; height: 0.1925in; position: absolute; left: 0.2898in; top: 2.6264in"><span class="p" style="display: block"><span class="s-MT2">{{ s0.company_email | escape | newline_to_br }}</span></span></span><span class="s-Mgr1 frame" style="display: block; width: 2.6878in; height: 0.1925in; position: absolute; left: 0.2898in; top: 2.8189in"><span class="p" style="display: block"><span class="s-MT2">{{ s0.company_website | escape | newline_to_br }}</span></span></span></p>
+</div>
+<div class="page-footer"><p class="s-MP4">&nbsp;</p>
+<p class="s-MP4">&nbsp;</p>
+<p class="s-MP4">&nbsp;</p>
+<p class="s-MP4">&nbsp;</p>
+</div>
+{% assign c1 = s0 | scope: "section1" %}{% for s1 in c1 %}<div class="s-Sect1 section" data-section="section1"><p class="s-P3"><span class="s-gr1 frame" style="display: block; width: 3.5421in; height: 0.1925in; position: absolute; left: 3.7957in; top: -1.2846in"><span class="p" style="display: block">{{ s1.payee_address | escape | newline_to_br }}</span></span><span class="s-gr1 frame" style="display: block; width: 3.6815in; height: 0.1925in; position: absolute; left: 4.2398in; top: 0.1102in"><span class="s-P17 p" style="display: block"><span class="s-T3">{{ s1.bank_check_number_text | escape | newline_to_br }}</span></span></span><span class="s-gr2 frame" style="display: block; width: 2.4067in; height: 0.2571in; position: absolute; left: 0.3689in; top: 0.0339in"><span class="p" style="display: block"><span class="s-T2">Paiement : {{ s1.number | escape | newline_to_br }}</span></span></span></p>
+<p class="s-P3"><span class="line" style="display: block; position: absolute; left: 0.3063in; top: 0.1654in; width: 7.6457in; border-top: 0.03cm solid #000"></span></p>
+<p class="s-P3"><span class="s-gr1 frame" style="display: block; width: 4.9189in; height: 0.1925in; position: absolute; left: 0.3736in; top: 0.0571in"><span class="p" style="display: block"><span class="s-T4">Responsable :</span> {{ s1.responsible | escape | newline_to_br }}</span></span></p>
+<p class="s-P3"><span class="s-gr4 frame" style="display: block; width: 7.5398in; height: 0.4803in; position: absolute; left: 0.3634in; top: 0.1417in"><span class="p" style="display: block"><span class="s-T3">Madame, Monsieur,</span></span><span class="p" style="display: block"><span class="s-T5"></span></span><span class="p" style="display: block"><span class="s-T3">{{ s1.text | escape | newline_to_br }}</span></span></span></p>
+<p class="s-P3">&nbsp;</p>
+<p class="s-P3">&nbsp;</p>
+<p class="s-P5">&nbsp;</p>
+<p class="s-P6">&nbsp;</p>
+<p class="s-P6">&nbsp;</p>
+<table class="s-Table1 table" data-table="table1"><colgroup><col style="width: 1.5201in"><col style="width: 1.5201in"><col style="width: 1.5097in"><col style="width: 1.5097in"><col style="width: 1.5097in"></colgroup><tbody><tr><td class="s-Table1_A1"><p class="s-P9">Votre référence</p>
+</td><td class="s-Table1_A1"><p class="s-P9">Notre référence</p>
+</td><td class="s-Table1_A1"><p class="s-P9">Date de facture</p>
+</td><td class="s-Table1_A1"><p class="s-P9">Montant HT</p>
+</td><td class="s-Table1_E1"><p class="s-P9">Montant TTC</p>
+</td></tr>
+</tbody></table>
+<table class="s-Table2 table" data-table="table2"><colgroup><col style="width: 1.5201in"><col style="width: 1.5201in"><col style="width: 1.5097in"><col style="width: 1.5097in"><col style="width: 1.5097in"></colgroup><tbody>{% assign c2 = s1 | scope: "table2" %}{% for s2 in c2 %}<tr class="s-Table2_1"><td class="s-Table2_A1"><p class="s-P10">{{ s2.reference_number | escape | newline_to_br }}</p>
+</td><td class="s-Table2_A1"><p class="s-P10">{{ s2.number | escape | newline_to_br }}</p>
+</td><td class="s-Table2_A1"><p class="s-P10">{{ s2.invoiced_at | escape | newline_to_br }}</p>
+</td><td class="s-Table2_A1"><p class="s-P11">{{ s2.pretax_amount | escape | newline_to_br }}</p>
+</td><td class="s-Table2_E1"><p class="s-P11">{{ s2.amount | escape | newline_to_br }}</p>
+</td></tr>
+{% endfor %}</tbody></table>
+<p class="s-P4"><span class="s-gr5 frame" style="display: block; width: 7.563in; height: 0.3843in; position: absolute; left: 0.348in; top: 0.1035in"><span class="s-P20 p" style="display: block">Nous vous invitons à nous faire parvenir vos coordonnées bancaires si ce n'est pas déjà fait.</span><span class="s-P20 p" style="display: block">Veuillez agréer, Madame, Monsieur, nos salutations les meilleures.</span></span></p>
+<p class="s-P4">&nbsp;</p>
+<p class="s-P7">&nbsp;</p>
+<p class="s-P7">&nbsp;</p>
+<p class="s-P7">&nbsp;</p>
+<p class="s-P7">&nbsp;</p>
+<p class="s-P7">&nbsp;</p>
+<p class="s-P7">&nbsp;</p>
+<p class="s-P12">&nbsp;</p>
+{% endfor %}</div>
+
+</body>
+</html>

@@ -55,7 +55,7 @@ module Backend
         format.pdf do
           template = DocumentTemplate.find(params[:template])
 
-          if template.file_extension == 'odt'
+          if template.file_extension.html?
             printer = Printers::OutgoingPaymentListPrinter.new(outgoing_payment_list: @outgoing_payment_list, nature: params[:nature], template: template)
 
             generator = Ekylibre::DocumentManagement::DocumentGenerator.build

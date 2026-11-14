@@ -8,7 +8,6 @@
                                                                       states: params[:states],
                                                                       account: resource) do |menu|
     - export_params = params.slice(:states, :lettering_state, :period, :started_on, :stopped_on)
-    - menu.item :extract_account_as_odt.tl, params: export_params, format: :odt
   = t.destroy(resource)
   = t.mark(resource) if resource.reconcilable?
 

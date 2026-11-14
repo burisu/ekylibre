@@ -1,0 +1,29 @@
+{% comment %}Journal entry sheet. Data: journal entry serialized by JournalEntriesController#show (s0){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }}</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-title">Écriture comptable {{ s0.number | escape }} <span class="state-stamp">{{ s0.state_label | upcase | escape }}</span></div>
+<table class="doc-meta">
+  <tr><td class="label">Date de valeur</td><td>{{ s0.printed_on }}</td><td class="label">Pièce</td><td>{{ s0.resource.number | escape }}</td></tr>
+  <tr><td class="label">Journal</td><td>{{ s0.journal.name | escape }} / {{ s0.journal.code | escape }} ({{ s0.journal.currency }})</td><td class="label">Exercice</td><td>{{ s0.financial_year.code | escape }} ({{ s0.financial_year.currency }})</td></tr>
+  <tr><td class="label">Débit</td><td>{{ s0.real_debit }} {{ s0.real_currency }}</td><td class="label">Crédit</td><td>{{ s0.real_credit }} {{ s0.real_currency }}</td></tr>
+</table>
+<div class="doc-subtitle">Lignes d'écriture</div>
+<table class="data">
+  <thead><tr><th>N°</th><th>Compte</th><th>Nom</th><th>Taxe</th><th>Lettre</th><th class="num">Débit</th><th class="num">Crédit</th></tr></thead>
+  <tbody>
+  {% for item in s0.items %}
+    <tr><td>{{ item.position }}</td><td>{{ item.account.number | escape }}</td><td>{{ item.name | escape }}</td><td>{{ item.tax.name | escape }}</td><td>{{ item.letter | escape }}</td><td class="num">{{ item.real_debit }}</td><td class="num">{{ item.real_credit }}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="5">Total ({{ s0.real_currency }})</td><td class="num">{{ s0.real_debit }}</td><td class="num">{{ s0.real_credit }}</td></tr></tfoot>
+</table>
+<div class="doc-subtitle">Informations complémentaires</div>
+<table class="doc-meta">
+  <tr><td class="label">Créateur</td><td>{{ s0.creator.first_name | escape }} {{ s0.creator.last_name | escape }}</td><td class="label">Date de création</td><td>{{ s0.created_at }}</td></tr>
+  <tr><td class="label">Modificateur</td><td>{{ s0.updater.first_name | escape }} {{ s0.updater.last_name | escape }}</td><td class="label">Date de modification</td><td>{{ s0.updated_at }}</td></tr>
+</table>
+</body>
+</html>

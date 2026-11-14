@@ -20,7 +20,7 @@ module Backend
   class FinancialYearExchangesController < Backend::BaseController
     manage_restfully only: %i[new show]
 
-    list(:journal_entries, conditions: { financial_year_exchange_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:journal_entries, conditions: { financial_year_exchange_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :number, url: true
       t.column :continuous_number
       t.column :printed_on, datatype: :date

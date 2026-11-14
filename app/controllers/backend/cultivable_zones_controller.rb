@@ -40,7 +40,7 @@ module Backend
     end
 
     # content production on current cultivable land parcel
-    list(:productions, model: :activity_productions, conditions: { cultivable_zone_id: 'params[:id]'.c }, order: 'started_on DESC') do |t|
+    list(:productions, model: :activity_productions, conditions: { cultivable_zone_id: -> { params[:id] } }, order: 'started_on DESC') do |t|
       t.column :name, url: true
       t.column :activity, url: true
       t.column :support, url: true

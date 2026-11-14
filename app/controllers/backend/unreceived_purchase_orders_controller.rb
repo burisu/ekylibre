@@ -18,22 +18,23 @@
 
 module Backend
   class UnreceivedPurchaseOrdersController < Backend::BaseController
-    manage_restfully planned_at: 'Time.zone.today+2'.c, redirect_to: '{action: :show, id: "id".c}'.c,
+    manage_restfully planned_at: -> { Time.zone.today+2 }, redirect_to: ->(record) { { action: :show, id: record.id } },
                      except: :new, continue: [:nature_id], model_name: 'PurchaseOrder'
 
     def self.list_conditions
-      code = ''
-      code = search_conditions(purchase_order: %i[number reference_number created_at pretax_amount], entities: %i[number full_name]) + " ||= []\n"
-      code << "c[0] << ' AND #{PurchaseOrder.table_name}.state = ?'\n"
-      code << "c << 'opened'\n"
-      code << "c[0] << ' AND #{PurchaseOrder.table_name}.reconciliation_state = ?'\n"
-      code << "c << 'to_reconcile'\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{PurchaseOrder.table_name}.responsible_id = ?'\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(purchase_order: %i[number reference_number created_at pretax_amount], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        c[0] << " AND #{PurchaseOrder.table_name}.state = ?"
+        c << 'opened'
+        c[0] << " AND #{PurchaseOrder.table_name}.reconciliation_state = ?"
+        c << 'to_reconcile'
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{PurchaseOrder.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, model: :purchase_order, joins: :supplier, order: { created_at: :desc, number: :desc }) do |t|

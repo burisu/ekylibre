@@ -34,13 +34,13 @@ module Backend
       t.column :description
     end
 
-    list(:animals, model: :product_memberships, conditions: { group_id: 'params[:id]'.c }, order: :started_at) do |t|
+    list(:animals, model: :product_memberships, conditions: { group_id: -> { params[:id] } }, order: :started_at) do |t|
       t.column :member, url: true
       t.column :started_at
       t.column :stopped_at
     end
 
-    list(:places, model: :product_localizations, conditions: { product_id: 'params[:id]'.c }, order: { started_at: :desc }) do |t|
+    list(:places, model: :product_localizations, conditions: { product_id: -> { params[:id] } }, order: { started_at: :desc }) do |t|
       t.column :container, url: true
       t.column :nature
       t.column :started_at
@@ -48,7 +48,7 @@ module Backend
     end
 
     # List interventions for one group
-    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT animals_interventions.intervention_id FROM animals_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = animals_interventions.intervention_id WHERE animals_interventions.animal_group_id = ? AND campaigns_interventions.campaign_id = ?)", 'record', 'params[:id]'.c, 'current_campaign'.c], order: { created_at: :desc }, line_class: :status) do |t|
+    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT animals_interventions.intervention_id FROM animals_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = animals_interventions.intervention_id WHERE animals_interventions.animal_group_id = ? AND campaigns_interventions.campaign_id = ?)", 'record', -> { params[:id] }, -> { current_campaign&.id }], order: { created_at: :desc }, line_class: :status) do |t|
       t.column :name, url: true
       t.column :started_at
       t.column :human_working_duration, on_select: :sum, value_method: 'working_duration.in(:second).in(:hour)', datatype: :decimal

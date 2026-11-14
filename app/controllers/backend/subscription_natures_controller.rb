@@ -29,7 +29,7 @@ module Backend
       t.column :description
     end
 
-    list(:subscriptions, conditions: { nature_id: 'params[:id]'.c }, order: { started_on: :desc }) do |t|
+    list(:subscriptions, conditions: { nature_id: -> { params[:id] } }, order: { started_on: :desc }) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -42,7 +42,7 @@ module Backend
       t.column :stopped_on
     end
 
-    list(:product_natures, conditions: { subscription_nature_id: 'params[:id]'.c }) do |t|
+    list(:product_natures, conditions: { subscription_nature_id: -> { params[:id] } }) do |t|
       t.action :edit, url: { controller: '/backend/product_natures' }
       t.action :destroy, url: { controller: '/backend/product_natures' }
       t.column :number, url: { controller: '/backend/product_natures' }

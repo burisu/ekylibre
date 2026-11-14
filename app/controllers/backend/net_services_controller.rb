@@ -29,7 +29,7 @@ module Backend
       t.column :url
     end
 
-    list(:identifiers, conditions: { net_service_id: 'params[:id]'.c }) do |t|
+    list(:identifiers, conditions: { net_service_id: -> { params[:id] } }) do |t|
       t.column :nature, url: true
       t.column :value
     end

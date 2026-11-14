@@ -37,7 +37,7 @@ module Backend
     end
 
     # List interventions for one production support
-    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT activity_productions_interventions.intervention_id FROM activity_productions_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = activity_productions_interventions.intervention_id WHERE activity_production_id = ? AND campaigns_interventions.campaign_id = ?)", 'record', 'params[:id]'.c, 'current_campaign'.c], order: { created_at: :desc }, line_class: :status) do |t|
+    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT activity_productions_interventions.intervention_id FROM activity_productions_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = activity_productions_interventions.intervention_id WHERE activity_production_id = ? AND campaigns_interventions.campaign_id = ?)", 'record', -> { params[:id] }, -> { current_campaign&.id }], order: { created_at: :desc }, line_class: :status) do |t|
       t.column :name, url: true
       # t.status
       t.column :started_at
@@ -49,7 +49,7 @@ module Backend
       # t.column :provisional
     end
 
-    list(:plants, model: :plant, conditions: { activity_production_id: 'params[:id]'.c }, order: { name: :asc }, line_class: :status) do |t|
+    list(:plants, model: :plant, conditions: { activity_production_id: -> { params[:id] } }, order: { name: :asc }, line_class: :status) do |t|
       t.column :name, url: true
       t.column :work_number, hidden: true
       t.column :variety

@@ -12,8 +12,8 @@ module Backend
       t.column :to_bank_at
       t.column :delivered, hidden: true
       t.column :work_name, through: :affair, label: :affair_number, url: { controller: :payslip_affairs }
-      t.column :deal_work_name, through: :affair, label: :payslip_number, url: { controller: :payslips, id: 'RECORD.affair.deals_of_type(Payslip).first.id'.c }
-      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: 'RECORD.journal_entry.bank_statements.first.id'.c }, label: :bank_statement_number
+      t.column :deal_work_name, through: :affair, label: :payslip_number, url: { controller: :payslips, id: ->(record) { record.affair.deals_of_type(Payslip).first.id } }
+      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: ->(record) { record.journal_entry.bank_statements.first.id } }, label: :bank_statement_number
     end
   end
 end

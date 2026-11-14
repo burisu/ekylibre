@@ -18,7 +18,7 @@
 
 module Backend
   class ContractsController < Backend::BaseController
-    manage_restfully currency: 'Preference[:currency]'.c
+    manage_restfully currency: -> { Preference[:currency] }
 
     respond_to :csv, :ods, :xlsx, :pdf, :odt, :docx, :html, :xml, :json
 
@@ -27,14 +27,15 @@ module Backend
     #   :state State search
     #   :period Two dates with "_" separator
     def self.conditions
-      code = ''
-      code = search_conditions(contracts: %i[pretax_amount number description], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += \" AND \#{Contract.table_name}.responsible_id = ?\"\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(contracts: %i[pretax_amount number description], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{Contract.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        c
+      end
     end
 
     list(conditions: conditions, joins: :supplier, line_class: :status, order: { created_at: :desc, number: :desc }) do |t|
@@ -53,14 +54,14 @@ module Backend
       t.column :pretax_amount, currency: true
     end
 
-    list(:items, model: :contract_items, conditions: { contract_id: 'params[:id]'.c }) do |t|
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+    list(:items, model: :contract_items, conditions: { contract_id: -> { params[:id] } }) do |t|
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :quantity
       t.column :unit_pretax_amount, currency: true
       t.column :pretax_amount, currency: true
     end
 
-    list(:receptions, model: :receptions, children: :items, conditions: { contract_id: 'params[:id]'.c }) do |t|
+    list(:receptions, model: :receptions, children: :items, conditions: { contract_id: -> { params[:id] } }) do |t|
       t.action :edit, if: :draft?
       t.action :destroy, if: :draft?
       t.column :number, url: true

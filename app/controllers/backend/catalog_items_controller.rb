@@ -18,7 +18,7 @@
 
 module Backend
   class CatalogItemsController < Backend::BaseController
-    manage_restfully except: [:index, :new], destroy_to: '{controller: :catalogs, action: :show, id: RECORD.catalog_id}'.c, continue: [:variant_id]
+    manage_restfully except: [:index, :new], destroy_to: ->(record) { {controller: :catalogs, action: :show, id: record.catalog_id} }, continue: [:variant_id]
 
     unroll
 
@@ -31,8 +31,8 @@ module Backend
       t.action :edit
       t.action :destroy
       t.column :name, url: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
-      t.column :product, url: { controller: 'RECORD.product.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
+      t.column :product, url: { controller: ->(record) { record.product.class.name.tableize }, namespace: :backend }
       t.column :amount, currency: true
       t.column :reference_tax, url: true
       t.column :all_taxes_included

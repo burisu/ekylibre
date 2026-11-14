@@ -19,55 +19,55 @@
 module Backend
   class IncomingPaymentsController < Backend::BaseController
     manage_restfully(
-      to_bank_at: 'Time.zone.today'.c,
-      paid_at: 'Time.zone.today'.c,
-      responsible_id: 'current_user.id'.c,
+      to_bank_at: -> { Time.zone.today },
+      paid_at: -> { Time.zone.today },
+      responsible_id: -> { current_user.id },
       received: true,
-      mode_id: 'params[:mode_id] ? params[:mode_id] : (payer = Entity.find_by(id: params[:entity_id].to_i)) ? payer.incoming_payments.reorder(id: :desc).first.mode_id : nil'.c,
+      mode_id: -> { params[:mode_id] ? params[:mode_id] : (payer = Entity.find_by(id: params[:entity_id].to_i)) ? payer.incoming_payments.reorder(id: :desc).first.mode_id : nil },
       t3e: {
-        payer: 'RECORD.payer.full_name'.c,
-        entity: 'RECORD.payer.full_name'.c,
-        number: 'RECORD.number'.c
+        payer: ->(record) { record.payer.full_name },
+        entity: ->(record) { record.payer.full_name },
+        number: ->(record) { record.number }
       }
     )
 
     unroll :number, :to_bank_at, :amount, :currency, mode: :name, payer: :full_name
 
     def self.incoming_payments_conditions(_options = {})
-      code = search_conditions(incoming_payments: %i[amount bank_check_number number bank_account_number], entities: %i[number full_name]) + "||=[]\n"
-      code << "if params[:paid_at].present? && params[:paid_at].to_s != 'all'\n"
-      code << " c[0] << ' AND #{IncomingPayment.table_name}.paid_at::DATE BETWEEN ? AND ?'\n"
-      code << " if params[:paid_at].to_s == 'interval'\n"
-      code << "   c << params[:paid_at_started_on]\n"
-      code << "   c << params[:paid_at_stopped_on]\n"
-      code << " else\n"
-      code << "   interval = params[:paid_at].to_s.split('_')\n"
-      code << "   c << interval.first\n"
-      code << "   c << interval.second\n"
-      code << " end\n"
-      code << "end\n"
-      code << "if params[:s] == 'not_received'\n"
-      code << "  c[0] += ' AND received=?'\n"
-      code << "  c << false\n"
-      code << "elsif params[:s] == 'to_deposit_later'\n"
-      code << "  c[0] += ' AND to_bank_at > ?'\n"
-      code << "  c << Time.zone.today\n"
-      code << "elsif params[:s] == 'to_deposit_now'\n"
-      code << "  c[0] += ' AND to_bank_at <= ? AND deposit_id IS NULL AND #{IncomingPaymentMode.table_name}.with_deposit'\n"
-      code << "  c << Time.zone.now\n"
-      # code << "elsif params[:s] == 'unparted'\n"
-      # code << "  c[0] += ' AND used_amount != amount'\n"
-      code << "end\n"
-      code << "if params[:mode_id].present?\n"
-      code << "  c[0] += \" AND \#{IncomingPayment.table_name}.mode_id = ?\"\n"
-      code << "  c << params[:mode_id]\n"
-      code << "end\n"
-      code << "if params[:provider].present?\n"
-      code << "  c[0] += \" AND \#{IncomingPayment.table_name}.provider ->> 'vendor' = ?\"\n"
-      code << "  c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(incoming_payments: %i[amount bank_check_number number bank_account_number], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:paid_at].present? && params[:paid_at].to_s != 'all'
+          c[0] << " AND #{IncomingPayment.table_name}.paid_at::DATE BETWEEN ? AND ?"
+          if params[:paid_at].to_s == 'interval'
+            c << params[:paid_at_started_on]
+            c << params[:paid_at_stopped_on]
+          else
+            interval = params[:paid_at].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:s] == 'not_received'
+          c[0] += ' AND received=?'
+          c << false
+        elsif params[:s] == 'to_deposit_later'
+          c[0] += ' AND to_bank_at > ?'
+          c << Time.zone.today
+        elsif params[:s] == 'to_deposit_now'
+          c[0] += " AND to_bank_at <= ? AND deposit_id IS NULL AND #{IncomingPaymentMode.table_name}.with_deposit"
+          c << Time.zone.now
+        end
+        if params[:mode_id].present?
+          c[0] += " AND #{IncomingPayment.table_name}.mode_id = ?"
+          c << params[:mode_id]
+        end
+        if params[:provider].present?
+          c[0] += " AND #{IncomingPayment.table_name}.provider ->> 'vendor' = ?"
+          c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s
+        end
+        c
+      end
     end
 
     list(conditions: incoming_payments_conditions, joins: :payer, order: { to_bank_at: :desc }) do |t|
@@ -83,7 +83,7 @@ module Backend
       t.column :received, hidden: true
       t.column :deposit, url: true
       t.column :work_name, through: :affair, label: :affair_number, url: { controller: :sale_affairs }
-      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: 'RECORD.journal_entry.bank_statements.first.id'.c }, label: :bank_statement_number
+      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: ->(record) { record.journal_entry.bank_statements.first.id } }, label: :bank_statement_number
       t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
     end
   end

@@ -19,8 +19,11 @@
 module Backend
   class SettlementsController < Backend::MattersController
     def self.list_conditions
-      code = search_conditions(products: %i[name work_number number description uuid], product_nature_variants: [:name]) + " ||= []\n"
-      code.c
+      search1 = search_conditions(products: %i[name work_number number description uuid], product_nature_variants: [:name])
+      lambda do
+        c = instance_exec(&search1)
+        c
+      end
     end
     list(conditions: list_conditions) do |t|
       t.action :edit
@@ -28,7 +31,7 @@ module Backend
       t.column :number, url: true
       t.column :work_number
       t.column :name, url: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :variety
       t.column :population
       t.column :unit_name

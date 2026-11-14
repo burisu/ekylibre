@@ -20,7 +20,7 @@ module Backend
   class InspectionsController < Backend::BaseController
     include InspectionViewable
 
-    manage_restfully sampled_at: 'Time.zone.now'.c
+    manage_restfully sampled_at: -> { Time.zone.now }
 
     unroll
 

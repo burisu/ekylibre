@@ -32,7 +32,7 @@ module Backend
       t.column :cached_total_sum, label: :total, datatype: :float, currency: true
     end
 
-    list(:payments, model: :purchase_payment, conditions: { list_id: 'params[:id]'.c }) do |t|
+    list(:payments, model: :purchase_payment, conditions: { list_id: -> { params[:id] } }) do |t|
       t.column :number, url: true
       t.column :payee, url: true
       t.column :paid_at
@@ -41,8 +41,8 @@ module Backend
       t.column :bank_check_number
       t.column :to_bank_at
       t.column :work_name, through: :affair, label: :affair_number, url: { controller: :purchase_affairs }
-      t.column :deal_work_name, through: :affair, label: :purchase_number, url: { controller: :purchase_invoices, id: 'RECORD.affair.deals_of_type(Purchase).first.id'.c }
-      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: 'RECORD.journal_entry.bank_statements.first.id'.c }
+      t.column :deal_work_name, through: :affair, label: :purchase_number, url: { controller: :purchase_invoices, id: ->(record) { record.affair.deals_of_type(Purchase).first.id } }
+      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: ->(record) { record.journal_entry.bank_statements.first.id } }
     end
 
     def show

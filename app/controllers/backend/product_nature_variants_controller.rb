@@ -33,39 +33,41 @@ module Backend
     #   :nature_id
     #   :category_id
     def self.variants_conditions
-      code = search_conditions(product_nature_variants: %i[name number work_number]) + " ||= []\n"
-      code << "unless params[:working_set_id].blank?\n"
-      code << "  item = Onoma::WorkingSet.find(params[:working_set_id])\n"
-      code << "  c[0] << \" AND product_nature_variants.nature_id IN (SELECT id FROM product_natures WHERE \#{WorkingSet.to_sql(item.expression)})\"\n"
-      code << "end\n"
-      code << "if params[:nature_id].to_i > 0\n"
-      code << "  c[0] << \" AND product_nature_variants.nature_id = ?\"\n"
-      code << "  c << params[:nature_id].to_i\n"
-      code << "end\n"
-      code << "if params[:category_id].to_i > 0\n"
-      code << "  c[0] << \" AND product_nature_variants.category_id = ?\"\n"
-      code << "  c << params[:category_id].to_i\n"
-      code << "end\n"
-      code << "if controller_name == 'article_variants'\n"
-      code << "  c[0] << \" AND product_nature_variants.type = ?\"\n"
-      code << "  c << 'Variants::ArticleVariant'\n"
-      code << "elsif controller_name == 'equipment_variants'\n"
-      code << "  c[0] << \" AND product_nature_variants.type = ?\"\n"
-      code << "  c << 'Variants::EquipmentVariant'\n"
-      code << "end\n"
-      code << "if params[:s] == 'active'\n"
-      code << "  c[0] += ' AND product_nature_variants.active = ?'\n"
-      code << "  c << true\n"
-      code << "elsif params[:s] == 'inactive'\n"
-      code << "  c[0] += ' AND product_nature_variants.active = ?'\n"
-      code << "  c << false\n"
-      code << "end\n"
-      code << "if params[:provider].present?\n"
-      code << "  c[0] += \" AND \#{ProductNatureVariant.table_name}.provider ->> 'vendor' = ?\"\n"
-      code << "  c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(product_nature_variants: %i[name number work_number])
+      lambda do
+        c = instance_exec(&search1)
+        unless params[:working_set_id].blank?
+          item = Onoma::WorkingSet.find(params[:working_set_id])
+          c[0] << " AND product_nature_variants.nature_id IN (SELECT id FROM product_natures WHERE #{WorkingSet.to_sql(item.expression)})"
+        end
+        if params[:nature_id].to_i > 0
+          c[0] << " AND product_nature_variants.nature_id = ?"
+          c << params[:nature_id].to_i
+        end
+        if params[:category_id].to_i > 0
+          c[0] << " AND product_nature_variants.category_id = ?"
+          c << params[:category_id].to_i
+        end
+        if controller_name == 'article_variants'
+          c[0] << " AND product_nature_variants.type = ?"
+          c << 'Variants::ArticleVariant'
+        elsif controller_name == 'equipment_variants'
+          c[0] << " AND product_nature_variants.type = ?"
+          c << 'Variants::EquipmentVariant'
+        end
+        if params[:s] == 'active'
+          c[0] += ' AND product_nature_variants.active = ?'
+          c << true
+        elsif params[:s] == 'inactive'
+          c[0] += ' AND product_nature_variants.active = ?'
+          c << false
+        end
+        if params[:provider].present?
+          c[0] += " AND #{ProductNatureVariant.table_name}.provider ->> 'vendor' = ?"
+          c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s
+        end
+        c
+      end
     end
 
     list(conditions: variants_conditions) do |t|
@@ -89,7 +91,7 @@ module Backend
       t.column :derivative_of
     end
 
-    list(:catalog_items, conditions: { variant_id: 'params[:id]'.c, product_id: nil }) do |t|
+    list(:catalog_items, conditions: { variant_id: -> { params[:id] }, product_id: nil }) do |t|
       t.action :edit, url: { controller: '/backend/catalog_items' }
       t.action :destroy, url: { controller: '/backend/catalog_items' }
       t.column :name, url: { controller: '/backend/catalog_items' }
@@ -101,7 +103,7 @@ module Backend
       t.column :stopped_at
     end
 
-    list(:products, scope: [:alive], conditions: { variant_id: 'params[:id]'.c }, order: { born_at: :desc }) do |t|
+    list(:products, scope: [:alive], conditions: { variant_id: -> { params[:id] } }, order: { born_at: :desc }) do |t|
       t.column :name, url: { controller: '/backend/products' }
       t.column :work_number
       t.column :identification_number
@@ -111,7 +113,7 @@ module Backend
       t.column :container, url: { controller: '/backend/products' }
     end
 
-    list(:sale_items, conditions: { variant_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:sale_items, conditions: { variant_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :number, through: :sale, url: { controller: '/backend/sales' }
       t.column :invoiced_at, through: :sale, datatype: :datetime
       t.column :conditioning_unit
@@ -124,7 +126,7 @@ module Backend
     end
 
     list(:purchase_invoice_items, model: :purchase_item, joins: :purchase, conditions: [
-      "variant_id = ? AND purchases.type = 'PurchaseInvoice'", 'params[:id]'.c]) do |t|
+      "variant_id = ? AND purchases.type = 'PurchaseInvoice'", -> { params[:id] }]) do |t|
       t.column :number, through: :purchase, url: { controller: '/backend/purchases' }
       t.column :invoiced_at, through: :purchase, datatype: :datetime
       t.column :conditioning_unit
@@ -135,11 +137,11 @@ module Backend
       t.column :tax, hidden: true
       t.column :pretax_amount
       t.column :amount
-      t.column :supplier, label_method: 'supplier.full_name', url: { controller: '/backend/entities', action: :show, id: 'RECORD.supplier.id'.c }
+      t.column :supplier, label_method: 'supplier.full_name', url: { controller: '/backend/entities', action: :show, id: ->(record) { record.supplier.id } }
     end
 
     list(:purchase_order_items, model: :purchase_item, joins: :purchase, conditions: [
-      "variant_id = ? AND purchases.type = 'PurchaseOrder'", 'params[:id]'.c]) do |t|
+      "variant_id = ? AND purchases.type = 'PurchaseOrder'", -> { params[:id] }]) do |t|
       t.column :number, through: :purchase, url: { controller: '/backend/purchases' }
       t.column :ordered_at, through: :purchase, datatype: :datetime
       t.column :conditioning_unit
@@ -150,11 +152,11 @@ module Backend
       t.column :tax, hidden: true
       t.column :pretax_amount
       t.column :amount
-      t.column :supplier, label_method: 'supplier.full_name', url: { controller: '/backend/entities', action: :show, id: 'RECORD.supplier.id'.c }
+      t.column :supplier, label_method: 'supplier.full_name', url: { controller: '/backend/entities', action: :show, id: ->(record) { record.supplier.id } }
     end
 
-    list(:receptions, model: :parcel_item_storings, joins: :parcel_item, conditions: ['parcel_items.variant_id = ?', 'params[:id]'.c], order: { created_at: :desc }) do |t|
-      t.column :reception_number, through: :parcel_item, label: :number, url: { controller: '/backend/receptions', action: :show, id: 'RECORD.parcel_item.parcel_id'.c }
+    list(:receptions, model: :parcel_item_storings, joins: :parcel_item, conditions: ['parcel_items.variant_id = ?', -> { params[:id] }], order: { created_at: :desc }) do |t|
+      t.column :reception_number, through: :parcel_item, label: :number, url: { controller: '/backend/receptions', action: :show, id: ->(record) { record.parcel_item.parcel_id } }
       t.column :reception_planned_at, through: :parcel_item, datatype: :datetime
       t.column :reception_given_at, through: :parcel_item, datatype: :datetime
       t.column :product, url: { controller: '/backend/products' }
@@ -162,10 +164,10 @@ module Backend
       t.column :conditioning_quantity
       t.column :conditioning_unit
       t.column :unit_pretax_amount, through: :parcel_item, hidden: true
-      t.column :sender, label_method: 'sender.full_name', through: :parcel_item, label: :supplier, url: { controller: '/backend/entities', action: :show, id: 'RECORD.parcel_item.sender.id'.c }
+      t.column :sender, label_method: 'sender.full_name', through: :parcel_item, label: :supplier, url: { controller: '/backend/entities', action: :show, id: ->(record) { record.parcel_item.sender.id } }
     end
 
-    list(:shipments, model: :shipment_items, conditions: { variant_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:shipments, model: :shipment_items, conditions: { variant_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :number, through: :shipment, url: { controller: '/backend/shipments' }
       t.column :planned_at, through: :shipment, datatype: :datetime
       t.column :given_at, through: :shipment, datatype: :datetime
@@ -187,7 +189,7 @@ module Backend
                   ['pnv_infos.last_unit_pretax_amount', 'last_unit_pretax_amount']],
          joins: 'INNER JOIN product_nature_variant_suppliers_infos pnv_infos
                  ON purchase_items.variant_id = pnv_infos.variant_id',
-         conditions: ['pnv_infos.variant_id = ?', 'params[:id]'.c],
+         conditions: ['pnv_infos.variant_id = ?', -> { params[:id] }],
          count: 'supplier_name',
          group: 'supplier_name,
                  pnv_infos.entity_id,
@@ -197,17 +199,17 @@ module Backend
                  last_unit_pretax_amount,
                  ordered_unit_name',
          order: 'supplier_name') do |t|
-      t.column :supplier_name, label: :name, url: { controller: '/backend/entities', action: :show, id: 'RECORD.entity_id'.c }
+      t.column :supplier_name, label: :name, url: { controller: '/backend/entities', action: :show, id: ->(record) { record.entity_id } }
       t.column :ordered_quantity
       t.column :ordered_unit_name, label: :conditioning
       t.column :average_unit_pretax_amount
       t.column :last_unit_pretax_amount
-      t.action :order_again, icon_name: 'cart-plus', url: { controller: '/backend/purchase_orders', action: :new, supplier_id: 'RECORD.entity_id'.c, items_attributes: [{ variant_id: 'params[:id]'.c, role: 'merchandise' }], display_items_form: true }
+      t.action :order_again, icon_name: 'cart-plus', url: { controller: '/backend/purchase_orders', action: :new, supplier_id: ->(record) { record.entity_id }, items_attributes: [{ variant_id: -> { params[:id] }, role: 'merchandise' }], display_items_form: true }
     end
 
-    list(:components, model: :product_nature_variant_component, conditions: { product_nature_variant_id: 'params[:id]'.c }, order: { parent_id: :desc }) do |t|
+    list(:components, model: :product_nature_variant_component, conditions: { product_nature_variant_id: -> { params[:id] } }, order: { parent_id: :desc }) do |t|
       t.column :name
-      t.column :part_product_nature_variant, url: { controller: 'RECORD.product_nature_variant.class.name.tableize'.c, namespace: :backend }
+      t.column :part_product_nature_variant, url: { controller: ->(record) { record.product_nature_variant.class.name.tableize }, namespace: :backend }
     end
 
     # Returns quantifiers for a given variant
@@ -426,7 +428,7 @@ module Backend
       variant = instance_variable_get("@#{controller_name.singularize}")
       handle_maaid(variant, params[:phyto_product_id])
       if save_and_redirect(variant,
-                           url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: 'id'.c })),
+                           url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: -> { id } })),
                            notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false),
                            identifier: :name)
         if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock]) && variant.storable?
@@ -445,7 +447,7 @@ module Backend
       @product_nature_variant.attributes = permitted_params
       handle_maaid(@product_nature_variant, params[:phyto_product_id])
       if save_and_redirect(@product_nature_variant,
-                           url: params[:redirect] || { action: :show, id: 'id'.c },
+                           url: params[:redirect] || { action: :show, id: -> { id } },
                            notify: (params[:redirect] ? :record_x_updated : false),
                            identifier: :name )
         if ActiveModel::Type::Boolean.new.cast(params[:create_zero_intial_stock]) && @product_nature_variant.storable?
@@ -467,7 +469,7 @@ module Backend
       variant_with_same_name_count = product_nature_variant.class.with_name(variant_name).count
       rank = " (#{variant_with_same_name_count})" if variant_with_same_name_count > 0
       @new_product_nature_variant.name = "#{variant_name}#{rank}"
-      return if save_and_redirect(@new_product_nature_variant, url: { action: :edit, id: 'id'.c }, notify: :record_x_created, identifier: :name)
+      return if save_and_redirect(@new_product_nature_variant, url: { action: :edit, id: -> { id } }, notify: :record_x_created, identifier: :name)
     end
 
     private

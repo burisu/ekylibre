@@ -35,7 +35,7 @@ module Backend
       t.column :choices_count, datatype: :integer
     end
 
-    list(:choices, model: :custom_field_choices, conditions: { custom_field_id: 'params[:id]'.c }, order: 'position') do |t|
+    list(:choices, model: :custom_field_choices, conditions: { custom_field_id: -> { params[:id] } }, order: 'position') do |t|
       t.action :up, unless: :first?, method: :post
       t.action :down, unless: :last?, method: :post
       t.column :name

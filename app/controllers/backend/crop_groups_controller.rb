@@ -11,14 +11,15 @@ module Backend
     end
 
     def self.crop_groups_conditions
-      code = ''
-      code << search_conditions(crop_groups: %i[name target], labels: %i[name], products: %i[name]) + " ||= []\n"
-      code << "unless params[:label].blank? \n"
-      code << "  c[0] << ' AND labels.name = ?'\n"
-      code << "  c << params[:label]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search = search_conditions(crop_groups: %i[name target], labels: %i[name], products: %i[name])
+      lambda do
+        c = instance_exec(&search)
+        unless params[:label].blank?
+          c[0] << ' AND labels.name = ?'
+          c << params[:label]
+        end
+        c
+      end
     end
 
     list selectable: true, conditions: crop_groups_conditions, joins: "LEFT JOIN crop_group_labellings ON crop_group_labellings.crop_group_id = crop_groups.id
@@ -34,7 +35,7 @@ module Backend
       t.column :total_area, label_method: :total_area, label: :total_area
     end
 
-    list(:interventions, joins: { targets: { product: :crop_groups } }, conditions: ['crop_groups.id = ?', 'params[:id]'.c], order: { created_at: :desc }, line_class: :status, distinct: true) do |t|
+    list(:interventions, joins: { targets: { product: :crop_groups } }, conditions: ['crop_groups.id = ?', -> { params[:id] }], order: { created_at: :desc }, line_class: :status, distinct: true) do |t|
       t.column :name, url: true
       t.column :started_at
       t.column :human_working_duration
@@ -44,7 +45,7 @@ module Backend
       t.column :issue, url: true
     end
 
-    list(:plants, joins: :crop_groups, conditions: ['crop_groups.id = ?', 'params[:id]'.c], order: { name: :asc }, line_class: :status) do |t|
+    list(:plants, joins: :crop_groups, conditions: ['crop_groups.id = ?', -> { params[:id] }], order: { name: :asc }, line_class: :status) do |t|
       t.column :name, url: true
       t.column :work_number, hidden: true
       t.column :variety
@@ -55,7 +56,7 @@ module Backend
       t.column :dead_at
     end
 
-    list(:productions, model: :activity_production, joins: { support: :crop_groups }, conditions: ['crop_groups.id = ?', 'params[:id]'.c], order: { started_on: :desc }) do |t|
+    list(:productions, model: :activity_production, joins: { support: :crop_groups }, conditions: ['crop_groups.id = ?', -> { params[:id] }], order: { started_on: :desc }) do |t|
       t.column :name, url: true
       t.column :activity_name, label: :activity, url: true
       t.column :support_name, label: :support, url: true

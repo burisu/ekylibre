@@ -23,7 +23,7 @@ module Backend
          conditions: ["#{User.table_name}.signup_at IS NOT NULL"],
          order: 'users.last_name') do |t|
       t.action :edit, url: { action: :edit, controller: 'registrations' }
-      t.action :destroy, if: '!RECORD.signup_at.nil?'.c
+      t.action :destroy, if: ->(record) { !record.signup_at.nil? }
       t.column :first_name
       t.column :last_name
       t.column :email

@@ -22,20 +22,27 @@ module Backend
   class EntriesLedgersController < Backend::BaseController
     before_action :save_search_preference, only: :show
     def self.list_conditions
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c') + "\n"
-      code << journal_period_crit('params')
-      code << journal_entries_states_crit('params')
-      code << accounts_range_crit('params')
-      code << journals_crit('params')
-      code << amount_range_crit('params')
-      code << journal_letter_crit('params')
-      code << "unless params[:activity_budget_id].blank?\n"
-      code << "  c[0] << ' AND #{JournalEntryItem.table_name}.activity_budget_id = ?'\n"
-      code << "  c << params[:activity_budget_id]\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c')
+      crit2 = journal_period_crit('params')
+      crit3 = journal_entries_states_crit('params')
+      crit4 = accounts_range_crit('params')
+      crit5 = journals_crit('params')
+      crit6 = amount_range_crit('params')
+      crit7 = journal_letter_crit('params')
+      lambda do
+        c = instance_exec(&search1)
+        instance_exec(c, &crit2)
+        instance_exec(c, &crit3)
+        instance_exec(c, &crit4)
+        instance_exec(c, &crit5)
+        instance_exec(c, &crit6)
+        instance_exec(c, &crit7)
+        unless params[:activity_budget_id].blank?
+          c[0] << " AND #{JournalEntryItem.table_name}.activity_budget_id = ?"
+          c << params[:activity_budget_id]
+        end
+        c
+      end
     end
 
     list(:journal_entry_items, selectable: true, model: :journal_entry_items, conditions: list_conditions, joins: %i[entry account], order: "accounts.number, journal_entries.number, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
@@ -55,7 +62,7 @@ module Backend
       t.column :credit, currency: true, hidden: true, on_select: :sum
       t.column :absolute_debit,  currency: :absolute_currency, on_select: :sum
       t.column :absolute_credit, currency: :absolute_currency, on_select: :sum
-      t.column :vat_account, url: { controller: :accounts, action: :show, id: 'RECORD.vat_account'.c }, label_method: :vat_account_label
+      t.column :vat_account, url: { controller: :accounts, action: :show, id: ->(record) { record.vat_account } }, label_method: :vat_account_label
     end
 
     def show

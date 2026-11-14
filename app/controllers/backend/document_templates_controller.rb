@@ -18,7 +18,7 @@
 
 module Backend
   class DocumentTemplatesController < Backend::BaseController
-    manage_restfully language: 'Preference[:language]'.c
+    manage_restfully language: -> { Preference[:language] }
 
     unroll
 

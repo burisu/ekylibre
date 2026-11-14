@@ -33,12 +33,12 @@ module Backend
       t.column :by_default
     end
 
-    list(:items, model: :catalog_items, conditions: { catalog_id: 'params[:id]'.c }) do |t|
+    list(:items, model: :catalog_items, conditions: { catalog_id: -> { params[:id] } }) do |t|
       t.action :edit
       t.action :destroy
       t.column :name, url: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
-      t.column :product, url: { controller: 'RECORD.product.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
+      t.column :product, url: { controller: ->(record) { record.product.class.name.tableize }, namespace: :backend }
       t.column :unit
       t.column :amount, currency: true
       t.column :all_taxes_included

@@ -7,7 +7,7 @@ module Backend
         t.column :unit_name, through: :product
         t.column :delta
         t.column :started_at
-        t.column :intervention, url: { controller: '/backend/interventions', id: 'RECORD.intervention.id'.c }
+        t.column :intervention, url: { controller: '/backend/interventions', id: ->(record) { record.intervention.id } }
         t.column :container, hidden: true
       end
 

@@ -18,7 +18,7 @@
 
 module Backend
   class PurchaseInvoicesController < Backend::BaseController
-    manage_restfully planned_at: 'Time.zone.today+2'.c, redirect_to: '{action: :show, id: "id".c}'.c,
+    manage_restfully planned_at: -> { Time.zone.today+2 }, redirect_to: ->(record) { { action: :show, id: record.id } },
                      except: %i[new create update], continue: [:nature_id]
 
     respond_to :csv, :ods, :xlsx, :pdf, :odt, :docx, :html, :xml, :json
@@ -28,45 +28,46 @@ module Backend
     before_action :save_search_preference, only: :index
 
     def self.list_conditions
-      code = ''
-      code = search_conditions(purchase_invoice: %i[number reference_number created_at pretax_amount amount], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{PurchaseInvoice.table_name}.invoiced_at::DATE BETWEEN ? AND ?'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if !params[:reconciliation_state].blank? && params[:reconciliation_state].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{Purchase.table_name}.reconciliation_state IN (?)'\n"
-      code << "  c << params[:reconciliation_state]\n"
-      code << "end\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{PurchaseInvoice.table_name}.responsible_id = ?'\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "c\n "
-      code << "if params[:payment_mode_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{Entity.table_name}.supplier_payment_mode_id = ?'\n"
-      code << "  c << params[:payment_mode_id]\n"
-      code << "end\n"
-      code << "if params[:nature].present?\n"
-      code << " if params[:nature] == 'unpaid'\n"
-      code << "     c[0] << ' AND NOT #{PurchaseAffair.table_name}.closed'\n"
-      code << " end\n"
-      code << "end\n"
-      code << "if params[:purchases_attachments] == 'y'\n"
-      code << "    c[0] << ' AND #{PurchaseInvoice.table_name}.id IN (SELECT DISTINCT resource_id FROM #{Attachment.table_name} WHERE #{Attachment.table_name}.resource_type = \\'Purchase\\' AND #{Attachment.table_name}.deleted_at IS NULL)'\n"
-      code << "end\n"
-      code << "if params[:purchases_attachments] == 'n'\n"
-      code << "    c[0] << ' AND NOT #{PurchaseInvoice.table_name}.id IN (SELECT DISTINCT resource_id FROM #{Attachment.table_name} WHERE #{Attachment.table_name}.resource_type = \\'Purchase\\' AND #{Attachment.table_name}.deleted_at IS NULL)'\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(purchase_invoice: %i[number reference_number created_at pretax_amount amount], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND #{PurchaseInvoice.table_name}.invoiced_at::DATE BETWEEN ? AND ?"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if !params[:reconciliation_state].blank? && params[:reconciliation_state].to_s != 'all'
+          c[0] << " AND #{Purchase.table_name}.reconciliation_state IN (?)"
+          c << params[:reconciliation_state]
+        end
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{PurchaseInvoice.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        c
+        if params[:payment_mode_id].to_i > 0
+          c[0] += " AND #{Entity.table_name}.supplier_payment_mode_id = ?"
+          c << params[:payment_mode_id]
+        end
+        if params[:nature].present?
+          if params[:nature] == 'unpaid'
+            c[0] << " AND NOT #{PurchaseAffair.table_name}.closed"
+          end
+        end
+        if params[:purchases_attachments] == 'y'
+          c[0] << " AND #{PurchaseInvoice.table_name}.id IN (SELECT DISTINCT resource_id FROM #{Attachment.table_name} WHERE #{Attachment.table_name}.resource_type = 'Purchase' AND #{Attachment.table_name}.deleted_at IS NULL)"
+        end
+        if params[:purchases_attachments] == 'n'
+          c[0] << " AND NOT #{PurchaseInvoice.table_name}.id IN (SELECT DISTINCT resource_id FROM #{Attachment.table_name} WHERE #{Attachment.table_name}.resource_type = 'Purchase' AND #{Attachment.table_name}.deleted_at IS NULL)"
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: %i[affair supplier], line_class: :status, order: { created_at: :desc, number: :desc }) do |t|
@@ -88,10 +89,10 @@ module Backend
     end
     # Mode de paiement du fournisseur
 
-    list(:items, model: :purchase_items, order: { id: :asc }, conditions: { purchase_id: 'params[:id]'.c }) do |t|
-      t.column :variant, label_method: :name_with_unit, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+    list(:items, model: :purchase_items, order: { id: :asc }, conditions: { purchase_id: -> { params[:id] } }) do |t|
+      t.column :variant, label_method: :name_with_unit, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :annotation, hidden: true
-      t.column :first_reception_number, label: :reception, url: { controller: '/backend/receptions', id: 'RECORD.first_reception_id'.c }
+      t.column :first_reception_number, label: :reception, url: { controller: '/backend/receptions', id: ->(record) { record.first_reception_id } }
       t.column :conditioning_unit
       t.column :conditioning_quantity, class: 'right-align'
       t.column :unit_pretax_amount, currency: true, class: 'right-align'
@@ -105,7 +106,7 @@ module Backend
       t.column :fixed_asset, url: true, hidden: true
     end
 
-    list(:receptions, children: :items, conditions: { id: "PurchaseInvoice.find_by(id: params[:id]).receptions".c }) do |t|
+    list(:receptions, children: :items, conditions: { id: -> { PurchaseInvoice.find_by(id: params[:id]).receptions } }) do |t|
       t.action :edit, if: :draft?
       t.action :destroy, if: :draft?
       t.column :number, url: true
@@ -184,7 +185,7 @@ module Backend
       url = if params[:create_and_continue]
               { action: :new, continue: true }
             else
-              { action: :show, id: 'id'.c }
+              { action: :show, id: -> { id } }
             end
 
       if @purchase_invoice.items.blank?

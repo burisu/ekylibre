@@ -21,45 +21,43 @@ module Backend
     include InspectionViewable
 
     def self.list_conditions
-      code = ''
-      code = search_conditions(products: %i[name work_number]) + " ||= []\n"
-      code << "if params[:born_at].present? && params[:born_at].to_s != 'all'\n"
-      code << " c[0] << ' AND #{Plant.table_name}.born_at::DATE BETWEEN ? AND ?'\n"
-      code << " if params[:born_at].to_s == 'interval'\n"
-      code << "   c << params[:born_at_started_on]\n"
-      code << "   c << params[:born_at_stopped_on]\n"
-      code << " else\n"
-      code << "   interval = params[:born_at].to_s.split('_')\n"
-      code << "   c << interval.first\n"
-      code << "   c << interval.second\n"
-      code << " end\n"
-      code << "end\n"
-
-      code << "if params[:dead_at].present? && params[:dead_at].to_s != 'all'\n"
-      code << " c[0] << ' AND #{Plant.table_name}.dead_at::DATE BETWEEN ? AND ?'\n"
-      code << " if params[:dead_at].to_s == 'interval'\n"
-      code << "   c << params[:dead_at_started_on]\n"
-      code << "   c << params[:dead_at_stopped_on]\n"
-      code << " else\n"
-      code << "   interval = params[:dead_at].to_s.split('_')\n"
-      code << "   c << interval.first\n"
-      code << "   c << interval.second\n"
-      code << " end\n"
-      code << "end\n"
-
-      code << "if params[:variety].present?\n"
-      code << " c[0] << ' AND #{Plant.table_name}.variety = ?'\n"
-      code << " c << params[:variety]\n"
-      code << "end\n"
-
-      code << "if params[:area].present?\n"
-      code << " interval = params[:area].split(',')\n"
-      code << " c[0] << ' AND (SELECT (ST_Area(ST_Transform(ST_GeomFromEWKB(#{Plant.table_name}.initial_shape),2154))) BETWEEN ? AND ?)'\n"
-      code << " c << interval.first.to_i * 10_000\n"
-      code << " c << interval.last.to_i * 10_000\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(products: %i[name work_number])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:born_at].present? && params[:born_at].to_s != 'all'
+          c[0] << " AND #{Plant.table_name}.born_at::DATE BETWEEN ? AND ?"
+          if params[:born_at].to_s == 'interval'
+            c << params[:born_at_started_on]
+            c << params[:born_at_stopped_on]
+          else
+            interval = params[:born_at].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:dead_at].present? && params[:dead_at].to_s != 'all'
+          c[0] << " AND #{Plant.table_name}.dead_at::DATE BETWEEN ? AND ?"
+          if params[:dead_at].to_s == 'interval'
+            c << params[:dead_at_started_on]
+            c << params[:dead_at_stopped_on]
+          else
+            interval = params[:dead_at].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:variety].present?
+          c[0] << " AND #{Plant.table_name}.variety = ?"
+          c << params[:variety]
+        end
+        if params[:area].present?
+          interval = params[:area].split(',')
+          c[0] << " AND (SELECT (ST_Area(ST_Transform(ST_GeomFromEWKB(#{Plant.table_name}.initial_shape),2154))) BETWEEN ? AND ?)"
+          c << interval.first.to_i * 10_000
+          c << interval.last.to_i * 10_000
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions) do |t|
@@ -76,7 +74,7 @@ module Backend
       t.column :dead_at
     end
 
-    list :plant_countings, conditions: { plant_id: 'params[:id]'.c } do |t|
+    list :plant_countings, conditions: { plant_id: -> { params[:id] } } do |t|
       t.column :number, url: true
       t.status label: :state
       t.column :read_at, label: :date

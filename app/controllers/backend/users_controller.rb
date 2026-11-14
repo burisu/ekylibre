@@ -18,15 +18,15 @@
 
 module Backend
   class UsersController < Backend::BaseController
-    manage_restfully language: 'params[:language] || Preference[:language]'.c
+    manage_restfully language: -> { params[:language] || Preference[:language] }
 
     unroll :first_name, :last_name
 
-    list(order: 'users.locked, users.last_name', line_class: "(RECORD.locked ? 'critic' : '')".c) do |t|
-      t.action :lock, method: :post, if: '!RECORD.locked and RECORD.id != current_user.id'.c
-      t.action :unlock, method: :post, if: 'RECORD.locked and RECORD.id != current_user.id'.c
+    list(order: 'users.locked, users.last_name', line_class: ->(record) { (record.locked ? 'critic' : '') }) do |t|
+      t.action :lock, method: :post, if: ->(record) { !record.locked and record.id != current_user.id }
+      t.action :unlock, method: :post, if: ->(record) { record.locked and record.id != current_user.id }
       t.action :edit
-      t.action :destroy, if: 'RECORD.id != current_user.id'.c
+      t.action :destroy, if: ->(record) { record.id != current_user.id }
       t.column :full_name, url: true
       t.column :first_name, url: true, hidden: true
       t.column :last_name, url: true, hidden: true

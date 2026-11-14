@@ -18,7 +18,7 @@
 
 module Backend
   class ManureManagementPlansController < Backend::BaseController
-    manage_restfully redirect_to: "{action: :edit, id: 'id'.c}".c
+    manage_restfully redirect_to: ->(record) { { action: :edit, id: record.id } }
 
     respond_to :pdf, :odt, :docx, :xml, :json, :html, :csv
 
@@ -36,7 +36,7 @@ module Backend
       t.column :annotation
     end
 
-    list :zones, model: :manure_management_plan_zones, conditions: { plan_id: 'params[:id]'.c } do |t|
+    list :zones, model: :manure_management_plan_zones, conditions: { plan_id: -> { params[:id] } } do |t|
       t.column :activity, url: true
       t.column :cultivable_zone, url: true
       t.column :nitrogen_need

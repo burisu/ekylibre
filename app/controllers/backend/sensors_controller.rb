@@ -40,7 +40,7 @@ module Backend
       t.column :host, url: true
     end
 
-    list :analyses, model: :analysis, conditions: { sensor_id: 'params[:id]'.c } do |t|
+    list :analyses, model: :analysis, conditions: { sensor_id: -> { params[:id] } } do |t|
       t.column :number, url: true
       t.column :nature
       t.column :analysed_at

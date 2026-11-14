@@ -18,7 +18,7 @@
 
 module Backend
   class EventsController < Backend::BaseController
-    manage_restfully except: :index, nature: '(params[:nature] || Event.nature.default_value)'.c, started_at: 'Time.zone.now'.c, affair_id: 'params[:affair_id]'.c, participations_attributes: '(params[:participations]&.to_unsafe_hash || [])'.c
+    manage_restfully except: :index, nature: -> { (params[:nature] || Event.nature.default_value) }, started_at: -> { Time.zone.now }, affair_id: -> { params[:affair_id] }, participations_attributes: -> { (params[:participations]&.to_unsafe_hash || []) }
 
     unroll
 
@@ -48,7 +48,7 @@ module Backend
       render plain: value.to_s, layout: false
     end
 
-    list(:participations, model: :event_participations, conditions: { event_id: 'params[:id]'.c }, order: :id) do |t|
+    list(:participations, model: :event_participations, conditions: { event_id: -> { params[:id] } }, order: :id) do |t|
       t.action :edit
       t.action :destroy
       t.column :participant, url: true

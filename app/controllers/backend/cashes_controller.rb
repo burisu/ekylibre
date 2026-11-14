@@ -18,7 +18,7 @@
 
 module Backend
   class CashesController < Backend::BaseController
-    manage_restfully mode: 'Cash.mode.default_value'.c, currency: 'Preference[:currency]'.c, nature: 'Cash.nature.default_value'.c, t3e: { nature: 'RECORD.nature.l'.c }
+    manage_restfully mode: -> { Cash.mode.default_value }, currency: -> { Preference[:currency] }, nature: -> { Cash.nature.default_value }, t3e: { nature: ->(record) { record.nature.l } }
 
     unroll
 
@@ -36,12 +36,12 @@ module Backend
       t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
     end
 
-    list(:bank_statements, conditions: { cash_id: 'params[:id]'.c }, order: { started_on: :desc }) do |t|
+    list(:bank_statements, conditions: { cash_id: -> { params[:id] } }, order: { started_on: :desc }) do |t|
       t.action :edit
-      t.action :reconciliation, url: { controller: '/backend/bank_reconciliation/items', action: :index, bank_statement_id: 'r.id'.c }
+      t.action :reconciliation, url: { controller: '/backend/bank_reconciliation/items', action: :index, bank_statement_id: -> { r.id } }
       t.action :destroy
-      t.action :new, on: :none, url: { cash_id: 'params[:id]'.c }
-      t.action :edit_interval, on: :none, url: { cash_id: 'params[:id]'.c }
+      t.action :new, on: :none, url: { cash_id: -> { params[:id] } }
+      t.action :edit_interval, on: :none, url: { cash_id: -> { params[:id] } }
       t.column :number, url: true
       t.column :started_on
       t.column :stopped_on
@@ -51,7 +51,7 @@ module Backend
       t.column :remaining_amount_to_reconcile, currency: true, label: :remaining_amount_to_reconcile
     end
 
-    list(:deposits, conditions: { cash_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:deposits, conditions: { cash_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :number, url: true
       t.column :created_at
       t.column :payments_count
@@ -60,7 +60,7 @@ module Backend
       t.column :description
     end
 
-    list(:sessions, model: :cash_session, conditions: { cash_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:sessions, model: :cash_session, conditions: { cash_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :number
       t.column :started_at
       t.column :stopped_at

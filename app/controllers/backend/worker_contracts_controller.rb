@@ -23,8 +23,11 @@ module Backend
     unroll
 
     def self.list_conditions
-      code = search_conditions(worker_contracts: %i[name description], entities: %i[full_name]) + " ||= []\n"
-      code.c
+      search1 = search_conditions(worker_contracts: %i[name description], entities: %i[full_name])
+      lambda do
+        c = instance_exec(&search1)
+        c
+      end
     end
 
     list(conditions: list_conditions) do |t|
@@ -38,7 +41,7 @@ module Backend
     end
 
     # List of distribution for one worker_contract
-    list(:distributions, model: :worker_contract_distributions, conditions: { worker_contract_id: 'params[:id]'.c }) do |t|
+    list(:distributions, model: :worker_contract_distributions, conditions: { worker_contract_id: -> { params[:id] } }) do |t|
       t.column :affectation_percentage, percentage: true
       t.column :main_activity, url: true
     end

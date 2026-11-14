@@ -40,7 +40,7 @@ module Backend
       t.column :absolute_credit, currency: :absolute_currency, hidden: true
     end
 
-    list(:items, model: :journal_entry_items, conditions: { entry_id: 'params[:id]'.c }, order: :position) do |t|
+    list(:items, model: :journal_entry_items, conditions: { entry_id: -> { params[:id] } }, order: :position) do |t|
       t.icon :lock, if: :currently_exchanged?
       t.column :position
       t.column :name
@@ -52,7 +52,7 @@ module Backend
       # t.column :number, through: :account, url: true
       # t.column :name, through: :account, url: true
       # t.column :number, through: :bank_statement, url: true, hidden: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :letter, through: :journal_entry
       t.column :real_debit, currency: :real_currency
       t.column :real_credit, currency: :real_currency

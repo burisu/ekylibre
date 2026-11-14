@@ -29,21 +29,23 @@ module Backend
     #   :product_nature_id
     #   :storage_id
     def self.list_conditions
-      code = search_conditions(campaigns: [:name], entities: [:full_name]) + " ||= []\n"
-      # code << "if current_campaign\n"
-      # code << "  c[0] << \" AND #{CapStatement.table_name}.campaign_id IN (?)\"\n"
-      # code << "  c << current_campaign.id\n"
-      # code << "end\n"
-      code.c
+      search1 = search_conditions(campaigns: [:name], entities: [:full_name])
+      lambda do
+        c = instance_exec(&search1)
+        c
+      end
     end
 
     def self.cap_land_parcel_conditions
-      code = search_conditions(cap_land_parcels: %i[land_parcel_number main_crop_code]) + " ||= []\n"
-      code << "if params[:id].to_i > 0\n"
-      code << "  c[0] << \" AND #{CapStatement.table_name}.id IN (?)\"\n"
-      code << "  c << params[:id].to_i\n"
-      code << "end\n"
-      code.c
+      search1 = search_conditions(cap_land_parcels: %i[land_parcel_number main_crop_code])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:id].to_i > 0
+          c[0] << " AND #{CapStatement.table_name}.id IN (?)"
+          c << params[:id].to_i
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: %i[campaign declarant]) do |t|
@@ -56,7 +58,7 @@ module Backend
       t.column :net_surface_area, label_method: :human_net_surface_area
     end
 
-    list(:cap_islets, conditions: { cap_statement_id: 'params[:id]'.c }, order: { islet_number: :desc }) do |t|
+    list(:cap_islets, conditions: { cap_statement_id: -> { params[:id] } }, order: { islet_number: :desc }) do |t|
       t.column :islet_number, url: true
       t.column :town_number
       t.column :human_shape_area, datatype: :measure

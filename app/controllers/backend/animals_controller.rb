@@ -25,39 +25,30 @@ module Backend
     #   :period Two Dates with _ separator
     #   :variant_id
     def self.list_conditions
-      code = ''
-      code = search_conditions(products: %i[name work_number number description uuid], product_nature_variants: [:name]) + " ||= []\n"
-      code << "unless (params[:period].blank? or params[:period].is_a? Symbol)\n"
-      code << "  if params[:period] != 'all'\n"
-      code << "    if params[:period] == 'interval' \n"
-      code << "      started_on = params[:started_on] \n"
-      code << "      stopped_on = params[:stopped_on] \n"
-      code << "    else \n"
-      code << "      interval = params[:period].split('_')\n"
-      code << "      started_on = interval.first\n"
-      code << "      stopped_on = interval.last\n"
-      code << "    end \n"
-      code << "    c[0] << \" AND #{Animal.table_name}.born_at::DATE >= ? AND (#{Animal.table_name}.dead_at::DATE IS NULL OR #{Animal.table_name}.dead_at::DATE >= ?)\"\n"
-      code << "    c << started_on\n"
-      code << "    c << stopped_on\n"
-      code << "  end\n "
-      code << "end\n "
-      # code << "unless (params[:s].blank? or params[:s].is_a? Symbol)\n"
-      # code << "  if params[:s] != 'all'\n"
-      # code << "    if params[:s] == 'healthy'\n"
-      # code << "      c[0] << \" AND #{ProductReading.table_name}.product_id=#{Animal.table_name}.id AND #{ProductReading.table_name}.indicator_name='healthy' AND #{ProductReading.table_name}.boolean_value=true\"\n"
-      # code << "    end\n "
-      # code << "    if params[:s] == 'illness'\n"
-      # code << "      c[0] << \" AND #{ProductReading.table_name}.product_id=#{Animal.table_name}.id AND #{ProductReading.table_name}.indicator_name='healthy' AND #{ProductReading.table_name}.boolean_value=false\"\n"
-      # code << "    end\n "
-      # code << "  end\n "
-      # code << "end\n "
-      code << "  if params[:variant_id].to_i > 0\n"
-      code << "    c[0] << \" AND #{Animal.table_name}.variant_id = ?\"\n"
-      code << "    c << params[:variant_id].to_i\n"
-      code << "  end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(products: %i[name work_number number description uuid], product_nature_variants: [:name])
+      lambda do
+        c = instance_exec(&search1)
+        unless (params[:period].blank? or params[:period].is_a? Symbol)
+          if params[:period] != 'all'
+            if params[:period] == 'interval'
+              started_on = params[:started_on]
+              stopped_on = params[:stopped_on]
+            else
+              interval = params[:period].split('_')
+              started_on = interval.first
+              stopped_on = interval.last
+            end
+            c[0] << " AND #{Animal.table_name}.born_at::DATE >= ? AND (#{Animal.table_name}.dead_at::DATE IS NULL OR #{Animal.table_name}.dead_at::DATE >= ?)"
+            c << started_on
+            c << stopped_on
+          end
+        end
+        if params[:variant_id].to_i > 0
+          c[0] << " AND #{Animal.table_name}.variant_id = ?"
+          c << params[:variant_id].to_i
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: :variants) do |t|
@@ -81,7 +72,7 @@ module Backend
     end
 
     # List interventions for one production support
-    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT animals_interventions.intervention_id FROM animals_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = animals_interventions.intervention_id WHERE animals_interventions.animal_id = ? AND campaigns_interventions.campaign_id = ?)", 'record', 'params[:id]'.c, 'current_campaign'.c], order: { created_at: :desc }, line_class: :status) do |t|
+    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT animals_interventions.intervention_id FROM animals_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = animals_interventions.intervention_id WHERE animals_interventions.animal_id = ? AND campaigns_interventions.campaign_id = ?)", 'record', -> { params[:id] }, -> { current_campaign&.id }], order: { created_at: :desc }, line_class: :status) do |t|
       t.column :name, url: true
       t.column :started_at
       t.column :stopped_at, hidden: true
@@ -172,7 +163,7 @@ module Backend
     end
 
     # Children list
-    list(:children, model: :product_links, conditions: { linked_id: 'params[:id]'.c, nature: %w[father mother] }, order: { started_at: :desc }) do |t|
+    list(:children, model: :product_links, conditions: { linked_id: -> { params[:id] }, nature: %w[father mother] }, order: { started_at: :desc }) do |t|
       t.column :name, through: :product, url: true
       t.column :born_at, through: :product, datatype: :datetime
       t.column :sex, through: :product, label_method: :sex_text, label: :sex

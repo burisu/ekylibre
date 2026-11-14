@@ -3,12 +3,14 @@ module Backend
     unroll
 
     def self.units_conditions
-      code = search_conditions(units: %i[name symbol]) + " ||= []\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(units: %i[name symbol])
+      lambda do
+        c = instance_exec(&search1)
+        c
+      end
     end
 
-    list(:products, conditions: { conditioning_unit_id: 'params[:id]'.c }, order: { born_at: :desc }) do |t|
+    list(:products, conditions: { conditioning_unit_id: -> { params[:id] } }, order: { born_at: :desc }) do |t|
       t.column :name, url: { controller: '/backend/products' }
       t.column :work_number
       t.column :identification_number

@@ -19,13 +19,13 @@
 module Backend
   class EntitiesController < Backend::BaseController
     manage_restfully(
-      nature: "(params[:nature] == 'contact' ? :contact : :organization)".c,
-      language: 'Preference[:language]'.c,
-      country: 'Preference[:country]'.c,
+      nature: -> { (params[:nature] == 'contact' ? :contact : :organization) },
+      language: -> { Preference[:language] },
+      country: -> { Preference[:country] },
       active: true,
       scope: :normal,
       continue: [:nature],
-      t3e: { nature: 'RECORD.nature.text'.c }
+      t3e: { nature: ->(record) { record.nature.text } }
     )
     manage_restfully_picture
     respond_to :csv, :ods, :xlsx, :pdf, :odt, :docx, :html, :xml, :json
@@ -42,75 +42,70 @@ module Backend
     # params:
     #   :q Text search
     def self.entities_conditions
-      code = ''
-      code = search_conditions(entities: %i[number full_name description iban siret_number vat_number custom_fields], entity_addresses: [:coordinate]) + " ||= []\n"
-
-      code << "  c[0] << ' AND #{Entity.table_name}.of_company IS FALSE'\n"
-
-      code << "unless params[:state].blank?\n"
-      code << "  if params[:state].include?('client')\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.client IS TRUE'\n"
-      code << "  end\n"
-      code << "  if params[:state].include?('supplier')\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.supplier IS TRUE'\n"
-      code << "  end\n"
-      code << "  if params[:state].include?('active')\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.active IS TRUE'\n"
-      code << "  end\n"
-      code << "end\n"
-
-      code << "unless params[:nature].blank?\n"
-      code << "  if Entity.nature.values.include?(params[:nature].to_sym)\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.nature = ?'\n"
-      code << "    c << params[:nature]\n"
-      code << "  end\n"
-      code << "end\n"
-
-      code << "unless params[:mail_line_6].blank?\n"
-      code << "  c[0] << ' AND #{Entity.table_name}.id IN (SELECT entity_id FROM entity_addresses WHERE mail_line_6 ILIKE E? AND by_default AND deleted_at IS NULL)'\n"
-      code << "  c << '%' + params[:mail_line_6].to_s.strip.gsub(/[\,\s\-]+/, '%') + '%'\n"
-      code << "end\n"
-
-      code << "unless params[:subscription_nature_id].blank? || params[:subscription_test].blank?\n"
-      code << "  if params[:subscription_test] == 'subscribed_on'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND ((started_on <= ? AND stopped_on IS NULL) OR (stopped_on IS NOT NULL AND ? BETWEEN started_on AND stopped_on)) )'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "    c << params[:subscribed_on]\n"
-      code << "    c << params[:subscribed_on]\n"
-      code << "  elsif params[:subscription_test] == 'subscribed_since'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND started_on >= ?)'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "    c << params[:subscribed_since]\n"
-      code << "  elsif params[:subscription_test] == 'expired_within'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND stopped_on BETWEEN CURRENT_DATE AND CURRENT_DATE + ?::INTERVAL) AND #{Entity.table_name}.id NOT IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND stopped_on > CURRENT_DATE + ?::INTERVAL)'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "    c << params[:expired_within] + ' days'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "    c << params[:expired_within] + ' days'\n"
-      code << "  elsif params[:subscription_test] == 'expired_since'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE s.nature_id = ? AND s.stopped_on BETWEEN (CURRENT_DATE - ?::INTERVAL) AND CURRENT_DATE)'\n"
-      code << "    c << params[:subscription_nature_id].to_i\n"
-      code << "    c << params[:expired_since] + ' days'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id NOT IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE s.nature_id = ? AND s.stopped_on > CURRENT_DATE)'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "  elsif params[:subscription_test] == 'active_finishing_within'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE nature_id = ? AND started_on <= CURRENT_DATE AND stopped_on BETWEEN CURRENT_DATE AND (CURRENT_DATE + ?::INTERVAL) AND (subscriber_id, nature_id) NOT IN (SELECT subscriber_id, nature_id FROM subscriptions WHERE (CURRENT_DATE + ?::INTERVAL) BETWEEN started_on AND stopped_on))'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "    c << (params[:delay].to_i - 1).to_s + ' days'\n"
-      code << "    c << params[:delay].to_i.to_s + ' days'\n"
-      code << "  elsif params[:subscription_test] == 'active_finishing_after'\n"
-      code << "    c[0] << ' AND #{Entity.table_name}.id IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE nature_id = ? AND started_on <= CURRENT_DATE AND stopped_on >= CURRENT_DATE + ?::INTERVAL)'\n"
-      code << "    c << params[:subscription_nature_id]\n"
-      code << "    c << params[:delay].to_i.to_s + ' days'\n"
-      code << "  end\n"
-      code << "end\n"
-
-      code << "if params[:provider].present?\n"
-      code << "  c[0] += \" AND \#{Entity.table_name}.provider ->> 'vendor' = ?\"\n"
-      code << "  c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(entities: %i[number full_name description iban siret_number vat_number custom_fields], entity_addresses: [:coordinate])
+      lambda do
+        c = instance_exec(&search1)
+        c[0] << " AND #{Entity.table_name}.of_company IS FALSE"
+        unless params[:state].blank?
+          if params[:state].include?('client')
+            c[0] << " AND #{Entity.table_name}.client IS TRUE"
+          end
+          if params[:state].include?('supplier')
+            c[0] << " AND #{Entity.table_name}.supplier IS TRUE"
+          end
+          if params[:state].include?('active')
+            c[0] << " AND #{Entity.table_name}.active IS TRUE"
+          end
+        end
+        unless params[:nature].blank?
+          if Entity.nature.values.include?(params[:nature].to_sym)
+            c[0] << " AND #{Entity.table_name}.nature = ?"
+            c << params[:nature]
+          end
+        end
+        unless params[:mail_line_6].blank?
+          c[0] << " AND #{Entity.table_name}.id IN (SELECT entity_id FROM entity_addresses WHERE mail_line_6 ILIKE E? AND by_default AND deleted_at IS NULL)"
+          c << '%' + params[:mail_line_6].to_s.strip.gsub(/[, -]+/, '%') + '%'
+        end
+        unless params[:subscription_nature_id].blank? || params[:subscription_test].blank?
+          if params[:subscription_test] == 'subscribed_on'
+            c[0] << " AND #{Entity.table_name}.id IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND ((started_on <= ? AND stopped_on IS NULL) OR (stopped_on IS NOT NULL AND ? BETWEEN started_on AND stopped_on)) )"
+            c << params[:subscription_nature_id]
+            c << params[:subscribed_on]
+            c << params[:subscribed_on]
+          elsif params[:subscription_test] == 'subscribed_since'
+            c[0] << " AND #{Entity.table_name}.id IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND started_on >= ?)"
+            c << params[:subscription_nature_id]
+            c << params[:subscribed_since]
+          elsif params[:subscription_test] == 'expired_within'
+            c[0] << " AND #{Entity.table_name}.id IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND stopped_on BETWEEN CURRENT_DATE AND CURRENT_DATE + ?::INTERVAL) AND #{Entity.table_name}.id NOT IN (SELECT subscriber_id FROM subscriptions WHERE nature_id = ? AND stopped_on > CURRENT_DATE + ?::INTERVAL)"
+            c << params[:subscription_nature_id]
+            c << params[:expired_within] + ' days'
+            c << params[:subscription_nature_id]
+            c << params[:expired_within] + ' days'
+          elsif params[:subscription_test] == 'expired_since'
+            c[0] << " AND #{Entity.table_name}.id IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE s.nature_id = ? AND s.stopped_on BETWEEN (CURRENT_DATE - ?::INTERVAL) AND CURRENT_DATE)"
+            c << params[:subscription_nature_id].to_i
+            c << params[:expired_since] + ' days'
+            c[0] << " AND #{Entity.table_name}.id NOT IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE s.nature_id = ? AND s.stopped_on > CURRENT_DATE)"
+            c << params[:subscription_nature_id]
+          elsif params[:subscription_test] == 'active_finishing_within'
+            c[0] << " AND #{Entity.table_name}.id IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE nature_id = ? AND started_on <= CURRENT_DATE AND stopped_on BETWEEN CURRENT_DATE AND (CURRENT_DATE + ?::INTERVAL) AND (subscriber_id, nature_id) NOT IN (SELECT subscriber_id, nature_id FROM subscriptions WHERE (CURRENT_DATE + ?::INTERVAL) BETWEEN started_on AND stopped_on))"
+            c << params[:subscription_nature_id]
+            c << (params[:delay].to_i - 1).to_s + ' days'
+            c << params[:delay].to_i.to_s + ' days'
+          elsif params[:subscription_test] == 'active_finishing_after'
+            c[0] << " AND #{Entity.table_name}.id IN (SELECT s.subscriber_id FROM subscriptions AS s WHERE nature_id = ? AND started_on <= CURRENT_DATE AND stopped_on >= CURRENT_DATE + ?::INTERVAL)"
+            c << params[:subscription_nature_id]
+            c << params[:delay].to_i.to_s + ' days'
+          end
+        end
+        if params[:provider].present?
+          c[0] += " AND #{Entity.table_name}.provider ->> 'vendor' = ?"
+          c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s
+        end
+        c
+      end
     end
 
     list(conditions: entities_conditions, order: 'entities.last_name, entities.first_name') do |t|
@@ -148,7 +143,7 @@ module Backend
       end
     end
 
-    list(:contracts, conditions: { supplier_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:contracts, conditions: { supplier_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.action :edit
       t.action :destroy, if: :destroyable?
       t.column :number, url: true
@@ -163,7 +158,7 @@ module Backend
       t.column :pretax_amount, currency: true
     end
 
-    list(:event_participations, conditions: { participant_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:event_participations, conditions: { participant_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.action :edit
       t.action :destroy
       t.column :event
@@ -174,7 +169,7 @@ module Backend
       t.column :started_at, through: :event, datatype: :datetime
     end
 
-    list(:links, model: :entity_links, conditions: ["#{EntityLink.table_name}.stopped_at IS NULL AND (#{EntityLink.table_name}.entity_id = ? OR #{EntityLink.table_name}.linked_id = ?)", 'params[:id]'.c, 'params[:id]'.c], per_page: 5) do |t|
+    list(:links, model: :entity_links, conditions: ["#{EntityLink.table_name}.stopped_at IS NULL AND (#{EntityLink.table_name}.entity_id = ? OR #{EntityLink.table_name}.linked_id = ?)", -> { params[:id] }, -> { params[:id] }], per_page: 5) do |t|
       t.action :edit
       t.action :destroy
       t.column :entity, url: true
@@ -183,7 +178,7 @@ module Backend
       t.column :description, hidden: true
     end
 
-    list(:observations, conditions: { subject_id: 'params[:id]'.c, subject_type: 'Entity' }, line_class: :importance, per_page: 5) do |t|
+    list(:observations, conditions: { subject_id: -> { params[:id] }, subject_type: 'Entity' }, line_class: :importance, per_page: 5) do |t|
       t.action :edit
       t.action :destroy
       t.column :content
@@ -192,7 +187,7 @@ module Backend
     end
 
     # Lists issues of the current product
-    list(:issues, conditions: { target_id: 'params[:id]'.c, target_type: 'Entity' }, order: { observed_at: :desc }) do |t|
+    list(:issues, conditions: { target_id: -> { params[:id] }, target_type: 'Entity' }, order: { observed_at: :desc }) do |t|
       t.action :edit
       t.action :destroy
       t.column :nature, url: true
@@ -201,7 +196,7 @@ module Backend
       t.column :creator
     end
 
-    list(:incoming_payments, conditions: { payer_id: 'params[:id]'.c }, order: { created_at: :desc }, line_class: "(RECORD.affair_closed? ? nil : 'warning')".c, per_page: 5) do |t|
+    list(:incoming_payments, conditions: { payer_id: -> { params[:id] } }, order: { created_at: :desc }, line_class: ->(record) { (record.affair_closed? ? nil : 'warning') }, per_page: 5) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -216,7 +211,7 @@ module Backend
       # Rapprochement bancaire
     end
 
-    list(:purchase_payments, conditions: { payee_id: 'params[:id]'.c }, order: { created_at: :desc }, line_class: "(RECORD.affair_closed? ? nil : 'warning')".c) do |t|
+    list(:purchase_payments, conditions: { payee_id: -> { params[:id] } }, order: { created_at: :desc }, line_class: ->(record) { (record.affair_closed? ? nil : 'warning') }) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -230,14 +225,14 @@ module Backend
                label: :bank_reconciliation
     end
 
-    list(:receptions, conditions: { sender_id: 'params[:id]'.c }, per_page: 5, order: { created_at: :desc }, line_class: :status) do |t|
+    list(:receptions, conditions: { sender_id: -> { params[:id] } }, per_page: 5, order: { created_at: :desc }, line_class: :status) do |t|
       t.column :number, url: true
       t.column :content_sentence, label: :contains
       t.column :planned_at
       t.column :created_at, hidden: true
       t.column :state    end
 
-    list(:shipments, conditions: { recipient_id: 'params[:id]'.c }, per_page: 5, order: { created_at: :desc }, line_class: :status) do |t|
+    list(:shipments, conditions: { recipient_id: -> { params[:id] } }, per_page: 5, order: { created_at: :desc }, line_class: :status) do |t|
       t.column :number, url: true
       t.column :content_sentence, label: :contains
       t.column :planned_at
@@ -246,7 +241,7 @@ module Backend
       t.column :sale, url: true
     end
 
-    list(:purchase_invoices, conditions: { supplier_id: 'params[:id]'.c }, line_class: "(RECORD.affair_closed? ? nil : 'warning')".c) do |t|
+    list(:purchase_invoices, conditions: { supplier_id: -> { params[:id] } }, line_class: ->(record) { (record.affair_closed? ? nil : 'warning') }) do |t|
       # t.action :show, url: {format: :pdf}, image: :print, hidden: true
       t.action :edit
       t.action :destroy, if: :destroyable?, hidden: true
@@ -257,7 +252,7 @@ module Backend
       t.column :amount, currency: true
     end
 
-    list(:purchase_orders, conditions: { supplier_id: 'params[:id]'.c }) do |t|
+    list(:purchase_orders, conditions: { supplier_id: -> { params[:id] } }) do |t|
       # t.action :show, url: {format: :pdf}, image: :print, hidden: true
       t.action :edit
       t.action :destroy, if: :destroyable?, hidden: true
@@ -269,7 +264,7 @@ module Backend
       t.column :amount, currency: true
     end
 
-    list(:sales, conditions: { client_id: 'params[:id]'.c }, per_page: 5, order: { created_at: :desc }, line_class: "(RECORD.affair_closed? ? nil : 'warning')".c) do |t|
+    list(:sales, conditions: { client_id: -> { params[:id] } }, per_page: 5, order: { created_at: :desc }, line_class: ->(record) { (record.affair_closed? ? nil : 'warning') }) do |t|
       # t.action :show, url: {format: :pdf}, image: :print, hidden: true
       t.action :duplicate, method: :post, hidden: true, if: :duplicatable?
       t.action :edit, if: :draft?
@@ -282,7 +277,7 @@ module Backend
       t.column :amount, currency: true
     end
 
-    list(:sale_opportunities, conditions: { third_id: 'params[:id]'.c }, per_page: 5, order: { created_at: :desc }) do |t|
+    list(:sale_opportunities, conditions: { third_id: -> { params[:id] } }, per_page: 5, order: { created_at: :desc }) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -292,9 +287,9 @@ module Backend
       t.column :pretax_amount, currency: true
     end
 
-    list(:subscriptions, conditions: { subscriber_id: 'params[:id]'.c }, order: { stopped_on: :desc }, line_class: "(RECORD.disabled? ? 'disabled' : RECORD.active? ? 'success' : '') + (RECORD.suspended ? ' squeezed' : '')".c) do |t|
+    list(:subscriptions, conditions: { subscriber_id: -> { params[:id] } }, order: { stopped_on: :desc }, line_class: ->(record) { (record.disabled? ? 'disabled' : record.active? ? 'success' : '') + (record.suspended ? ' squeezed' : '') }) do |t|
       t.action :edit
-      t.action :renew, method: :post, if: 'current_user.can?(:write, :sales) && RECORD.renewable?'.c
+      t.action :renew, method: :post, if: ->(record) { current_user.can?(:write, :sales) && record.renewable? }
       t.action :suspend, method: :post, if: :suspendable?
       t.action :takeover, method: :post, if: :suspended
       t.action :destroy
@@ -308,7 +303,7 @@ module Backend
       t.column :suspended, hidden: true
     end
 
-    list(:tasks, conditions: { entity_id: 'params[:id]'.c }, order: :state, line_class: 'RECORD.state'.c) do |t|
+    list(:tasks, conditions: { entity_id: -> { params[:id] } }, order: :state, line_class: ->(record) { record.state }) do |t|
       t.action :edit
       t.action :destroy
       t.column :name, url: true
@@ -322,19 +317,19 @@ module Backend
 
     def self.entities_moves_client_conditions(params)
       code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, conditions: 'c', variable: 'params[:b]'.c) + "\n"
+      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, conditions: 'c', variable: -> { params[:b] }) + "\n"
       code << "c[0] << ' AND #{JournalEntryItem.table_name}.account_id = ?'\n"
       code << "c << Entity.find(#{params[:id]}).client_account_id\n"
       code << "c\n"
       eval code
     end
 
-    list(:client_journal_entry_items, model: :journal_entry_items, conditions: { account_id: 'Entity.find(params[:id]).client_account_id'.c }, line_class: "(RECORD.completely_lettered? ? 'lettered-item' : '')".c, joins: :entry, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
+    list(:client_journal_entry_items, model: :journal_entry_items, conditions: { account_id: -> { Entity.find(params[:id]).client_account_id } }, line_class: ->(record) { (record.completely_lettered? ? 'lettered-item' : '') }, joins: :entry, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
       t.column :journal, url: true
       t.column :entry_number, url: true
       t.column :printed_on, datatype: :date, label: :column
       t.column :name
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :state_label
       t.column :letter
       t.column :real_debit,  currency: :real_currency, hidden: true
@@ -347,19 +342,19 @@ module Backend
 
     def self.entities_moves_supplier_conditions(params)
       code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, conditions: 'c', variable: 'params[:b]'.c) + "\n"
+      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, conditions: 'c', variable: -> { params[:b] }) + "\n"
       code << "c[0] << ' AND #{JournalEntryItem.table_name}.account_id = ?'\n"
       code << "c << Entity.find(#{params[:id]}).supplier_account_id\n"
       code << "c\n"
       eval code
     end
 
-    list(:supplier_journal_entry_items, model: :journal_entry_items, conditions: { account_id: 'Entity.find(params[:id]).supplier_account_id'.c }, line_class: "(RECORD.completely_lettered? ? 'lettered-item' : '')".c, joins: :entry, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
+    list(:supplier_journal_entry_items, model: :journal_entry_items, conditions: { account_id: -> { Entity.find(params[:id]).supplier_account_id } }, line_class: ->(record) { (record.completely_lettered? ? 'lettered-item' : '') }, joins: :entry, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
       t.column :journal, url: true
       t.column :entry_number, url: true
       t.column :printed_on, datatype: :date, label: :column
       t.column :name
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :state_label
       t.column :letter
       t.column :real_debit,  currency: :real_currency, hidden: true

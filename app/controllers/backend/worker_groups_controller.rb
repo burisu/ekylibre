@@ -29,14 +29,15 @@ module Backend
     end
 
     def self.worker_groups_conditions
-      code = ''
-      code << search_conditions(products: %i[name]) + " ||= []\n"
-      code << "unless params[:label].blank? \n"
-      code << "  c[0] << ' AND labels.name = ?'\n"
-      code << "  c << params[:label]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search = search_conditions(products: %i[name])
+      lambda do
+        c = instance_exec(&search)
+        unless params[:label].blank?
+          c[0] << ' AND labels.name = ?'
+          c << params[:label]
+        end
+        c
+      end
     end
 
     list selectable: true, conditions: worker_groups_conditions, joins: "LEFT JOIN worker_group_labellings ON worker_group_labellings.worker_group_id = worker_groups.id
@@ -53,11 +54,11 @@ module Backend
       t.column :group_size, label: :group_size
     end
 
-    list(:workers, joins: :worker_groups, conditions: ['worker_groups.id = ?', 'params[:id]'.c], order: { name: :asc }) do |t|
+    list(:workers, joins: :worker_groups, conditions: ['worker_groups.id = ?', -> { params[:id] }], order: { name: :asc }) do |t|
       t.column :number, url: true
       t.column :work_number
       t.column :name, url: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :variety
       t.column :container, url: true
       t.column :description

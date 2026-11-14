@@ -54,7 +54,7 @@ module Ekylibre
             else
               value
             end
-          elsif value.is_a?(CodeString)
+          elsif value.is_a?(Proc)
             value
           else
             raise "What kind of value (#{value.class.name}:#{value.inspect})"

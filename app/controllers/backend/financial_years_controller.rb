@@ -37,7 +37,7 @@ module Backend
       # t.column :currency_precision
     end
 
-    list(:account_balances, joins: :account, conditions: { financial_year_id: 'params[:id]'.c }, order: 'accounts.number') do |t|
+    list(:account_balances, joins: :account, conditions: { financial_year_id: -> { params[:id] } }, order: 'accounts.number') do |t|
       t.column :account, url: true
       t.column :account_number, through: :account, label_method: :number, url: true, hidden: true
       t.column :account_name, through: :account, label_method: :name, url: true, hidden: true
@@ -45,14 +45,14 @@ module Backend
       t.column :local_credit, currency: true
     end
 
-    list(:fixed_asset_depreciations, conditions: { financial_year_id: 'params[:id]'.c }) do |t|
+    list(:fixed_asset_depreciations, conditions: { financial_year_id: -> { params[:id] } }) do |t|
       t.column :fixed_asset, url: true
       t.column :started_on
       t.column :stopped_on
       t.column :amount, currency: true
     end
 
-    list(:ekylibre_format_exchanges, model: :financial_year_exchanges, conditions: { financial_year_id: 'params[:id]'.c, format: 'ekylibre' }) do |t|
+    list(:ekylibre_format_exchanges, model: :financial_year_exchanges, conditions: { financial_year_id: -> { params[:id] }, format: 'ekylibre' }) do |t|
       t.action :journal_entries_export, format: :csv, label: :journal_entries_export.ta, class: 'export-action'
       t.action :journal_entries_import, label: :journal_entries_import.ta, if: :opened?, class: 'import-action'
       t.action :notify_accountant_modal, if: :opened?, class: 'notify-accountant-action'
@@ -63,7 +63,7 @@ module Backend
       t.column :closed_at, class: 'center-align'
     end
 
-    list(:isacompta_format_exchanges, model: :financial_year_exchanges, conditions: { financial_year_id: 'params[:id]'.c, format: 'isacompta' }) do |t|
+    list(:isacompta_format_exchanges, model: :financial_year_exchanges, conditions: { financial_year_id: -> { params[:id] }, format: 'isacompta' }) do |t|
       t.action :journal_entries_export, format: :csv, label: :journal_entries_export.ta, class: 'export-action'
       t.action :journal_entries_import, label: :journal_entries_import.ta, if: :opened?, class: 'import-action'
       t.action :notify_accountant_modal, if: :opened?, class: 'notify-accountant-action'

@@ -18,7 +18,7 @@
 
 module Backend
   class PostalZonesController < Backend::BaseController
-    manage_restfully country: 'Preference[:country]'.c
+    manage_restfully country: -> { Preference[:country] }
 
     unroll
 

@@ -25,20 +25,22 @@ module Backend
     unroll
 
     def self.categories_conditions
-      code = search_conditions(product_nature_categories: %i[name number]) + " ||= []\n"
-      code << "if params[:s] == 'active'\n"
-      code << "  c[0] += ' AND product_nature_categories.active = ?'\n"
-      code << "  c << true\n"
-      code << "elsif params[:s] == 'inactive'\n"
-      code << "  c[0] += ' AND product_nature_categories.active = ?'\n"
-      code << "  c << false\n"
-      code << "end\n"
-      code << "if params[:provider].present?\n"
-      code << "  c[0] += \" AND \#{ProductNatureCategory.table_name}.provider ->> 'vendor' = ?\"\n"
-      code << "  c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(product_nature_categories: %i[name number])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:s] == 'active'
+          c[0] += ' AND product_nature_categories.active = ?'
+          c << true
+        elsif params[:s] == 'inactive'
+          c[0] += ' AND product_nature_categories.active = ?'
+          c << false
+        end
+        if params[:provider].present?
+          c[0] += " AND #{ProductNatureCategory.table_name}.provider ->> 'vendor' = ?"
+          c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s
+        end
+        c
+      end
     end
 
     list(conditions: categories_conditions) do |t|
@@ -58,7 +60,7 @@ module Backend
       t.column :variants_count, hidden: true
     end
 
-    list(:products, conditions: { category_id: 'params[:id]'.c }, order: { born_at: :desc }) do |t|
+    list(:products, conditions: { category_id: -> { params[:id] } }, order: { born_at: :desc }) do |t|
       t.column :name, url: { controller: '/backend/products' }
       t.column :identification_number
       t.column :born_at
@@ -67,7 +69,7 @@ module Backend
       t.column :population
     end
 
-    list(:product_nature_variants, conditions: { category_id: 'params[:id]'.c }, order: { name: :asc }) do |t|
+    list(:product_nature_variants, conditions: { category_id: -> { params[:id] } }, order: { name: :asc }) do |t|
       t.action :edit, url: { controller: '/backend/product_nature_variants' }
       t.action :destroy, if: :destroyable?, url: { controller: '/backend/product_nature_variants' }
       t.column :active
@@ -78,7 +80,7 @@ module Backend
       t.column :unit_name
     end
 
-    list(:taxations, model: :product_nature_category_taxations, conditions: { product_nature_category_id: 'params[:id]'.c }, order: :id) do |t|
+    list(:taxations, model: :product_nature_category_taxations, conditions: { product_nature_category_id: -> { params[:id] } }, order: :id) do |t|
       t.column :tax, url: true
       t.column :usage
     end
@@ -104,7 +106,7 @@ module Backend
 
       t3e(@product_nature_category.attributes)
       @product_nature_category.attributes = permitted_params
-      return if save_and_redirect(@product_nature_category, url: params[:redirect] || { action: :show, id: 'id'.c }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
+      return if save_and_redirect(@product_nature_category, url: params[:redirect] || { action: :show, id: -> { id } }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
 
       @form_url = backend_product_nature_category_path(@product_nature_category)
       @key = 'product_nature_category'

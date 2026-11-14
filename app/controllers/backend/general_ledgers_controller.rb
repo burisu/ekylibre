@@ -23,47 +23,58 @@ module Backend
     before_action :save_search_preference, only: :show
 
     def self.list_conditions
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c') + "\n"
-      code << ledger_crit('params')
-      code << journal_period_crit('params')
-      code << account_crit('params')
-      code << "params[:lettering_state] = ['lettered', 'partially_lettered', 'unlettered']\n"
-      code << "preference_basename = 'backend/general_ledgers.journal_entry_items-list' \n"
-
-      code << "if current_user.preference(preference_basename + '.lettered_items.masked', false, :boolean).value \n"
-      code << "  params[:lettering_state].reject!{|s| s == 'lettered'}\n"
-      code << "end \n"
-      code << "states = #{JournalEntry.states}\n"
-      code << "if current_user.preference(preference_basename + '.draft_items.masked', false, :boolean).value \n"
-      code << "  states.reject!{|s| s == :draft}\n"
-      code << "end \n"
-      code << "states = states.each_with_object({}) do |v, h| \n"
-      code << "  h[v] = 1 \n"
-      code << "end \n"
-      code << "params[:states] = states\n"
-      code << journal_letter_crit('params')
-      code << journal_entries_states_crit('params')
-      code << "c\n"
-      code.c
+      search1 = search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c')
+      crit2 = ledger_crit('params')
+      crit3 = journal_period_crit('params')
+      crit4 = account_crit('params')
+      crit5 = journal_letter_crit('params')
+      crit6 = journal_entries_states_crit('params')
+      lambda do
+        c = instance_exec(&search1)
+        instance_exec(c, &crit2)
+        instance_exec(c, &crit3)
+        instance_exec(c, &crit4)
+        params[:lettering_state] = ['lettered', 'partially_lettered', 'unlettered']
+        preference_basename = 'backend/general_ledgers.journal_entry_items-list'
+        if current_user.preference(preference_basename + '.lettered_items.masked', false, :boolean).value
+          params[:lettering_state].reject!{|s| s == 'lettered'}
+        end
+        states = JournalEntry.states.dup
+        if current_user.preference(preference_basename + '.draft_items.masked', false, :boolean).value
+          states.reject!{|s| s == :draft}
+        end
+        states = states.each_with_object({}) do |v, h|
+          h[v] = 1
+        end
+        params[:states] = states
+        instance_exec(c, &crit5)
+        instance_exec(c, &crit6)
+        c
+      end
     end
 
     def self.account_conditions
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c') + "\n"
-      code << account_journal_period_crit('params')
-      code << centralizing_account_crit('params')
-      code << "c\n"
-      code.c
+      search1 = search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c')
+      crit2 = account_journal_period_crit('params')
+      crit3 = centralizing_account_crit('params')
+      lambda do
+        c = instance_exec(&search1)
+        instance_exec(c, &crit2)
+        instance_exec(c, &crit3)
+        c
+      end
     end
 
     def self.centralized_account_conditions
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c') + "\n"
-      code << centralizing_account_crit('params')
-      code << centralizing_account_journal_period_crit('params')
-      code << "c\n"
-      code.c
+      search1 = search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit] }, conditions: 'c')
+      crit2 = centralizing_account_crit('params')
+      crit3 = centralizing_account_journal_period_crit('params')
+      lambda do
+        c = instance_exec(&search1)
+        instance_exec(c, &crit2)
+        instance_exec(c, &crit3)
+        c
+      end
     end
 
     def self.subledger_accounts_selections
@@ -76,49 +87,51 @@ module Backend
     end
 
     def self.union_subquery
-      q1 = %q{Account.select("rpad(accounts.number, 8, '0') AS account_number, accounts.centralizing_account_name AS account_name, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) >= 0 THEN SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_debit_balance, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) < 0 THEN @ SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_credit_balance, journal_entry_items.absolute_currency AS account_currency").joins('INNER JOIN "journal_entry_items" ON "journal_entry_items"."account_id" = accounts."id"').joins('INNER JOIN "journal_entries" ON "journal_entries"."id" = "journal_entry_items"."entry_id"').where("nature = 'auxiliary'").group('account_name, account_number, account_currency')}
-
-      q2 = %q{Account.select('accounts.number AS account_number, accounts.name, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) >= 0 THEN SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_debit_balance, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) < 0 THEN @ SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_credit_balance, journal_entry_items.absolute_currency AS account_currency').joins('INNER JOIN "journal_entry_items" ON "journal_entry_items"."account_id" = accounts."id"').joins('INNER JOIN "journal_entries" ON "journal_entries"."id" = "journal_entry_items"."entry_id"').where("nature = 'general'").group('accounts.number, accounts.name, accounts.id, accounts.description, account_currency')}
-
-      code = "k = ''\n"
-      code << centralized_account_conditions.to_s
-      code << "k << '(' \n"
-      code << "k << #{q1.c}.where(c).to_sql \n"
-      code << "k << ' UNION '\n"
-      code << "k << #{q2.c}.where(c).to_sql \n"
-      code << "k << ') AS U'\n"
-      code << "k\n"
-      code.c
+      conditions = centralized_account_conditions
+      lambda do
+        c = instance_exec(&conditions)
+        auxiliary = Account.select("rpad(accounts.number, 8, '0') AS account_number, accounts.centralizing_account_name AS account_name, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) >= 0 THEN SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_debit_balance, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) < 0 THEN @ SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_credit_balance, journal_entry_items.absolute_currency AS account_currency")
+                           .joins('INNER JOIN "journal_entry_items" ON "journal_entry_items"."account_id" = accounts."id"')
+                           .joins('INNER JOIN "journal_entries" ON "journal_entries"."id" = "journal_entry_items"."entry_id"')
+                           .where("nature = 'auxiliary'")
+                           .group('account_name, account_number, account_currency')
+        general = Account.select('accounts.number AS account_number, accounts.name, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) >= 0 THEN SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_debit_balance, CASE WHEN (SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit)) < 0 THEN @ SUM(journal_entry_items.real_debit) - SUM(journal_entry_items.real_credit) ELSE 0 END AS cumulated_absolute_credit_balance, journal_entry_items.absolute_currency AS account_currency')
+                         .joins('INNER JOIN "journal_entry_items" ON "journal_entry_items"."account_id" = accounts."id"')
+                         .joins('INNER JOIN "journal_entries" ON "journal_entries"."id" = "journal_entry_items"."entry_id"')
+                         .where("nature = 'general'")
+                         .group('accounts.number, accounts.name, accounts.id, accounts.description, account_currency')
+        "(#{auxiliary.where(c).to_sql} UNION #{general.where(c).to_sql}) AS U"
+      end
     end
 
     list(:subledger_accounts, model: :accounts, conditions: account_conditions, joins: %i[journal_entry_items], order: 'accounts.number', select: subledger_accounts_selections, group: %w[accounts.number accounts.name accounts.id account_currency], count: 'DISTINCT accounts.number') do |t|
-      t.column :number, url: { controller: :general_ledgers, account_number: 'RECORD.number'.c, current_financial_year: 'params[:current_financial_year]'.c, ledger: 'RECORD.number[0..2]'.c }
+      t.column :number, url: { controller: :general_ledgers, account_number: ->(record) { record.number }, current_financial_year: -> { params[:current_financial_year] }, ledger: ->(record) { record.number[0..2] } }
       t.column :name, url: true
       t.column :cumulated_absolute_debit_balance, currency: :account_currency, class: "smallcolumns monetary_column debitcolor", default: ''
       t.column :cumulated_absolute_credit_balance, currency: :account_currency, class: "smallcolumns monetary_column creditcolor", default: ''
     end
 
     list(:centralized_ledger_accounts, model: :accounts, select: [['*']], from: union_subquery, count: 'DISTINCT U.account_number', group: 'U.account_number, U.account_name, U.cumulated_absolute_credit_balance, U.cumulated_absolute_debit_balance, U.account_currency', order: 'U.account_number') do |t|
-      t.column :account_number, url: { controller: :general_ledgers, action: :index, current_financial_year: 'params[:current_financial_year]'.c, ledger: 'RECORD.account_number'.c }
-      t.column :account_name, url: { controller: :general_ledgers, action: :index, current_financial_year: 'params[:current_financial_year]'.c, ledger: 'RECORD.account_number'.c }
+      t.column :account_number, url: { controller: :general_ledgers, action: :index, current_financial_year: -> { params[:current_financial_year] }, ledger: ->(record) { record.account_number } }
+      t.column :account_name, url: { controller: :general_ledgers, action: :index, current_financial_year: -> { params[:current_financial_year] }, ledger: ->(record) { record.account_number } }
       t.column :cumulated_absolute_debit_balance, currency: :account_currency, class: "smallcolumns monetary_column debitcolor", default: ''
       t.column :cumulated_absolute_credit_balance, currency: :account_currency, class: "smallcolumns monetary_column creditcolor", default: ''
     end
 
     list(:subledger_journal_entry_items, model: :journal_entry_items, conditions: list_conditions, joins: %i[entry account journal], order: "#{JournalEntryItem.table_name}.printed_on, #{JournalEntryItem.table_name}.id", export_class: ListExportJob) do |t|
       t.column :printed_on, class: "smallcolumns printed_on_column"
-      t.column :journal_name, url: { controller: :journals, id: 'RECORD.journal_id'.c }, label: :journal, class: :mediumcolumns
+      t.column :journal_name, url: { controller: :journals, id: ->(record) { record.journal_id } }, label: :journal, class: :mediumcolumns
       t.column :account, url: true, hidden: true, class: :largecolumns
-      t.column :account_number, through: :account, label_method: :number, url: { controller: :general_ledgers, account_number: 'RECORD.account.number'.c, current_financial_year: 'params[:current_financial_year]'.c, ledger: 'RECORD.account&.number[0..2]'.c }, hidden: true, class: :mediumcolumns
+      t.column :account_number, through: :account, label_method: :number, url: { controller: :general_ledgers, account_number: ->(record) { record.account.number }, current_financial_year: -> { params[:current_financial_year] }, ledger: ->(record) { record.account&.number[0..2] } }, hidden: true, class: :mediumcolumns
       t.column :account_name, through: :account, label_method: :name, url: true, hidden: true, class: :mediumcolumns
-      t.column :entry_number, url: { controller: :journal_entries, id: 'RECORD.entry_id'.c }, class: :smallcolumns
+      t.column :entry_number, url: { controller: :journal_entries, id: ->(record) { record.entry_id } }, class: :smallcolumns
       t.column :continuous_number, hidden: true
       t.column :code, through: :journal, label: :journal, hidden: true, class: :smallcolumns
-      t.column :entry_resource_label, url: { controller: 'RECORD&.entry&.resource&.class&.model_name&.plural'.c, id: 'RECORD&.entry&.resource&.id'.c }, label: :entry_resource_label, class: :largecolumns
+      t.column :entry_resource_label, url: { controller: ->(record) { record&.entry&.resource&.class&.model_name&.plural }, id: ->(record) { record&.entry&.resource&.id } }, label: :entry_resource_label, class: :largecolumns
       t.column :name, class: :entryname
       t.column :reference_number, through: :entry, hidden: true, class: :mediumcolumns
       t.column :main_client_or_supplier_account, through: :entry, class: :largecolumns
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }, hidden: true, class: :smallcolumns
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }, hidden: true, class: :smallcolumns
       t.column :letter, class: "smallcolumns letterscolumn"
       t.column :real_debit,  currency: :real_currency, hidden: true, class: "smallcolumns monetary_column"
       t.column :real_credit, currency: :real_currency, hidden: true, class: "smallcolumns monetary_column"

@@ -25,22 +25,20 @@ module Backend
     #   :variant_id
     #   :activity_id
     def self.equipments_conditions
-      code = ''
-      code = search_conditions(products: %i[name work_number number description uuid],
-                               product_nature_variants: [:name]) + " ||= []\n"
-      code << "  if params[:variant_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{ProductNatureVariant.table_name}.id = ?\"\n"
-      code << "    c << params[:variant_id].to_i\n"
-      code << "  end\n"
-
-      # filter by activity_id
-      code << "  if params[:activity_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{Equipment.table_name}.id IN (SELECT target_id FROM target_distributions WHERE activity_id = ?)\"\n"
-      code << "    c << params[:activity_id].to_i\n"
-      code << "  end\n"
-
-      code << "c\n"
-      code.c
+      search1 = search_conditions(products: %i[name work_number number description uuid],
+                               product_nature_variants: [:name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:variant_id].to_i > 0
+          c[0] << " AND #{ProductNatureVariant.table_name}.id = ?"
+          c << params[:variant_id].to_i
+        end
+        if params[:activity_id].to_i > 0
+          c[0] << " AND #{Equipment.table_name}.id IN (SELECT target_id FROM target_distributions WHERE activity_id = ?)"
+          c << params[:activity_id].to_i
+        end
+        c
+      end
     end
 
     list(conditions: equipments_conditions, joins: :variants) do |t|
@@ -57,12 +55,12 @@ module Backend
       t.column :isacompta_analytic_code, hidden: AnalyticSegment.where(name: 'equipments').none?
     end
 
-    list(:links, model: :product_link, conditions: { product_id: 'params[:id]'.c }) do |t|
+    list(:links, model: :product_link, conditions: { product_id: -> { params[:id] } }) do |t|
       t.column :nature
-      t.column :linked_id, url: { controller: 'backend/equipments', id: 'RECORD.linked_id'.c }, label_method: :linked_name
+      t.column :linked_id, url: { controller: 'backend/equipments', id: ->(record) { record.linked_id } }, label_method: :linked_name
     end
 
-    list(:catalog_items, conditions: { product_id: 'params[:id]'.c }) do |t|
+    list(:catalog_items, conditions: { product_id: -> { params[:id] } }) do |t|
       t.action :edit, url: { controller: '/backend/catalog_items' }
       t.action :destroy, url: { controller: '/backend/catalog_items' }
       t.column :name, url: { controller: '/backend/catalog_items' }
@@ -85,8 +83,8 @@ module Backend
         AND intervention_parameters.product_id = ?
         AND intervention_parameters.type = ?
       )",
-      'record', Procedo::Procedure.find(:equipment_maintenance).name, 'params[:id]'.c,
-      'record', Procedo::Procedure.find(:equipment_maintenance).name, 'params[:id]'.c, 'InterventionTool'
+      'record', Procedo::Procedure.find(:equipment_maintenance).name, -> { params[:id] },
+      'record', Procedo::Procedure.find(:equipment_maintenance).name, -> { params[:id] }, 'InterventionTool'
     ]) do |t|
       t.column :intervention, url: true
       t.column :reference, label_method: :name, sort: :reference_name
@@ -103,7 +101,7 @@ module Backend
        AND interventions.procedure_name = ?
        AND intervention_parameters.product_id = ?
        AND intervention_parameters.type = ?",
-      'record', Procedo::Procedure.find(:equipment_maintenance).name, 'params[:id]'.c, 'InterventionTarget'
+      'record', Procedo::Procedure.find(:equipment_maintenance).name, -> { params[:id] }, 'InterventionTarget'
     ]) do |t|
       t.column :intervention, url: true
       t.column :reference, label_method: :name, sort: :reference_name

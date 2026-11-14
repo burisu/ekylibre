@@ -1,35 +1,45 @@
+# frozen_string_literal: true
+
 module JournalEntriesCondition
   extend ActiveSupport::Concern
 
   module ClassMethods
+    # Returns a list condition Proc filtering journal entries
     def journal_entries_conditions(options = {})
-      code = ''
-      search_options = {}
       filter = { JournalEntryItem.table_name => %i[name debit credit] }
+      search_options = {}
       unless options[:with_items]
-        code << search_conditions(filter, conditions: 'cjel') + "\n"
-        search_options[:filters] = { "#{JournalEntry.table_name}.id IN (SELECT entry_id FROM #{JournalEntryItem.table_name} WHERE \" + cjel[0] + \")" => 'cjel[1..-1]' }
+        items_search = search_conditions(filter.dup)
+        search_options[:filters] = {
+          -> { "#{JournalEntry.table_name}.id IN (SELECT entry_id FROM #{JournalEntryItem.table_name} WHERE #{instance_exec(&items_search)[0]})" } =>
+            -> { instance_exec(&items_search)[1..] }
+        }
         filter.delete(JournalEntryItem.table_name)
       end
       filter[JournalEntry.table_name] = %i[number debit credit]
-      code << search_conditions(filter, search_options)
-      if options[:with_journals]
-        code << "\n"
-        code << journals_crit('params')
-      else
-        code << "[0] += ' AND (#{JournalEntry.table_name}.journal_id=?)'\n"
-        code << "c << params[:id]\n"
+      search = search_conditions(filter, search_options)
+      journals = journals_crit('params') if options[:with_journals]
+      states = journal_entries_states_crit('params') unless options[:state]
+      period = journal_period_crit('params')
+      state = options[:state]&.to_s
+
+      lambda do
+        c = instance_exec(&search)
+        if journals
+          instance_exec(c, &journals)
+        else
+          c[0] += " AND (#{JournalEntry.table_name}.journal_id=?)"
+          c << params[:id]
+        end
+        if state
+          c[0] += " AND (#{JournalEntry.table_name}.state=?)"
+          c << state
+        else
+          instance_exec(c, &states)
+        end
+        instance_exec(c, &period)
+        c
       end
-      if options[:state]
-        code << "c[0] += ' AND (#{JournalEntry.table_name}.state=?)'\n"
-        code << "c << '#{options[:state]}'\n"
-      else
-        code << journal_entries_states_crit('params')
-      end
-      code << journal_period_crit('params')
-      code << "c\n"
-      # list = code.split("\n"); list.each_index{|x| puts((x+1).to_s.rjust(4)+": "+list[x])}
-      code.gsub(/\s*\n\s*/, ';').c
     end
   end
 end

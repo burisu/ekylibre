@@ -18,7 +18,7 @@
 
 module Backend
   class InventoriesController < Backend::BaseController
-    manage_restfully achieved_at: 'Time.zone.now'.c, responsible_id: 'current_user.person.id'.c, name: 'Time.zone.now.year.to_s'.c
+    manage_restfully achieved_at: -> { Time.zone.now }, responsible_id: -> { current_user.person.id }, name: -> { Time.zone.now.year.to_s }
 
     respond_to :pdf, :odt, :docx, :xml, :json, :html, :csv
 
@@ -50,7 +50,7 @@ module Backend
 
     def create
       @inventory = resource_model.new(permitted_params)
-      return if save_and_redirect(@inventory, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: "id".c })), notify: :record_x_created, identifier: :name)
+      return if save_and_redirect(@inventory, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: -> { id } })), notify: :record_x_created, identifier: :name)
 
       render(locals: { cancel_url: :back, with_continue: false })
     end
@@ -72,7 +72,7 @@ module Backend
 
     end
 
-    list(:items, model: :inventory_items, conditions: { inventory_id: 'params[:id]'.c }, order: :id) do |t|
+    list(:items, model: :inventory_items, conditions: { inventory_id: -> { params[:id] } }, order: :id) do |t|
       # t.column :name, through: :building, url: true
       t.column :product, url: true
       # t.column :serial_number, through: :product

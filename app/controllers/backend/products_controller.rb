@@ -37,64 +37,58 @@ module Backend
     #   :q Text search
     #   :working_set
     def self.list_conditions
-      code = search_conditions(products: %i[name work_number number description uuid], product_nature_variants: [:name]) + " ||= []\n"
-
-      code << "if params[:working_set_id].blank?\n"
-      code << "  item = 'is preparation'\n"
-      code << "  c[0] << \" AND #{Product.table_name}.nature_id IN (SELECT id FROM product_natures WHERE \#{WorkingSet.to_sql(item)})\"\n"
-      code << "else \n"
-      code << "  item = Onoma::WorkingSet.find(params[:working_set_id])\n"
-      code << "  c[0] << \" AND #{Product.table_name}.nature_id IN (SELECT id FROM product_natures WHERE \#{WorkingSet.to_sql(item.expression)})\"\n"
-      code << "end\n"
-
-      # State
-      code << "if params[:s] == 'available'\n"
-      code << "  c[0] << ' AND #{Product.table_name}.dead_at IS NULL'\n"
-      code << "elsif params[:s] == 'consume'\n"
-      code << "  c[0] << ' AND #{Product.table_name}.dead_at IS NOT NULL'\n"
-      code << "end\n"
-
-      # Label
-      code << "if params[:label_id].to_i > 0\n"
-      code << "  c[0] << ' AND #{Product.table_name}.id IN (SELECT product_id FROM product_labellings WHERE label_id IN (?))'\n"
-      code << "  c << params[:label_id].to_i\n"
-      code << "end\n"
-
-      # Period
-      code << "if params[:period].to_s != 'all'\n"
-      code << "  started_on = params[:started_on]\n"
-      code << "  stopped_on = params[:stopped_on]\n"
-      code << "  c[0] << ' AND #{Product.table_name}.born_at::DATE BETWEEN ? AND ?'\n"
-      code << "  c << started_on\n"
-      code << "  c << stopped_on\n"
-      code << "  if params[:s] == 'consume'\n"
-      code << "    c[0] << ' AND #{Product.table_name}.dead_at::DATE BETWEEN ? AND ?'\n"
-      code << "    c << started_on\n"
-      code << "    c << stopped_on\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(products: %i[name work_number number description uuid], product_nature_variants: [:name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:working_set_id].blank?
+          item = 'is preparation'
+          c[0] << " AND #{Product.table_name}.nature_id IN (SELECT id FROM product_natures WHERE #{WorkingSet.to_sql(item)})"
+        else
+          item = Onoma::WorkingSet.find(params[:working_set_id])
+          c[0] << " AND #{Product.table_name}.nature_id IN (SELECT id FROM product_natures WHERE #{WorkingSet.to_sql(item.expression)})"
+        end
+        if params[:s] == 'available'
+          c[0] << " AND #{Product.table_name}.dead_at IS NULL"
+        elsif params[:s] == 'consume'
+          c[0] << " AND #{Product.table_name}.dead_at IS NOT NULL"
+        end
+        if params[:label_id].to_i > 0
+          c[0] << " AND #{Product.table_name}.id IN (SELECT product_id FROM product_labellings WHERE label_id IN (?))"
+          c << params[:label_id].to_i
+        end
+        if params[:period].to_s != 'all'
+          started_on = params[:started_on]
+          stopped_on = params[:stopped_on]
+          c[0] << " AND #{Product.table_name}.born_at::DATE BETWEEN ? AND ?"
+          c << started_on
+          c << stopped_on
+          if params[:s] == 'consume'
+            c[0] << " AND #{Product.table_name}.dead_at::DATE BETWEEN ? AND ?"
+            c << started_on
+            c << stopped_on
+          end
+        end
+        c
+      end
     end
 
     def self.intervention_parameters_conditions
-      code = search_conditions(intervention_parameter: %i[id]) + " ||= []\n"
-
-      code << "if params[:id].present?\n"
-      code << " c[0] << 'AND #{InterventionParameter.table_name}.product_id = ? '\n"
-      code << " c << params[:id]\n"
-      code << "end\n"
-
-      code << "if params[:current_campaign].present?\n"
-      code << " c[0] << 'AND #{InterventionParameter.table_name}.intervention_id IN (SELECT id FROM interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = interventions.id WHERE campaigns_interventions.campaign_id = ? AND interventions.nature = ?) '\n"
-      code << " c << current_campaign.id\n"
-      code << " c << \'record\' \n"
-      code << "else"
-      code << " c[0] << 'AND #{InterventionParameter.table_name}.intervention_id IN (SELECT id FROM interventions WHERE interventions.nature = ?) '\n"
-      code << " c << \'record\' \n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(intervention_parameter: %i[id])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:id].present?
+          c[0] << "AND #{InterventionParameter.table_name}.product_id = ? "
+          c << params[:id]
+        end
+        if params[:current_campaign].present?
+          c[0] << "AND #{InterventionParameter.table_name}.intervention_id IN (SELECT id FROM interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = interventions.id WHERE campaigns_interventions.campaign_id = ? AND interventions.nature = ?) "
+          c << current_campaign.id
+          c << 'record'
+        else c[0] << "AND #{InterventionParameter.table_name}.intervention_id IN (SELECT id FROM interventions WHERE interventions.nature = ?) "
+          c << 'record'
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions) do |t|
@@ -103,7 +97,7 @@ module Backend
       t.column :number, url: true
       t.column :work_number
       t.column :name, url: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :variety
       t.column :population
       t.column :conditioning_unit
@@ -113,7 +107,7 @@ module Backend
     end
 
     # Lists contained products of the current product
-    list(:contained_products, model: :product_localizations, joins: { product: :variant }, conditions: { product_nature_variants: { active: true }, container_id: 'params[:id]'.c, stopped_at: nil }, order: { started_at: :desc }) do |t|
+    list(:contained_products, model: :product_localizations, joins: { product: :variant }, conditions: { product_nature_variants: { active: true }, container_id: -> { params[:id] }, stopped_at: nil }, order: { started_at: :desc }) do |t|
       t.column :product, url: true
       t.column :variant, label_method: "product.variant.name"
       t.column :population, through: :product
@@ -125,7 +119,7 @@ module Backend
     end
 
     # Lists carried linkages of the current product
-    list(:carried_linkages, model: :product_linkages, conditions: { carrier_id: 'params[:id]'.c }, order: { started_at: :desc }) do |t|
+    list(:carried_linkages, model: :product_linkages, conditions: { carrier_id: -> { params[:id] } }, order: { started_at: :desc }) do |t|
       t.column :carried, url: true
       t.column :point
       t.column :nature
@@ -135,7 +129,7 @@ module Backend
     end
 
     # Lists carrier linkages of the current product
-    list(:carrier_linkages, model: :product_linkages, conditions: { carried_id: 'params[:id]'.c }, order: { started_at: :desc }) do |t|
+    list(:carrier_linkages, model: :product_linkages, conditions: { carried_id: -> { params[:id] } }, order: { started_at: :desc }) do |t|
       t.column :carrier, url: true
       t.column :point
       t.column :nature
@@ -145,7 +139,7 @@ module Backend
     end
 
     # Lists fixed_assets of a product
-    list(:fixed_assets, conditions: { product_id: 'params[:id]'.c }, order: { started_on: :desc }) do |t|
+    list(:fixed_assets, conditions: { product_id: -> { params[:id] } }, order: { started_on: :desc }) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -157,7 +151,7 @@ module Backend
     end
 
     # Lists inspections of the current product
-    list(:inspections, conditions: { product_id: 'params[:id]'.c }, order: { sampled_at: :desc }) do |t|
+    list(:inspections, conditions: { product_id: -> { params[:id] } }, order: { sampled_at: :desc }) do |t|
       t.column :number, url: true
       t.column :position
       t.column :sampled_at
@@ -166,7 +160,7 @@ module Backend
     end
 
     # Lists groups of the current product
-    list(:groups, model: :product_memberships, conditions: { member_id: 'params[:id]'.c }, order: { started_at: :desc }) do |t|
+    list(:groups, model: :product_memberships, conditions: { member_id: -> { params[:id] } }, order: { started_at: :desc }) do |t|
       t.column :group, url: true
       t.column :intervention, url: true
       t.column :started_at
@@ -174,8 +168,8 @@ module Backend
     end
 
     # Lists issues of the current product
-    list(:issues, conditions: { target_id: 'params[:id]'.c, target_type: 'Product' }, order: { observed_at: :desc }) do |t|
-      t.action :new, url: { controller: :interventions, issue_id: 'RECORD.id'.c, id: nil }
+    list(:issues, conditions: { target_id: -> { params[:id] }, target_type: 'Product' }, order: { observed_at: :desc }) do |t|
+      t.action :new, url: { controller: :interventions, issue_id: ->(record) { record.id }, id: nil }
       t.column :nature, url: true
       t.column :observed_at
       t.status
@@ -196,7 +190,7 @@ module Backend
     end
 
     # Lists members of the current product
-    list(:members, model: :product_memberships, conditions: { group_id: 'params[:id]'.c }, order: :started_at) do |t|
+    list(:members, model: :product_memberships, conditions: { group_id: -> { params[:id] } }, order: :started_at) do |t|
       t.column :member, url: true
       t.column :intervention, url: true
       t.column :started_at
@@ -204,8 +198,8 @@ module Backend
     end
 
     # Lists incoming items (product) localize in the current product (building_division or other)
-    list(:storage_reception_items, model: :parcel_item_storings, joins: :parcel_item, conditions: { storage_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
-      t.column :reception, label_method: :reception_number, url: { controller: :receptions, id: 'RECORD.parcel_item.parcel_id'.c }
+    list(:storage_reception_items, model: :parcel_item_storings, joins: :parcel_item, conditions: { storage_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
+      t.column :reception, label_method: :reception_number, url: { controller: :receptions, id: ->(record) { record.parcel_item.parcel_id } }
       t.column :nature, label_method: :reception_nature
       t.column :given_at, through: :parcel, datatype: :datetime
       t.column :conditioning_unit
@@ -214,8 +208,8 @@ module Backend
     end
 
     # Lists parcel items of the current product
-    list(:reception_items, model: :parcel_item_storings, joins: :parcel_item, conditions: { product_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
-      t.column :reception, label_method: :reception_number, url: { controller: :receptions, id: 'RECORD.parcel_item.parcel_id'.c }
+    list(:reception_items, model: :parcel_item_storings, joins: :parcel_item, conditions: { product_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
+      t.column :reception, label_method: :reception_number, url: { controller: :receptions, id: ->(record) { record.parcel_item.parcel_id } }
       t.column :nature, label_method: :reception_nature
       t.column :given_at, through: :parcel, datatype: :datetime
       t.column :conditioning_unit
@@ -224,7 +218,7 @@ module Backend
     end
 
     # Lists shipment items localize in the current product (building_division or other) ['products.id = ?', 'params[:id]'.c]
-    list(:storage_shipment_items, model: :shipment_items, joins: :localization, conditions: ['product_localizations.container_id = ?', 'params[:id]'.c], order: { created_at: :desc }) do |t|
+    list(:storage_shipment_items, model: :shipment_items, joins: :localization, conditions: ['product_localizations.container_id = ?', -> { params[:id] }], order: { created_at: :desc }) do |t|
       t.column :shipment, url: { controller: :shipments }
       t.column :nature, through: :shipment
       t.column :given_at, through: :shipment, datatype: :datetime
@@ -234,7 +228,7 @@ module Backend
     end
 
     # Lists shipment items of the current product
-    list(:shipment_items, model: :shipment_items, conditions: { product_id: 'params[:id]'.c, parcels: { nature: :outgoing } }, order: { created_at: :desc }) do |t|
+    list(:shipment_items, model: :shipment_items, conditions: { product_id: -> { params[:id] }, parcels: { nature: :outgoing } }, order: { created_at: :desc }) do |t|
       t.column :shipment, url: { controller: :shipments }
       t.column :nature, through: :shipment
       t.column :given_at, through: :shipment, datatype: :datetime
@@ -244,7 +238,7 @@ module Backend
     end
 
     # Lists localizations of the current product
-    list(:places, model: :product_localizations, conditions: { product_id: 'params[:id]'.c }, order: { started_at: :desc }) do |t|
+    list(:places, model: :product_localizations, conditions: { product_id: -> { params[:id] } }, order: { started_at: :desc }) do |t|
       t.action :edit
       t.column :nature
       t.column :container, url: true
@@ -254,14 +248,14 @@ module Backend
     end
 
     # Lists readings of the current product
-    list(:readings, model: :product_readings, conditions: { product_id: 'params[:id]'.c, indicator_datatype: '%i[string integer decimal boolean choice measure]'.c }, order: { created_at: :desc }) do |t|
+    list(:readings, model: :product_readings, conditions: { product_id: -> { params[:id] }, indicator_datatype: -> { %i[string integer decimal boolean choice measure] } }, order: { created_at: :desc }) do |t|
       t.column :indicator, datatype: :item
       t.column :value, datatype: :measure, class: 'center'
       t.column :read_at, datatype: :datetime
     end
 
     # Lists readings of the current product
-    list(:trackings, conditions: { product_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:trackings, conditions: { product_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.action :edit
       t.action :destroy, if: :destroyable?
       t.column :active
@@ -272,7 +266,7 @@ module Backend
       t.column :producer, hidden: true
     end
 
-    list(:yield_observations, joins: :plants, conditions: ['products.id = ?', 'params[:id]'.c] ) do |t|
+    list(:yield_observations, joins: :plants, conditions: ['products.id = ?', -> { params[:id] }] ) do |t|
       t.action :edit
       t.action :destroy, if: :destroyable?
       t.column :number, url: true

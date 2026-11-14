@@ -54,9 +54,6 @@ require 'state_machine/i18n'
 
 require 'open_weather_map' if Onoma[:indicators]
 
-# require 'active_list'
-# ::ActionController::Base.send(:include, ActiveList::ActionPack::ActionController)
-# ::ActionView::Base.send(:include, ActiveList::ActionPack::ViewsHelper)
 
 Ekylibre.load_integrations
 

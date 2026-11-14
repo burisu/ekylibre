@@ -18,7 +18,7 @@
 
 module Backend
   class AnalysesController < Backend::BaseController
-    manage_restfully sampled_at: 'Time.zone.now'.c, sampler_id: 'current_user.person.id'.c, except: [:create]
+    manage_restfully sampled_at: -> { Time.zone.now }, sampler_id: -> { current_user.person.id }, except: [:create]
 
     unroll
 
@@ -38,21 +38,23 @@ module Backend
     #   :period Two Dates with _ separator
     #   :variant_id
     def self.analyses_conditions
-      code = search_conditions(entities: [:full_name], analyses: %i[reference_number number]) + " ||= []\n"
-      code << "  c[0] << \" AND #{Analysis.table_name}.nature != ?\"\n"
-      code << "  c << 'sensor_analysis'\n"
-      code << "  if params[:sampler_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{Entity.table_name}.id = ?\"\n"
-      code << "    c << params[:sampler_id].to_i\n"
-      code << "  end\n"
-      code << "  unless params[:nature].blank?\n"
-      code << "    if Analysis.nature.values.include?(params[:nature].to_sym)\n"
-      code << "      c[0] << ' AND #{Analysis.table_name}.nature = ?'\n"
-      code << "      c << params[:nature]\n"
-      code << "    end\n"
-      code << "  end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(entities: [:full_name], analyses: %i[reference_number number])
+      lambda do
+        c = instance_exec(&search1)
+        c[0] << " AND #{Analysis.table_name}.nature != ?"
+        c << 'sensor_analysis'
+        if params[:sampler_id].to_i > 0
+          c[0] << " AND #{Entity.table_name}.id = ?"
+          c << params[:sampler_id].to_i
+        end
+        unless params[:nature].blank?
+          if Analysis.nature.values.include?(params[:nature].to_sym)
+            c[0] << " AND #{Analysis.table_name}.nature = ?"
+            c << params[:nature]
+          end
+        end
+        c
+      end
     end
 
     list(conditions: analyses_conditions) do |t|
@@ -70,7 +72,7 @@ module Backend
       t.column :sampler, url: true, hidden: true
     end
 
-    list :items, model: :analysis_items, conditions: { analysis_id: 'params[:id]'.c } do |t|
+    list :items, model: :analysis_items, conditions: { analysis_id: -> { params[:id] } } do |t|
       t.column :indicator, datatype: :item
       t.column :value, datatype: :measure, class: 'center'
       t.column :annotation, class: 'center'

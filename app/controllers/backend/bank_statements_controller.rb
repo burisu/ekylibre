@@ -19,9 +19,9 @@
 module Backend
   class BankStatementsController < Backend::BaseController
     manage_restfully(
-      started_on: 'Cash.find(params[:cash_id]).last_bank_statement.stopped_on + 1 rescue (Time.zone.today-1.month-2.days)'.c,
-      stopped_on: 'Cash.find(params[:cash_id]).last_bank_statement.stopped_on >> 1 rescue (Time.zone.today-2.days)'.c,
-      redirect_to: "{controller: '/backend/bank_reconciliation/items', action: :index, bank_statement_id: 'id'.c}".c
+      started_on: -> { Cash.find(params[:cash_id]).last_bank_statement.stopped_on + 1 rescue (Time.zone.today-1.month-2.days) },
+      stopped_on: -> { Cash.find(params[:cash_id]).last_bank_statement.stopped_on >> 1 rescue (Time.zone.today-2.days) },
+      redirect_to: ->(record) { { controller: '/backend/bank_reconciliation/items', action: :index, bank_statement_id: record.id } }
     )
 
     unroll
@@ -43,14 +43,14 @@ module Backend
       redirect_to backend_cashes_path
     end
 
-    list(:items, model: :bank_statement_items, conditions: { bank_statement_id: 'params[:id]'.c }, order: :id) do |t|
+    list(:items, model: :bank_statement_items, conditions: { bank_statement_id: -> { params[:id] } }, order: :id) do |t|
       t.column :transfered_on, url: true
       t.column :name
       t.column :entity
       t.column :memo
       t.column :transaction_nature, label_method: "transaction_nature&.t(scope: 'interbank_transaction_codes')"
       t.column :letter
-      t.column :first_document_name, icon_name: 'cart-plus', url: { controller: :documents, action: :show, id: 'RECORD.first_document_id'.c }
+      t.column :first_document_name, icon_name: 'cart-plus', url: { controller: :documents, action: :show, id: ->(record) { record.first_document_id } }
       t.column :journal_entry, url: true
       t.column :debit, currency: :currency
       t.column :credit, currency: :currency

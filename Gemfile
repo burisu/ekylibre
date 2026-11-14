@@ -62,7 +62,6 @@ gem 'turbolinks', '~> 5.2.1'
 gem 'twitter-typeahead-rails', '~> 0.11.1'
 
 # Front
-gem 'active_list', github: 'ekylibre/active_list', branch: 'master'
 gem 'kaminari', '~> 1.1'
 gem 'remotipart', '~> 1.2'
 gem 'simple_form', '~> 4.0'
@@ -73,7 +72,6 @@ gem 'haml', '~> 5.2'
 gem 'jbuilder', '~> 2.0'
 
 # Ruby extensions
-gem 'code_string', '~> 0.0.1'
 gem 'semantic', '~> 1.6'
 
 # Exception analysis and metrics

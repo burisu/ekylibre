@@ -25,16 +25,18 @@ module Backend
     unroll
 
     def self.product_natures_conditions(_options = {})
-      code = search_conditions(product_natures: %i[number name description]) + "\n"
-      code << "if params[:s] == 'active'\n"
-      code << "  c[0] += ' AND product_natures.active = ?'\n"
-      code << "  c << true\n"
-      code << "elsif params[:s] == 'inactive'\n"
-      code << "  c[0] += ' AND product_natures.active = ?'\n"
-      code << "  c << false\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(product_natures: %i[number name description])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:s] == 'active'
+          c[0] += ' AND product_natures.active = ?'
+          c << true
+        elsif params[:s] == 'inactive'
+          c[0] += ' AND product_natures.active = ?'
+          c << false
+        end
+        c
+      end
     end
 
     list(conditions: product_natures_conditions) do |t|
@@ -48,8 +50,8 @@ module Backend
     end
 
     list(:variants, model: :product_nature_variants,
-                    conditions: { nature_id: 'params[:id]'.c }, order: :name) do |t|
-      t.action :new, on: :none, url: { nature_id: 'params[:id]'.c, redirect: 'request.fullpath'.c }
+                    conditions: { nature_id: -> { params[:id] } }, order: :name) do |t|
+      t.action :new, on: :none, url: { nature_id: -> { params[:id] }, redirect: -> { request.fullpath } }
       t.action :edit, url: { controller: :product_nature_variants }
       t.action :destroy, url: { controller: :product_nature_variants }
       t.column :active
@@ -72,7 +74,7 @@ module Backend
 
       t3e(@product_nature.attributes)
       @product_nature.attributes = permitted_params
-      return if save_and_redirect(@product_nature, url: params[:redirect] || { action: :show, id: 'id'.c }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
+      return if save_and_redirect(@product_nature, url: params[:redirect] || { action: :show, id: -> { id } }, notify: (params[:redirect] ? :record_x_updated : false), identifier: :name)
 
       @form_url = backend_product_nature_path(@product_nature)
       @key = 'product_nature'

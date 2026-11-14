@@ -26,7 +26,6 @@ module Ekylibre
           # Blocks update or destroy if necessary
           def protect(options = {}, &block)
             options[:on] = %i[update destroy] unless options[:on]
-            code = ''.c
             [options[:on]].flatten.each do |callback|
               method_name = "protected_on_#{callback}?".to_sym
 
@@ -56,25 +55,21 @@ module Ekylibre
             # If result is false, it stops intervention
             def secure(options = {}, &block)
               options[:on] = %i[update destroy] unless options[:on]
-              code = ''.c
               [options[:on]].flatten.each do |callback|
                 method_name = "secured_on_#{callback}?".to_sym
 
-                code << "before_#{callback} :secure_#{callback}ability!\n"
+                send("before_#{callback}", :"secure_#{callback}ability!")
 
-                code << "def secure_#{callback}ability!\n"
-                code << "  unless self.#{callback}able?\n"
-                code << "    raise RecordNot#{callback.to_s.camelcase}able.new('Record cannot be #{callback}d because it is secured', self)\n"
-                code << "  end\n"
-                code << "end\n"
+                define_method("secure_#{callback}ability!") do
+                  unless send("#{callback}able?")
+                    raise "Ekylibre::Record::RecordNot#{callback.to_s.camelcase}able".constantize.new("Record cannot be #{callback}d because it is secured", self)
+                  end
+                end
 
-                code << "def #{callback}able?\n"
-                code << "  #{method_name}\n"
-                code << "end\n"
+                define_method("#{callback}able?") { send(method_name) }
 
                 define_method(method_name, &block) if block_given?
               end
-              class_eval code
             end
           end
         end

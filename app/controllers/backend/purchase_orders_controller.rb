@@ -18,7 +18,7 @@
 
 module Backend
   class PurchaseOrdersController < Backend::BaseController
-    manage_restfully planned_at: 'Time.zone.today+2'.c, redirect_to: '{action: :show, id: "id".c}'.c,
+    manage_restfully planned_at: -> { Time.zone.today+2 }, redirect_to: ->(record) { { action: :show, id: record.id } },
                      except: %i[new create], continue: [:nature_id]
 
     unroll :number, :reference_number, :ordered_at, :pretax_amount, supplier: :full_name
@@ -26,29 +26,30 @@ module Backend
     before_action :save_search_preference, only: :index
 
     def self.list_conditions
-      code = ''
-      code = search_conditions(purchase_order: %i[number reference_number created_at pretax_amount], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{PurchaseOrder.table_name}.ordered_at::DATE BETWEEN ? AND ?'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if params[:state].is_a?(Array) && !params[:state].empty?\n"
-      code << "  c[0] << ' AND #{PurchaseOrder.table_name}.state IN (?)'\n"
-      code << "  c << params[:state]\n"
-      code << "end\n "
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{PurchaseOrder.table_name}.responsible_id = ?'\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(purchase_order: %i[number reference_number created_at pretax_amount], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND #{PurchaseOrder.table_name}.ordered_at::DATE BETWEEN ? AND ?"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:state].is_a?(Array) && !params[:state].empty?
+          c[0] << " AND #{PurchaseOrder.table_name}.state IN (?)"
+          c << params[:state]
+        end
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{PurchaseOrder.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: :supplier, order: { created_at: :desc, number: :desc }) do |t|
@@ -64,10 +65,10 @@ module Backend
       t.column :amount, currency: true, on_select: :sum
     end
 
-    list(:items, model: :purchase_items, order: { id: :asc }, conditions: { purchase_id: 'params[:id]'.c }) do |t|
-      t.column :variant, label_method: :name_with_unit, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+    list(:items, model: :purchase_items, order: { id: :asc }, conditions: { purchase_id: -> { params[:id] } }) do |t|
+      t.column :variant, label_method: :name_with_unit, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :annotation, hidden: true
-      t.column :first_reception_number, label: :reception, url: { controller: '/backend/receptions', id: 'RECORD.first_reception_id'.c }
+      t.column :first_reception_number, label: :reception, url: { controller: '/backend/receptions', id: ->(record) { record.first_reception_id } }
       t.column :conditioning_unit
       t.column :conditioning_quantity, class: 'right-align'
       t.column :human_received_quantity, label: :received_quantity, datatype: :decimal, class: 'right-align'
@@ -135,7 +136,7 @@ module Backend
         notify_error_now :purchase_order_need_at_least_one_item
       else
         return if save_and_redirect(@purchase_order,
-                                    url: (params[:create_and_continue] ? { action: :new, continue: true, nature_id: @purchase_order.nature_id } : (params[:redirect] || { action: :show, id: "id".c })),
+                                    url: (params[:create_and_continue] ? { action: :new, continue: true, nature_id: @purchase_order.nature_id } : (params[:redirect] || { action: :show, id: -> { id } })),
                                     notify: :record_x_created, identifier: :number)
       end
       render(locals: { cancel_url: { action: :index }, with_continue: true })

@@ -244,7 +244,7 @@ module Interventions
         end
 
         def notify_api_error_to_creator(error: nil, log: "", message: nil)
-          code = error.http_code
+          code = Clients::Http.status(error)
           error_message = I18n.t('labels.pfi_client_error', campaign: @campaign.name, activity: @activity.name, input: @intervention_parameter_input.name, intervention: @intervention_parameter_input.intervention.name, loggable: log)
           ExceptionNotifier.notify_exception(error, data: { message: error_message }) if code.to_s == '400'
           creator = @intervention_parameter_input.intervention.creator

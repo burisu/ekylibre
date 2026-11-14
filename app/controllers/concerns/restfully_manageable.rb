@@ -41,6 +41,7 @@ module RestfullyManageable
       raise 'Need a :identifier option' if @options[:identifier].blank?
 
       @options[:cancel_url] ||= actions.include?(:index) ? { action: :index } : :back
+      @after_save_url = @options[:cancel_url] if @after_save_url.blank?
       @new_columns = columns.map(&:to_sym).uniq.reject do |c|
         NEW_IGNORED_COLUMNS.include?(c) || c.blank? || c.to_s.end_with?('_attributes')
       end
@@ -81,8 +82,9 @@ module RestfullyManageable
     # Resolves a redirection option (:show, :index, Symbol method, Hash, Proc)
     def restfully_url(value, record)
       case value
-      when :show then { action: :show, id: record.id }
+      when :show then { action: :show, id: ->(saved) { saved.id } }
       when :index then { action: :index }
+      when :back then :back
       when Symbol then send(value)
       else restfully_value(value, record)
       end

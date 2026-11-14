@@ -32,6 +32,10 @@ USER ekylibre
 # Lecture locale des justificatifs (plugin Qonto) : PyMuPDF ; tesseract et python3 sont dans l'image de base.
 RUN pip3 install --user --no-cache-dir pymupdf==1.26.5
 
+# Impression PDF : templates HTML (Liquid) convertis par WeasyPrint.
+RUN pip3 install --user --no-cache-dir weasyprint==62.3
+ENV PATH="/home/ekylibre/.local/bin:${PATH}"
+
 RUN bundle config set --local without 'development test' && \
     bundle install -j $(nproc) && \
     bundle clean --force

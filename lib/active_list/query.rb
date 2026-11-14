@@ -27,7 +27,9 @@ module ActiveList
     # Relation without pagination nor order
     def base_relation
       relation = model.all
-      Array(table.options[:scope]).each { |scope| relation = relation.public_send(scope) }
+      Array(table.options[:scope]).each do |scope|
+        relation = scope.is_a?(Proc) ? relation.instance_exec(&scope) : relation.public_send(scope)
+      end
       relation = relation.select(select_clause) if select_clause
       relation = relation.from(Evaluation.value(context, table.options[:from])) if table.options[:from]
       relation = relation.where(conditions) if table.options[:conditions].present?

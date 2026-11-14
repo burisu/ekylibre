@@ -38,7 +38,7 @@ module Backend
 
     list(:bank_statements, conditions: { cash_id: -> { params[:id] } }, order: { started_on: :desc }) do |t|
       t.action :edit
-      t.action :reconciliation, url: { controller: '/backend/bank_reconciliation/items', action: :index, bank_statement_id: -> { r.id } }
+      t.action :reconciliation, url: { controller: '/backend/bank_reconciliation/items', action: :index, bank_statement_id: ->(record) { record.id } }
       t.action :destroy
       t.action :new, on: :none, url: { cash_id: -> { params[:id] } }
       t.action :edit_interval, on: :none, url: { cash_id: -> { params[:id] } }

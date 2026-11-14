@@ -146,6 +146,16 @@ class Styles:
         return '\n'.join(out)
 
 
+UNITS_IN_CM = {'cm': 1.0, 'mm': 0.1, 'in': 2.54, 'pt': 2.54 / 72, 'pc': 2.54 / 6, 'px': 2.54 / 96}
+
+
+def to_cm(value):
+    m = re.match(r'^\s*(-?[0-9.]+)\s*([a-z]*)\s*$', value or '')
+    if not m:
+        return 0.0
+    return float(m.group(1)) * UNITS_IN_CM.get(m.group(2) or 'cm', 1.0)
+
+
 def css_class(style_name):
     return 's-' + re.sub(r'[^A-Za-z0-9_-]', '_', style_name)
 
@@ -381,12 +391,12 @@ class Converter:
                         hf = layout.find(q('style:%s-style' % kind))
                         hp = hf.find(q('style:header-footer-properties')) if hf is not None else None
                         if hp is None:
-                            return '1.5cm'
-                        return 'calc(%s + %s + 0.8cm)' % (hp.get(q('fo:min-height'), '0cm'), hp.get(q('fo:margin-bottom' if kind == 'header' else 'fo:margin-top'), '0cm'))
+                            return 1.5
+                        return to_cm(hp.get(q('fo:min-height'), '0cm')) + to_cm(hp.get(q('fo:margin-bottom' if kind == 'header' else 'fo:margin-top'), '0cm')) + 0.8
                     if master.find(q('style:header')) is not None:
-                        margins[0] = 'calc(%s + %s)' % (margins[0], extra('header'))
+                        margins[0] = '%.3fcm' % (to_cm(margins[0]) + extra('header'))
                     if master.find(q('style:footer')) is not None:
-                        margins[2] = 'calc(%s + %s)' % (margins[2], extra('footer'))
+                        margins[2] = '%.3fcm' % (to_cm(margins[2]) + extra('footer'))
                     rules.append('margin: %s' % ' '.join(margins))
             h_el = master.find(q('style:header'))
             f_el = master.find(q('style:footer'))

@@ -1,0 +1,33 @@
+{% comment %}Animal husbandry register. Data: animal_husbandry_register aggregator (s0){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }} @page doc { size: A4 landscape; } .plan svg { max-width: 12cm; max-height: 8cm; }</style></head>
+<body class="doc">
+{% for enterprise in s0.enterprise %}
+<div class="doc-footer">{{ enterprise.entity_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-title">Registre d'élevage</div>
+<table class="doc-meta">
+  <tr><td class="label">Exploitation</td><td>{{ enterprise.entity_name | escape }}</td><td class="label">N° EDE cheptel</td><td>{{ enterprise.ede_cattling_number | escape }}</td></tr>
+  <tr><td class="label">Adresse</td><td>{{ enterprise.address | escape }}</td><td class="label">N° EDE détenteur</td><td>{{ enterprise.ede_owner_number | escape }}</td></tr>
+</table>
+{% endfor %}
+{% for campaign in s0.campaign %}
+<div class="doc-subtitle">Campagne {{ campaign.name | escape }}</div>
+{% for plan in campaign.plan %}<div class="plan">{{ plan.plan_svg }}</div>{% endfor %}
+{% for productions in campaign.animal_productions %}{% for production in productions.production %}
+<p><strong>{{ production.name | escape }}</strong> {{ production.variant_name | escape }}</p>
+{% if production.animal.size > 0 %}
+<table class="data">
+  <thead><tr><th>N° travail</th><th>N° identification</th><th>Nom</th><th>Variété</th><th>Sexe</th><th>Né le</th><th>Sorti le</th><th>Localisations</th></tr></thead>
+  <tbody>
+  {% for animal in production.animal %}
+    <tr><td>{{ animal.work_number | escape }}</td><td>{{ animal.identification_number | escape }}</td><td>{{ animal.name | escape }}</td><td>{{ animal.variety | escape }}</td><td>{{ animal.sex | escape }}</td><td>{{ animal.born_at | date: "%d/%m/%Y" }}</td><td>{{ animal.dead_at | date: "%d/%m/%Y" }}</td>
+      <td>{% for localizations in animal.animal_localizations %}{% for localization in localizations.localization %}{{ localization.container_name | escape }} ({{ localization.started_at | date: "%d/%m/%Y" }}{% if localization.stopped_at != blank %} → {{ localization.stopped_at | date: "%d/%m/%Y" }}{% endif %})<br>{% endfor %}{% endfor %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endfor %}{% endfor %}
+{% endfor %}
+</body>
+</html>

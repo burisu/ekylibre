@@ -135,42 +135,6 @@ class DocumentTemplate < ApplicationRecord
     source_dir.join("content.#{self.file_extension}")
   end
 
-  # Print a document with the given datasource and return raw data
-  # Store if needed by template
-  # @param datasource XML representation of data used by the template
-  def print(datasource, key, format = :pdf, options = {})
-    # Load the report
-    report = Beardley::Report.new(source_path, locale: 'i18n.iso2'.t)
-    # Call it with datasource
-    data = report.send("to_#{format}", datasource)
-    # Archive the document according to archiving method. See #document method.
-    document(data, key, format, options)
-    # Returns only the data (without filename)
-    data
-  end
-
-  # Export a document with the given datasource and return path file
-  # Store if needed by template
-  # @param datasource XML representation of data used by the template
-  def export(datasource, key, format = :pdf, options = {})
-    # Load the report
-    report = Beardley::Report.new(source_path, locale: 'i18n.iso2'.t)
-    # Call it with datasource
-    path = Pathname.new(report.to_file(format.to_sym, datasource))
-    # Archive the document according to archiving method. See #document method.
-    if document = self.document(path, key, format, options)
-      FileUtils.rm_rf(path)
-      path = document.file.path(:original)
-      if signed
-        user = document.creator
-        signer = Ekylibre::DocumentManagement::SignatureManager.new
-        signer.sign(document: document, user: user)
-      end
-    end
-    # Returns only the path
-    path
-  end
-
   # Returns the list of formats of the templates
   def formats
     (self['formats'].blank? ? Ekylibre::Reporting.formats : self['formats'].strip.split(/[\s\,]+/))
@@ -214,16 +178,6 @@ class DocumentTemplate < ApplicationRecord
   mattr_accessor :load_path
 
   class << self
-    # Print document with default active template for the given nature
-    # Returns nil if no template found.
-    def print(nature, datasource, key, format = :pdf, options = {})
-      if template = find_by(nature: nature, by_default: true, active: true)
-        return template.print(datasource, key, format, options)
-      end
-
-      nil
-    end
-
     def find_active_template(name, extension = nil)
       attributes = name.is_a?(Integer) ? { id: name } : { by_default: true, nature: name.to_s }
       attributes.merge!(file_extension: extension) if extension
@@ -233,29 +187,6 @@ class DocumentTemplate < ApplicationRecord
     # Returns the root directory for the document templates's sources
     def sources_root
       Ekylibre::Tenant.private_directory.join('reporting')
-    end
-
-    # Compute fallback chain for a given document nature
-    def template_fallbacks(nature, locale)
-      ActiveSupport::Deprecation.warn "DocumentTemplate#template_fallbacks is deprecated, use Ekylibre::DocumentManagement::TemplateFileProvider instead."
-
-      stack = []
-      load_path.each do |path|
-        root = path.join(locale, 'reporting')
-        stack << root.join("#{nature}.xml")
-        stack << root.join("#{nature}.jrxml")
-        fallback = {
-          sales_order: :sale,
-          sales_estimate: :sale,
-          sales_invoice: :sale,
-          purchases_estimate: :purchases_order
-        }[nature.to_sym]
-        if fallback
-          stack << root.join("#{fallback}.xml")
-          stack << root.join("#{fallback}.jrxml")
-        end
-      end
-      stack
     end
 
     # Loads in DB all default document templates
@@ -317,42 +248,6 @@ class DocumentTemplate < ApplicationRecord
                   template_file.read.force_encoding('UTF-8')
                 end
       File.write(source_path, content)
-    end
-
-    def import_jasper(template_file)
-      FileUtils.mkdir_p(source_dir)
-      File.open(source_path, 'wb') do |f|
-        # Updates source to make it working
-        begin
-          document = Nokogiri::XML(template_file) do |config|
-            config.noblanks.nonet.strict
-          end
-          # Removes comments
-          document.xpath('//comment()').remove
-          # Updates template
-          if document.root && document.root.namespace && document.root.namespace.href == 'http://jasperreports.sourceforge.net/jasperreports'
-            if template = document.root.xpath('xmlns:template').first
-              logger.info "Update <template> for document template #{nature}"
-              template.children.remove
-              style_file = Ekylibre::Tenant.private_directory.join('corporate_identity', 'reporting_style.xml')
-              # TODO: find a way to permit customization for users to restore that
-              if true # unless style_file.exist?
-                FileUtils.mkdir_p(style_file.dirname)
-                FileUtils.cp(Rails.root.join('config', 'corporate_identity', 'reporting_style.xml'), style_file)
-              end
-              template.add_child(Nokogiri::XML::CDATA.new(document, style_file.relative_path_from(source_path.dirname).to_s.inspect))
-            else
-              logger.info "Cannot find and update <template> in document template #{nature}"
-            end
-          end
-          # Writes source
-          f.write(document.to_s)
-        end
-      end
-      # Remove .jasper file to force reloading
-      Dir.glob(source_path.dirname.join('*.jasper')).each do |file|
-        FileUtils.rm_f(file)
-      end
     end
 end
 

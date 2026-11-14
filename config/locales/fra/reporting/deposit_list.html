@@ -1,0 +1,29 @@
+{% comment %}Deposit list. Data: deposit serialized by DepositsController#show (s0){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }}</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-header">
+  <div class="company"><strong>{{ s0.company.full_name | escape }}</strong>
+{{ s0.company.address | escape }}</div>
+  <div class="doc-address" style="width: 8cm"><strong>{{ s0.cash.bank_name | escape }}</strong>
+{{ s0.cash.bank_agency_address | escape }}</div>
+</div>
+<div class="doc-title">Bordereau de remise {{ s0.number | escape }}</div>
+<table class="doc-meta">
+  <tr><td class="label">Compte</td><td>{{ s0.cash.name | escape }}</td><td class="label">Mode</td><td>{{ s0.mode.name | escape }}</td></tr>
+  <tr><td class="label">IBAN</td><td>{{ s0.cash.iban | escape }}</td><td class="label">BIC</td><td>{{ s0.cash.bank_identifier_code | escape }}</td></tr>
+  <tr><td class="label">Responsable</td><td>{{ s0.responsible.full_name | escape }}</td><td class="label">Date</td><td>{{ s0.created_at }}</td></tr>
+</table>
+<table class="data">
+  <thead><tr><th>N°</th><th>Payeur</th><th>Banque</th><th>N° de chèque</th><th>Date</th><th class="num">Montant</th></tr></thead>
+  <tbody>
+  {% for payment in s0.payments %}
+    <tr><td>{{ payment.number | escape }}</td><td>{{ payment.payer.full_name | escape }}</td><td>{{ payment.bank_name | escape }}</td><td>{{ payment.bank_check_number | escape }}</td><td>{{ payment.to_bank_at }}</td><td class="num">{{ payment.amount }}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="5">{{ s0.payments_count }} règlement(s)</td><td class="num">{{ s0.amount }}</td></tr></tfoot>
+</table>
+</body>
+</html>

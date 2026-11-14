@@ -1,0 +1,18 @@
+{% comment %}Animal list. Data: animals serialized by AnimalsController#index (s0.records){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }} @page doc { size: A4 landscape; }</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-title">Liste des animaux — {{ s0.company.full_name | escape }}</div>
+<table class="data">
+  <thead><tr><th>N° travail</th><th>N° identification</th><th>Nom</th><th>Variété</th><th>Sexe</th><th>Né le</th><th>Mort le</th><th>Père</th><th>Mère</th></tr></thead>
+  <tbody>
+  {% for animal in s0.records %}
+    <tr><td>{{ animal.work_number | escape }}</td><td>{{ animal.identification_number | escape }}</td><td>{{ animal.name | escape }}</td><td>{{ animal.variety_text | escape }}</td><td>{{ animal.sex_text | escape }}</td><td>{{ animal.born_at }}</td><td>{{ animal.dead_at }}</td><td>{{ animal.initial_father.name | escape }}</td><td>{{ animal.initial_mother.name | escape }}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="9">{{ s0.records.size }} animaux</td></tr></tfoot>
+</table>
+</body>
+</html>

@@ -222,8 +222,8 @@ module ActiveList
         target = column.record_of(record)
         url[:id] ||= target&.id
         url[:action] ||= :show
+        dynamic_controller = url[:controller].is_a?(Proc) || (url[:controller].nil? && column.is_a?(Definition::AttributeColumn))
         url[:controller] ||= column.default_url_controller(record)
-        dynamic_controller = url[:controller].is_a?(Proc)
         url = Evaluation.deep(view, url, record)
         url[:controller] = "/#{namespace}/#{url[:controller]}" if namespace && dynamic_controller
         url

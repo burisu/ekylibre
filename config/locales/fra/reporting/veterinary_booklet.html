@@ -1,0 +1,32 @@
+{% comment %}Veterinary booklet. Data: veterinary_booklet aggregator (s0 = campaigns element){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }} @page doc { size: A4 landscape; }</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.entity_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-title">Carnet sanitaire</div>
+<table class="doc-meta">
+  <tr><td class="label">Exploitation</td><td>{{ s0.entity_name | escape }}</td><td class="label">N° d'élevage</td><td>{{ s0.breeding_number | escape }}</td></tr>
+  <tr><td class="label">Adresse</td><td colspan="3">{{ s0.address | escape }}</td></tr>
+</table>
+{% for campaign in s0.campaign %}{% if campaign.intervention.size > 0 %}
+<div class="doc-subtitle">Campagne {{ campaign.name | escape }}</div>
+<table class="data">
+  <thead><tr><th>Date début / fin</th><th>Animaux (nom et n° travail)</th><th>Incident</th><th>Ordonnance / prescripteur</th><th>Intervenants</th><th>Médicament / quantité</th><th>Remise en vente (lait / viande)</th></tr></thead>
+  <tbody>
+  {% for intervention in campaign.intervention %}
+    <tr>
+      <td>{{ intervention.started_at | date: "%d/%m/%Y %H:%M" }}<br>{{ intervention.stopped_at | date: "%d/%m/%Y %H:%M" }}</td>
+      <td>{% for group in intervention.target %}{% for target in group.target %}{{ target.name | escape }} ({{ target.identification_number | escape }})<br>{% endfor %}{% endfor %}</td>
+      <td>{% for issue in intervention.issue %}{{ issue.observed_at | date: "%d/%m/%Y %H:%M" }}<br>{{ issue.name | escape }} ({{ issue.state | escape }})<br><small>{{ issue.description | escape }}</small>{% endfor %}</td>
+      <td>{% for prescription in intervention.prescription %}{{ prescription.reference_number | escape }}<br>{{ prescription.name | escape }}{% endfor %}</td>
+      <td>{% for group in intervention.worker %}{% for worker in group.worker %}{{ worker.name | escape }}<br>{% endfor %}{% endfor %}</td>
+      <td>{% for inputs in intervention.inputs %}{% for input in inputs.input %}{{ input.variant_name | escape }} : {{ input.quantity | escape }}<br>{% endfor %}{% endfor %}</td>
+      <td>{% for inputs in intervention.inputs %}{% for input in inputs.input %}{% for dates in input.sale_dates %}{{ dates.milk_saleable_on | date: "%d/%m/%Y %H:%M" }} / {{ dates.meat_saleable_on | date: "%d/%m/%Y %H:%M" }}<br>{% endfor %}{% endfor %}{% endfor %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}{% endfor %}
+</body>
+</html>

@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }}</style></head>
+<body>
+<h1>{{ s0.title | escape }} {{ s0.number | escape }}</h1>
+{% assign c1 = s0 | scope: "items" %}
+<table>{% for s1 in c1 %}<tr><td>{{ s1.name | escape }}</td><td>{{ s1.amount }}</td></tr>{% endfor %}</table>
+</body>
+</html>

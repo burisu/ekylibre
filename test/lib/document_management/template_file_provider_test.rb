@@ -10,6 +10,7 @@ module Ekylibre
       test 'all natures have a template' do
         missing = %w[
           entity_sheet equipment_certification exchange_accountancy_file_fr fixed_asset_sheet incoming_delivery_docket journal
+          fr_pcg82_balance_sheet fr_pcg82_profit_and_loss_statement fr_pcga_balance_sheet fr_pcga_profit_and_loss_statement
           manure_management_plan manure_management_plan_sheet outgoing_deliveries_journal pfi_land_parcel_register
           phytosanitary_certification prescription products_sheet provisional_manure_management_plan purchases_estimate
           purchases_original security_data_sheet stocks tax_assessment vine_phytosanitary_register wine_bottling_register

@@ -28,7 +28,6 @@ gem 'rake', '~> 12.0'
 
 # TO REMOVE ASAP
 gem 'ffaker', '~> 2.0' # Should not be present in production. Is used to generate names for Products.
-gem 'rjb', '1.6.2' # Version 1.6.4 segfaults on test server, jasper repors should be trashed anyway....
 
 # Database
 gem 'activemodel-serializers-xml', '~> 1.0'
@@ -129,18 +128,7 @@ gem 'humanize', '~> 2.5'
 gem 'i18n-complements', '>= 0.0.14'
 gem 'i18n-js', '~> 3.8'
 
-# Reporting (Jasper): DEPRECATED
-# Need rjb which need openjdk-7-jdk (sudo apt-get install openjdk-7-jdk)
-# If you encounter a Segfault related to those gems you need to add
-# JAVA_TOOL_OPTIONS=-Xss1280k to your env vars
-# cf. https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1699772
-gem 'beardley', '~> 1.3'
-gem 'beardley-barcode', '>= 1.0.1'
-gem 'beardley-batik', '>= 1.0.1'
-gem 'beardley-charts', '>= 0.0.1'
-gem 'beardley-groovy', '>= 2.0.1'
-gem 'beardley-open_sans', '>= 0.0.2'
-gem 'beardley-xml', '>= 1.1.2'
+# Reporting: HTML (Liquid) templates rendered to PDF by WeasyPrint (Python binary)
 
 # Import/Export
 gem 'caxlsx'
@@ -186,7 +174,6 @@ group :development do
   gem 'bullet', '~> 5.7.0'
 
   gem 'better_errors', '~> 2.9'
-  gem 'binding_of_caller', '~> 1.0'
   gem 'rack-mini-profiler'
   # Get the time of a process
   gem 'ruby-prof', '~> 1.4'
@@ -208,6 +195,9 @@ group :development do
 end
 
 group :development, :test do
+  # Used by better_errors and test/lib PseudoEnvironment
+  gem 'binding_of_caller', '~> 1.0'
+
   gem 'dotenv', '~> 2.7'
 
   gem 'pry', '~> 0.12.0'

@@ -50,7 +50,7 @@ module Interventions
       test '#get_campaign with existing campaign' do
         VCR.use_cassette('existing_campaign') do
           response = client.get_campaign('2020')
-          assert(200, response.code)
+          assert_equal 200, response.status
         end
       end
 

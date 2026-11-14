@@ -199,14 +199,7 @@ module Transitionable
 
   module ClassMethods
     def transitionable
-      Dir.glob(Rails.root.join('app', 'services', self.name.underscore, 'transitions', '*.rb'))
-        .map { |path| [File.basename(path, '.rb').classify, path] }
-        .select { |(_, b)| File.exist? b }
-        .each do |class_name, path|
-        autoload class_name.to_sym, path
-        require_dependency path
-      end
-
+      # <Model>::Transitions is autoloaded from app/services/<model>/transitions
       return unless self.constants.include? :Transitions
 
       transitions_mod = self::Transitions

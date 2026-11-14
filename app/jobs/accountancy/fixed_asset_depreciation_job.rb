@@ -1,5 +1,5 @@
 module Accountancy
-  class FixedAssetDepreciationJob < ActiveJob::Base
+  class FixedAssetDepreciationJob < ApplicationJob
     queue_as :default
     include Rails.application.routes.url_helpers
 

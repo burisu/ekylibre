@@ -7,7 +7,9 @@ module HasInterval
     def has_interval(*columns)
       columns.each do |column|
         define_method column do
-          self[column].present? ? ActiveSupport::Duration.parse(self[column]) : nil
+          value = self[column]
+          # Rails >= 6.1 casts PostgreSQL intervals to ActiveSupport::Duration
+          value.is_a?(String) && value.present? ? ActiveSupport::Duration.parse(value) : value.presence
         end
 
         define_method "#{column}=" do |value|

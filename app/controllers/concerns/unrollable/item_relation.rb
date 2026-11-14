@@ -62,7 +62,7 @@ module Unrollable
       order_request = "(#{request.gsub('[!BEGIN!]', '')}) DESC"
 
       exact_match_request = exact_conditions_for(query, searchables)
-      self.class.new(@items.where(where_request).reorder([exact_match_request, order_request].join(',')))
+      self.class.new(@items.where(where_request).reorder(Arel.sql([exact_match_request, order_request].join(','))))
     end
 
     # Forwarding the unknown to the AR::Relation

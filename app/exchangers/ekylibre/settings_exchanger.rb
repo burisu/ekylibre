@@ -355,7 +355,7 @@ module Ekylibre
             record = options[:unless_exist] ? model.find_by(main_column => identifier) : nil
             record ||= model.new
             record.attributes = attributes
-            if record.save(attributes)
+            if record.save
               @records[records][identifier.to_s] = record
             else
               w.error "\nError on #{record.inspect}: #{record.errors.full_messages.to_sentence}"

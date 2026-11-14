@@ -1,8 +1,6 @@
 module Ekylibre
   module Access
     # autoload :Resource, 'ekylibre/access/resource'
-    autoload :Right, 'ekylibre/access/right'
-
     CATEGORIES_RIGHT_NAMES_FILE = Rails.root.join('db', 'nomenclatures', 'right_categories.yml').freeze
     CATEGORIES_RIGHT_NAMES = (CATEGORIES_RIGHT_NAMES_FILE.exist? ? YAML.load_file(CATEGORIES_RIGHT_NAMES_FILE) : {}).deep_symbolize_keys.freeze
     RIGHT_NAMES_CATEGORIES = CATEGORIES_RIGHT_NAMES.each_with_object({}) { |(k, v), h| v.map{|f| h[f] = k};  }.deep_symbolize_keys

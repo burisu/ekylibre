@@ -11981,40 +11981,6 @@ ALTER SEQUENCE public.versions_id_seq OWNED BY public.versions.id;
 
 
 --
--- Name: wice_grid_serialized_queries; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.wice_grid_serialized_queries (
-    id integer NOT NULL,
-    name character varying,
-    grid_name character varying,
-    query text,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
-);
-
-
---
--- Name: wice_grid_serialized_queries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.wice_grid_serialized_queries_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: wice_grid_serialized_queries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.wice_grid_serialized_queries_id_seq OWNED BY public.wice_grid_serialized_queries.id;
-
-
---
 -- Name: wine_incoming_harvest_inputs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -14183,13 +14149,6 @@ ALTER TABLE ONLY public.vegetative_stages ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.versions ALTER COLUMN id SET DEFAULT nextval('public.versions_id_seq'::regclass);
-
-
---
--- Name: wice_grid_serialized_queries id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.wice_grid_serialized_queries ALTER COLUMN id SET DEFAULT nextval('public.wice_grid_serialized_queries_id_seq'::regclass);
 
 
 --
@@ -16742,14 +16701,6 @@ ALTER TABLE ONLY public.vegetative_stages
 
 ALTER TABLE ONLY public.versions
     ADD CONSTRAINT versions_pkey PRIMARY KEY (id);
-
-
---
--- Name: wice_grid_serialized_queries wice_grid_serialized_queries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.wice_grid_serialized_queries
-    ADD CONSTRAINT wice_grid_serialized_queries_pkey PRIMARY KEY (id);
 
 
 --
@@ -28644,20 +28595,6 @@ CREATE INDEX index_versions_on_item_type_and_item_id ON public.versions USING bt
 
 
 --
--- Name: index_wice_grid_serialized_queries_on_grid_name; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_wice_grid_serialized_queries_on_grid_name ON public.wice_grid_serialized_queries USING btree (grid_name);
-
-
---
--- Name: index_wice_grid_serialized_queries_on_grid_name_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_wice_grid_serialized_queries_on_grid_name_and_id ON public.wice_grid_serialized_queries USING btree (grid_name, id);
-
-
---
 -- Name: index_wine_incoming_harvest_inputs_on_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -31548,6 +31485,7 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20260726120002'),
 ('20260726120003'),
 ('20261010200000'),
-('20261114100000');
+('20261114100000'),
+('20261114120000');
 
 

@@ -211,11 +211,9 @@ module Backend
 
       financial_year = FinancialYear.find_by(id: params[:current_financial_year]) || FinancialYear.current
 
-      conditions_code = '(' + self.class.list_conditions.gsub(/\s*\n\s*/, ';') + ')'
+      obj = instance_exec(&self.class.list_conditions)
 
-      obj = eval(conditions_code)
-
-      @calculations = JournalEntryItem.joins(%i[entry account journal]).where(obj).pluck("COALESCE(SUM(#{JournalEntryItem.table_name}.absolute_debit), 0) AS cumulated_absolute_debit, COALESCE(SUM(#{JournalEntryItem.table_name}.absolute_credit), 0) AS cumulated_absolute_credit").first
+      @calculations = JournalEntryItem.joins(%i[entry account journal]).where(obj).pluck(Arel.sql("COALESCE(SUM(#{JournalEntryItem.table_name}.absolute_debit), 0) AS cumulated_absolute_debit, COALESCE(SUM(#{JournalEntryItem.table_name}.absolute_credit), 0) AS cumulated_absolute_credit")).first
       @calculations << @calculations[0] - @calculations[1]
       params.permit!
       dataset_params = { accounts: params[:accounts],

@@ -1,22 +1,5 @@
 module Ekylibre
-  autoload :Access,            'ekylibre/access'
-  autoload :Bookkeeper,        'ekylibre/bookkeeper'
-  autoload :CorporateIdentity, 'ekylibre/corporate_identity'
-  autoload :Export,            'ekylibre/export'
-  autoload :FirstRun,          'ekylibre/first_run'
-  autoload :Hook,              'ekylibre/hook'
-  autoload :Navigation,        'ekylibre/navigation'
-  autoload :Record,            'ekylibre/record'
-  autoload :Reporting,         'ekylibre/reporting'
-  autoload :Plugin,            'ekylibre/plugin'
-  autoload :Schema,            'ekylibre/schema'
-  autoload :Secret,            'ekylibre/secret'
-  autoload :Snippet,           'ekylibre/snippet'
-  autoload :Support,           'ekylibre/support'
-  autoload :Tenant,            'ekylibre/tenant'
-  autoload :VERSION,           'ekylibre/version'
-  autoload :View,              'ekylibre/view'
-
+  require_relative 'ekylibre/version'
   CSV = ::CSV.freeze
 
   class << self

@@ -103,7 +103,7 @@ class FinancialYear < ApplicationRecord
       sql_date = ApplicationRecord.connection.quote(searched_on)
       started_on_clause = "ABS(#{sql_date} - started_on)"
       stopped_on_clause = "ABS(#{sql_date} - stopped_on)"
-      order("LEAST(#{started_on_clause}, #{stopped_on_clause}) ASC").first
+      order(Arel.sql("LEAST(#{started_on_clause}, #{stopped_on_clause}) ASC")).first
     end
 
     def on(searched_on)
@@ -491,7 +491,7 @@ class FinancialYear < ApplicationRecord
         last_journal_entry.add_debit(name, depreciation.fixed_asset.expenses_account, depreciation.amount)
         # Allocation
         last_journal_entry.add_credit(name, depreciation.fixed_asset.allocation_account, depreciation.amount)
-        depreciation.update_attributes(journal_entry_id: last_journal_entry.id)
+        depreciation.update(journal_entry_id: last_journal_entry.id)
       end
     end
     self

@@ -1,110 +1,84 @@
+# frozen_string_literal: true
+
 module Ekylibre
   module Record
+    # Ensures only one record has a boolean column (by default: by_default) set
+    # among all records (or among records with the same scope columns).
     module SelectsAmongAll #:nodoc:
       def self.included(base)
         base.extend(ClassMethods)
       end
 
       module ClassMethods
-        # Manage
+        # Options:
+        # - scope: column(s) defining groups in which only one record is selected
+        # - subset: scope method restricting the records taken in account
+        # - if: method name which must return true to select a record
         def selects_among_all(*columns)
           options = columns.extract_options!
-
           columns = [:by_default] if columns.empty?
-          code  = ''
 
-          scope = table_name.classify.constantize.name # "self.class"
-          scope << ".#{options[:subset]}" if options[:subset]
-          scope_columns = []
-          if s = options[:scope]
-            s = [s] if s.is_a?(Symbol)
-            unless s.is_a?(Symbol) || s.is_a?(Array)
-              raise ArgumentError.new('Scope must be given as a Symbol or an Array of Symbol')
-            end
-
-            scope << '.where(' + s.collect do |c|
-              scope_columns << c.to_sym
-              "#{c}: self.#{c}"
-            end.join(', ') + ')'
+          scope_columns = Array(options[:scope]).map(&:to_sym)
+          unless options[:scope].nil? || options[:scope].is_a?(Symbol) || options[:scope].is_a?(Array)
+            raise ArgumentError.new('Scope must be given as a Symbol or an Array of Symbol')
           end
+
+          model = table_name.classify.constantize
+          subset = options[:subset]
+          condition = options[:if]
+
+          # Records among which the column is unique
+          selection_scope = lambda do |record|
+            relation = subset ? model.public_send(subset) : model.all
+            scope_columns.any? ? relation.where(scope_columns.index_by(&:itself).transform_values { |c| record.public_send(c) }) : relation
+          end
+          selectable = ->(record) { condition.nil? || record.public_send(condition) }
 
           columns.each do |column|
-            code << "before_save(:set_#{column}_if_first, on: :create)\n"
-            code << "before_save(:set_#{column}_if_alone, on: :update)\n"
-            code << "after_save(:ensure_#{column}_uniqueness)\n"
+            # before_save (not before_create/update) to keep the original
+            # order with the other before_save callbacks of the model
+            before_save(:"set_#{column}_if_first", if: :new_record?)
+            before_save(:"set_#{column}_if_alone", unless: :new_record?)
+            after_save(:"ensure_#{column}_uniqueness")
 
-            pode = "self.update_column(:#{column}, true)\n"
-            code << "def set_#{column}\n"
-            if options[:if]
-              code << "  if self.#{options[:if]}\n"
-              code << pode.dig(2)
-              code << "  else\n"
-              code << "    return false\n"
-              code << "  end\n"
-            else
-              code << pode.dig
-            end
-            code << "end\n"
+            define_method("set_#{column}") do
+              return false unless selectable.call(self)
 
-            pode = "self.update_attributes!(#{column}: true)\n"
-            code << "def set_#{column}!\n"
-            if options[:if]
-              code << "  if self.#{options[:if]}\n"
-              code << pode.dig(2)
-              code << "  else\n"
-              code << "    fail 'Cannot selects #{column}'\n"
-              code << "  end\n"
-            else
-              code << pode.dig
+              update_column(column, true)
             end
-            code << "end\n"
 
-            pode = "self.#{column} = true unless #{scope}.where(#{column}: true).any?\n"
-            code << "def set_#{column}_if_first\n"
-            if options[:if]
-              code << "  if self.#{options[:if]}\n"
-              code << pode.dig(2)
-              code << "  end\n"
-            else
-              code << pode.dig
-            end
-            code << "end\n"
+            define_method("set_#{column}!") do
+              raise "Cannot selects #{column}" unless selectable.call(self)
 
-            pode << "self.#{column} = true unless #{scope}.where(#{column}: true).where.not(id: self.id).any?\n"
-            code << "def set_#{column}_if_alone\n"
-            if options[:if]
-              code << "  if self.#{options[:if]}\n"
-              code << pode.dig(2)
-              code << "  end\n"
-            else
-              code << pode.dig
+              update!(column => true)
             end
-            code << "end\n"
 
-            pode = "if self.#{column}?\n"
-            pode << "  #{scope}.where(#{column}: true).where.not(id: self.id).update_all(#{column}: false)\n"
-            pode << "end\n"
-            code << "def ensure_#{column}_uniqueness\n"
-            if options[:if]
-              code << "  if self.#{options[:if]}\n"
-              code << pode.dig(2)
-              code << "  end\n"
-            else
-              code << pode.dig
-            end
-            code << "end\n"
+            define_method("set_#{column}_if_first") do
+              return unless selectable.call(self)
 
-            code << "def self.#{column}(" + scope_columns.collect { |c| "#{c} = nil" }.join(', ') + ")\n"
-            if scope_columns.any?
-              code << '  if ' + scope_columns.collect { |c| "#{c}.nil?" }.join(' or ') + "\n"
-              code << "    fail ArgumentError, '#{scope_columns.size} arguments expected: " + scope_columns.join(', ') + "'\n"
-              code << "  end\n"
+              self[column] = true unless selection_scope.call(self).where(column => true).any?
             end
-            code << '  self.find_by(' + scope_columns.collect { |c| "#{c}: #{c}, " }.join + "#{column}: true)\n"
-            code << "end\n"
+
+            define_method("set_#{column}_if_alone") do
+              return unless selectable.call(self)
+
+              self[column] = true unless selection_scope.call(self).where(column => true).where.not(id: id).any?
+            end
+
+            define_method("ensure_#{column}_uniqueness") do
+              return unless selectable.call(self) && self[column]
+
+              selection_scope.call(self).where(column => true).where.not(id: id).update_all(column => false)
+            end
+
+            define_singleton_method(column) do |*values|
+              if values.size != scope_columns.size || values.any?(&:nil?)
+                raise ArgumentError.new("#{scope_columns.size} arguments expected: #{scope_columns.join(', ')}")
+              end
+
+              find_by(scope_columns.zip(values).to_h.merge(column => true))
+            end
           end
-
-          class_eval code
         end
       end
     end

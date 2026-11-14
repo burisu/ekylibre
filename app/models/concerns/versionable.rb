@@ -4,7 +4,8 @@ module Versionable
   extend ActiveSupport::Concern
 
   included do
-    has_many :versions, -> { order(created_at: :desc) }, as: :item, dependent: :delete_all
+    # Versions are created explicitly and must never be re-saved by autosave
+    has_many :versions, -> { order(created_at: :desc) }, as: :item, dependent: :delete_all, autosave: false
 
     after_create :add_creation_version
     after_update :add_update_version

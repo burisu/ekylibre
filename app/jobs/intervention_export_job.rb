@@ -1,4 +1,4 @@
-class InterventionExportJob < ActiveJob::Base
+class InterventionExportJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 

@@ -37,9 +37,58 @@ module Ekylibre
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
-    config.autoload_paths << Rails.root.join('lib')
+    config.autoloader = :zeitwerk
+    # lib/ is loaded once (not reloaded) so it can be used by initializers
+    config.autoload_once_paths << Rails.root.join('lib')
+    Rails.autoloaders.once.ignore(
+      # Not Ruby constants
+      Rails.root.join('lib', 'assets'),
+      Rails.root.join('lib', 'generators'),
+      Rails.root.join('lib', 'tasks'),
+      Rails.root.join('lib', 'templates'),
+      # Monkey patches, required explicitly (config/initializers/20-start.rb)
+      Rails.root.join('lib', 'enumerize'),
+      Rails.root.join('lib', 'state_machine'),
+      Rails.root.join('lib', 'reporting.rb'),
+      Rails.root.join('lib', 'safe_string.rb'),
+      Rails.root.join('lib', 'ekylibre', 'plugin', 'routing.rb'),
+      # Required before autoloading is set up (see above)
+      Rails.root.join('lib', 'possibly.rb'),
+      Rails.root.join('lib', 'ekylibre', 'middleware'),
+      Rails.root.join('lib', 'ekylibre', 'version.rb')
+    )
+    # Test and development tools, loaded on demand only
+    Rails.autoloaders.once.do_not_eager_load(
+      Rails.root.join('lib', 'active_exchanger', 'test_case.rb'),
+      Rails.root.join('lib', 'clean'),
+      Rails.root.join('lib', 'ekylibre', 'testing'),
+      Rails.root.join('lib', 'test')
+    )
+    Rails.autoloaders.main.ignore(Rails.root.join('app', 'themes'))
+    Rails.autoloaders.each do |autoloader|
+      autoloader.inflector.inflect(
+        'csv' => 'CSV',
+        'dsl' => 'DSL',
+        'ebp' => 'EBP',
+        'edi_exchanger' => 'EDIExchanger',
+        'fec' => 'FEC',
+        'fiea' => 'FIEA',
+        'geo_json' => 'GeoJSON',
+        'gml' => 'GML',
+        'html' => 'HTML',
+        'json' => 'JSON',
+        'kml' => 'KML',
+        'omniauth' => 'OmniAuth',
+        'sql_compiler' => 'SQLCompiler',
+        'svf' => 'SVF',
+        'svg' => 'SVG',
+        'upra' => 'UPRA',
+        'xml' => 'XML'
+      )
+    end
     config.autoload_paths << Rails.root.join('app', 'models', 'bookkeepers')
     config.autoload_paths << Rails.root.join('app', 'models', 'lexicon')
+    config.eager_load_paths += [Rails.root.join('lib'), Rails.root.join('app', 'models', 'bookkeepers'), Rails.root.join('app', 'models', 'lexicon')]
 
     # We want to use the structure.sql file
     config.active_record.schema_format = :sql

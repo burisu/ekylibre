@@ -1,5 +1,5 @@
-module Fec
-  class StructureErrorJob < ActiveJob::Base
+module FEC
+  class StructureErrorJob < ApplicationJob
     queue_as :default
     include Rails.application.routes.url_helpers
 

@@ -5,12 +5,6 @@ module Aggeratio
 
   class InvalidDocument < StandardError
   end
-
-  autoload :Aggregator,       'aggeratio/aggregator'
-  autoload :Base,             'aggeratio/base'
-  autoload :Parameter,        'aggeratio/parameter'
-  autoload :XML,              'aggeratio/xml'
-  autoload :DocumentFragment, 'aggeratio/document_fragment'
   # autoload :JSON, 'aggeratio/json'
   # autoload :CSV,  'aggeratio/csv'
   # autoload :XSD,  'aggeratio/xsd'
@@ -128,7 +122,7 @@ module Aggeratio
     end
 
     def build(element)
-      agg = Base.new(element)
+      agg = Aggeratio::Base.new(element)
       name = agg.name
 
       code = "class #{agg.class_name} < Aggregator\n"

@@ -1,4 +1,8 @@
 Rails.application.configure do
+  # The test database is prepared with `rake db:test:load_postgis_structure` (structure.sql
+  # needs the PostGIS extensions to exist first), not reloaded automatically.
+  config.active_record.maintain_test_schema = false
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # The test environment is used exclusively to run your application's

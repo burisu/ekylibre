@@ -1,4 +1,4 @@
-class DepositPaymentsJob < ActiveJob::Base
+class DepositPaymentsJob < ApplicationJob
   queue_as :default
 
   def perform(id:, payment_ids:, user_id:)

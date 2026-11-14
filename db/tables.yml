@@ -13793,21 +13793,6 @@ versions:
     type: text
   item_type:
     type: string
-wice_grid_serialized_queries:
-  created_at:
-    type: datetime
-  grid_name:
-    type: string
-  id:
-    type: integer
-    limit: 4
-    required: true
-  name:
-    type: string
-  query:
-    type: text
-  updated_at:
-    type: datetime
 wine_incoming_harvest_inputs:
   created_at:
     type: datetime

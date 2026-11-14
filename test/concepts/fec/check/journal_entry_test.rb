@@ -1,11 +1,11 @@
 require 'test_helper'
 
-module Fec
+module FEC
   module Check
     class JournalEntryTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
 
       setup do
-        [Inventory, Payslip, PayslipNature, Journal, Regularization, OutgoingPayment, JournalEntry, JournalEntryItem, FinancialYear].map(&:delete_all)
+        [::Inventory, ::Payslip, ::PayslipNature, ::Journal, ::Regularization, ::OutgoingPayment, ::JournalEntry, ::JournalEntryItem, ::FinancialYear].map(&:delete_all)
       end
 
       test 'entry items should have same name' do

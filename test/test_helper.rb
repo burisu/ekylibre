@@ -9,7 +9,7 @@ require 'rails/test_help'
 
 require 'rake'
 require 'minitest/mock'
-require 'database_cleaner'
+require 'database_cleaner/active_record'
 
 helper = Ekylibre::Testing::Helper.new
 helper.setup

@@ -1,5 +1,5 @@
 module Accountancy
-  class AccountingSystemChangingJob < ActiveJob::Base
+  class AccountingSystemChangingJob < ApplicationJob
     queue_as :default
     include Rails.application.routes.url_helpers
 

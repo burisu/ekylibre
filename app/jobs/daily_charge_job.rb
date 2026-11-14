@@ -1,4 +1,4 @@
-class DailyChargeJob < ActiveJob::Base
+class DailyChargeJob < ApplicationJob
   queue_as :default
 
   def perform(activity_production)

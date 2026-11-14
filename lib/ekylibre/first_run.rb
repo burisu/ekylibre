@@ -2,12 +2,6 @@ require 'zip'
 
 module Ekylibre
   module FirstRun
-    autoload :Counter, 'ekylibre/first_run/counter'
-    autoload :Booker,  'ekylibre/first_run/booker'
-    autoload :Base,    'ekylibre/first_run/base'
-    autoload :Faker,   'ekylibre/first_run/faker'
-    autoload :Folder,  'ekylibre/first_run/folder'
-
     class << self
       # Launch a first-run with tenant creation
       # Name of tenant is found with option :name or with path or folder options if missing

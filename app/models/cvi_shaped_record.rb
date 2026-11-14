@@ -3,7 +3,7 @@
 class CviShapedRecord < ApplicationRecord
   self.abstract_class = true
 
-  before_save :set_calculated_area, on: %i[create update], if: :shape_changed?
+  before_save :set_calculated_area, if: :shape_changed?
 
   scope :in_bounding_box, lambda { |bounding_box|
     where("#{self.table_name}.shape && ST_MakeEnvelope(#{bounding_box})")

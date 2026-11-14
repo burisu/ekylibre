@@ -57,8 +57,39 @@ module ActiveExchanger
         @@exchangers[klass.exchanger_name] = klass
       end
 
+      # Exchangers are registered when their class is loaded, so all the
+      # exchanger directories (application and plugins) are loaded first.
+      def exchangers
+        load_exchangers unless @exchangers_loaded
+        @@exchangers
+      end
+
+      def exchangers=(value)
+        @@exchangers = value
+        @exchangers_loaded = true
+      end
+
+      # Forgets registered exchangers (called on code reload)
+      def reset_exchangers!
+        @@exchangers = {}
+        @exchangers_loaded = false
+      end
+
+      def load_exchangers
+        autoloader = Rails.autoloaders.main
+        autoloader.root_dirs.each_key do |root|
+          next unless root.end_with?('/app/exchangers')
+
+          Dir.glob(File.join(root, '**', '*.rb')).sort.each do |path|
+            relative = path.delete_prefix("#{root}/").delete_suffix('.rb')
+            relative.split('/').map { |part| autoloader.inflector.camelize(part, nil) }.join('::').constantize
+          end
+        end
+        @exchangers_loaded = true
+      end
+
       def importers
-        @@exchangers.select { |_, v| v.method_defined?(:import) }
+        exchangers.select { |_, v| v.method_defined?(:import) }
       end
 
       def importers_selection(options = {})
@@ -68,7 +99,7 @@ module ActiveExchanger
       end
 
       def exporters
-        @@exchangers.select { |_k, v| v.method_defined?(:export) }
+        exchangers.select { |_k, v| v.method_defined?(:export) }
       end
 
       def find_and_import(nature, file, options = {}, &block)
@@ -121,9 +152,9 @@ module ActiveExchanger
       end
 
       def find(nature)
-        klass = @@exchangers[nature.to_sym]
+        klass = exchangers[nature.to_sym]
         unless klass
-          raise "Unable to find exchanger #{nature.inspect}. (#{@@exchangers.keys.to_sentence(locale: :eng)})"
+          raise "Unable to find exchanger #{nature.inspect}. (#{exchangers.keys.to_sentence(locale: :eng)})"
         end
 
         klass

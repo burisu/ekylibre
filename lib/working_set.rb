@@ -1,9 +1,4 @@
 module WorkingSet
-  autoload :AbilityArray,         'working_set/ability_array'
-  autoload :ActiveRecordCompiler, 'working_set/active_record_compiler'
-  autoload :QueryLanguage,        'working_set/query_language'
-  autoload :SQLCompiler,          'working_set/sql_compiler'
-
   class Parser < Treetop::Runtime::CompiledParser
     include QueryLanguage
   end

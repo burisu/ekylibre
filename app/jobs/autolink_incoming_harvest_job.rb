@@ -1,4 +1,4 @@
-class AutolinkIncomingHarvestJob < ActiveJob::Base
+class AutolinkIncomingHarvestJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 

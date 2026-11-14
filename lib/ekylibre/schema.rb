@@ -1,7 +1,5 @@
 module Ekylibre
   module Schema
-    autoload :Column, 'ekylibre/schema/column'
-
     class << self
       def setup_extensions
         # TODO: rename postgis schema to extensions

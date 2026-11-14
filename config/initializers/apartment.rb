@@ -84,9 +84,11 @@ module Apartment
     end
 
     class PostgresqlSchemaFromSqlAdapter < PostgresqlSchemaAdapter
-      PSQL_DUMP_BLACKLISTED_STATEMENTS << /CREATE SCHEMA/i
-      PSQL_DUMP_BLACKLISTED_STATEMENTS << /\\restrict/i
-      PSQL_DUMP_BLACKLISTED_STATEMENTS << /\\unrestrict/i
+      # Statements of structure.sql that must not be replayed in tenant schemas
+      # (recent pg_dump adds \\restrict / \\unrestrict meta-commands)
+      blacklisted = PSQL_DUMP_BLACKLISTED_STATEMENTS + [/CREATE SCHEMA/i, /\\restrict/i, /\\unrestrict/i]
+      remove_const(:PSQL_DUMP_BLACKLISTED_STATEMENTS)
+      PSQL_DUMP_BLACKLISTED_STATEMENTS = blacklisted.freeze
     end
   end
 end

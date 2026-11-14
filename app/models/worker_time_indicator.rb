@@ -57,11 +57,9 @@ class WorkerTimeIndicator < ApplicationRecord
 
     def durations(unit = :hour)
       total = self.sum(:duration)
-      if total == "0"
-        minutes = 0.00
-      else
-        minutes = ActiveSupport::Duration.parse(total).in_full(:minute)
-      end
+      # Rails >= 6.1 casts PostgreSQL intervals to ActiveSupport::Duration
+      total = ActiveSupport::Duration.parse(total) if total.is_a?(String) && total != '0'
+      minutes = total.is_a?(ActiveSupport::Duration) ? total.in_full(:minute) : 0.00
       Measure.new(minutes, :minute).convert(unit).round(2)
     end
   end

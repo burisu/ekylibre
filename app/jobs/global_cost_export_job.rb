@@ -1,4 +1,4 @@
-class GlobalCostExportJob < ActiveJob::Base
+class GlobalCostExportJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 

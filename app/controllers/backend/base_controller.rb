@@ -21,6 +21,7 @@ module Backend
     include Autocomplete
     prepend RespondWithTemplate
     include RestfullyManageable
+    include SimpleGrid
     include Unrollable
 
     layout :dialog_or_not

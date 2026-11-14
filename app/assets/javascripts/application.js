@@ -30,7 +30,6 @@
 //= require knockout
 //= require behave_compat
 //= require_self
-//= require wice_grid
 //= require wice_grid/settings
 //= require ekylibre
 //= require form/dialog

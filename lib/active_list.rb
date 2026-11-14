@@ -23,15 +23,6 @@ Mime::Type.register('application/vnd.oasis.opendocument.spreadsheet', :ods) unle
 # * a Proc with one argument receives the current record.
 # * a Symbol given for a record-related option is sent to the record.
 module ActiveList
-  autoload :Evaluation, 'active_list/evaluation'
-  autoload :Definition, 'active_list/definition'
-  autoload :State,      'active_list/state'
-  autoload :Query,      'active_list/query'
-  autoload :Renderer,   'active_list/renderer'
-  autoload :Exporters,  'active_list/exporters'
-  autoload :JobContext, 'active_list/job_context'
-  autoload :Integration, 'active_list/integration'
-
   mattr_accessor :export_formats, default: %i[ods csv xcsv]
 
   class << self

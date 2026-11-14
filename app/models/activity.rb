@@ -294,7 +294,7 @@ class Activity < ApplicationRecord
 
   def production_cycle_length
     if production_started_on.present? && production_stopped_on.present? && production_started_on_year.present? && production_stopped_on_year.present?
-      production_stopped_on.change(year: production_stopped_on.year + production_stopped_on_year ) - production_started_on.change(year: production_started_on.year + production_started_on_year )
+      production_stopped_on.advance(years: production_stopped_on_year) - production_started_on.advance(years: production_started_on_year)
     end
   end
 

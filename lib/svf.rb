@@ -1,9 +1,4 @@
 module SVF
-  autoload :Cell,      'svf/cell'
-  autoload :Formater,  'svf/formater'
-  autoload :Line,      'svf/line'
-  autoload :Occurrence, 'svf/occurrence'
-
   class InvalidSyntax < StandardError
   end
 

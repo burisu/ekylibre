@@ -351,7 +351,6 @@
 - variants/zone_variant
 - vegetative_stage
 - version
-- wice_grid_serialized_query
 - wine_incoming_harvest
 - wine_incoming_harvest_input
 - wine_incoming_harvest_plant

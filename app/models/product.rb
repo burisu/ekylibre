@@ -335,7 +335,7 @@ class Product < ApplicationRecord
     # Product.availables(at: date).where(id: product_ids, type: type)
     Product.availables(at: date).where(type: type)
   }
-  scope :excluding, ->(*ids) {
+  scope :excluding_ids, ->(*ids) {
     where.not(id: ids)
   }
   scope :alive, ->(at: Time.now) { where('products.dead_at IS NULL OR products.dead_at >= ?', at) }

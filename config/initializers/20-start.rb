@@ -7,15 +7,10 @@ require 'delay'
 ActiveRecord::Base.send(:extend, Delay::Validation::ClassMethods)
 
 require 'safe_string'
-autoload :SymbolArray, 'symbol_array'
 
 # ActionIntegration
-autoload :ActionIntegration, 'action_integration'
 
 # ActiveThing
-autoload :ActiveExchanger, 'active_exchanger'
-autoload :ActiveGuide,     'active_guide'
-autoload :ActiveSensor,    'active_sensor'
 
 # App-specific libs
 require 'ekylibre'
@@ -25,7 +20,6 @@ require 'working_set'
 
 # XML definitions
 autoload :Onoma,     'onoma'
-autoload :Aggeratio, 'aggeratio'
 # autoload :Procedo,   'procedo'
 # require 'nomen'
 # require 'aggeratio'
@@ -60,11 +54,15 @@ Ekylibre.load_integrations
 Ekylibre::Plugin.load unless ENV['PLUGIN'] == 'false' || ENV['RAILS_ENV'] == 'test'
 Ekylibre::Plugin.plug
 
+# TODO: remove these requires with Rails 7 (lib/ is then autoloaded by
+# Zeitwerk during initialization; Rails 6.1 still uses the classic
+# autoloader there, which does not know the XML/SQL... acronyms)
+require 'aggeratio'
+Dir[Rails.root.join('lib', 'aggeratio', '*.rb')].sort.each { |f| require f }
 Aggeratio.load_path += Dir.glob(Rails.root.join('config', 'aggregators', '**', '*.xml'))
 Aggeratio.load
 
 # Map and co
-autoload :Map, 'map'
 Map::Layer.load
 
 Zip.write_zip64_support = true

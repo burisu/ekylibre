@@ -60,7 +60,7 @@ class Notification < ApplicationRecord
   end
 
   def read!
-    update_attributes!(read_at: Time.zone.now)
+    update!(read_at: Time.zone.now)
   end
 
   def human_message

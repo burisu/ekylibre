@@ -1,19 +1,5 @@
 # frozen_string_literal: true
 
-require_dependency 'ekylibre/record'
-require_dependency 'ekylibre/record/acts/affairable'
-require_dependency 'ekylibre/record/acts/numbered'
-require_dependency 'ekylibre/record/acts/picturable'
-require_dependency 'ekylibre/record/acts/protected'
-require_dependency 'ekylibre/record/acts/reconcilable'
-require_dependency 'ekylibre/record/acts/referable'
-require_dependency 'ekylibre/record/autosave'
-require_dependency 'ekylibre/record/bookkeep'
-require_dependency 'ekylibre/record/dependents'
-require_dependency 'ekylibre/record/has_shape'
-require_dependency 'ekylibre/record/selects_among_all'
-require_dependency 'ekylibre/record/sums'
-
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 

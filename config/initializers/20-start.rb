@@ -54,8 +54,6 @@ Ekylibre.load_integrations
 Ekylibre::Plugin.load unless ENV['PLUGIN'] == 'false' || ENV['RAILS_ENV'] == 'test'
 Ekylibre::Plugin.plug
 
-Aggeratio.load_path += Dir.glob(Rails.root.join('config', 'aggregators', '**', '*.xml'))
-Aggeratio.load
 
 # Map and co
 Map::Layer.load

@@ -148,10 +148,11 @@ module Ekylibre
           validates name, inclusion: { in: values }, allow_blank: true
         end
 
-        # Defaults apply to new records whose value is still nil after initialization
+        # Defaults apply to records whose value is nil after initialization
+        # (persisted ones too, like enumerize did)
         if !default.nil? && respond_to?(:after_initialize)
           after_initialize do
-            if new_record? && self[name].nil?
+            if has_attribute?(name) && self[name].nil?
               self[name] = default.is_a?(Proc) ? instance_exec(&default) : default.to_s
             end
           end

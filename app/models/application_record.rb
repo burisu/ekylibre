@@ -10,7 +10,6 @@ class ApplicationRecord < ActiveRecord::Base
   include Ekylibre::Record::Acts::Picturable
   include Ekylibre::Record::Acts::Attachable
   include Ekylibre::Record::Acts::Protected
-  include Ekylibre::Record::Acts::Reconcilable
   include Ekylibre::Record::Acts::Referable
 
   include Ekylibre::Record::Autosave

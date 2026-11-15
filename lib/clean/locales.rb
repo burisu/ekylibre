@@ -337,8 +337,8 @@ module Clean
         translation << "  aggregator_properties:\n"
         ref[:aggregator_properties] ||= {}
         all_properties = []
-        Aggeratio.each_xml_aggregator do |element|
-          all_properties += Aggeratio::Base.new(element).properties.reject { |e| e.attr('level').to_s == 'api' }.collect { |e| e.attr('name').to_sym }
+        Aggeratio.each do |aggregator|
+          all_properties += aggregator::PROPERTIES
         end
         all_properties.uniq!.sort!
         all_properties.each do |property_name|

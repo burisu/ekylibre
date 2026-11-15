@@ -33,7 +33,7 @@ module Ekylibre
       end
 
       test 'restore shouldn\'t be possible in production env without DANGEROUS_MODE set' do
-        PseudoEnvironment.new(self).set_to(:production) do
+        in_production do
           ENV['DANGEROUS_MODE'] = nil
           assert_raises Ekylibre::ForbiddenImport do
             invoke_task('tenant:restore')
@@ -42,7 +42,7 @@ module Ekylibre
       end
 
       test 'when run in production restore confirms A LOT before overwriting existing tenants' do
-        PseudoEnvironment.new(self).set_to(:production) do
+        in_production do
           ENV['DANGEROUS_MODE'] = 'on'
           with_fully_mocked_restore tenant_exists: true do
             invoke_task('tenant:restore')
@@ -50,6 +50,11 @@ module Ekylibre
         end
 
         assert_operator @question_count, :>=, 3
+      end
+
+      # Runs the block as if Rails was running in production
+      def in_production(&block)
+        Rails.stub(:env, ActiveSupport::EnvironmentInquirer.new('production'), &block)
       end
 
       def confirm_and_count(*_args)

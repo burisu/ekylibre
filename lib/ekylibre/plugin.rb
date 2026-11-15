@@ -182,10 +182,9 @@ module Ekylibre
       @right_file = root.join('config', 'rights.yml')
       Ekylibre::Access.load_file(@right_file) if @right_file.exist?
 
-      # Adds aggregators
-      @aggregators_path = @root.join('config', 'aggregators')
-      if @aggregators_path.exist?
-        Aggeratio.load_path += Dir.glob(@aggregators_path.join('**', '*.xml'))
+      # Aggregators are Ruby classes registered by the plugin (Aggeratio.register)
+      if @root.join('config', 'aggregators').exist?
+        Rails.logger.warn "Plugin #{plugfile_path}: XML aggregators are not supported anymore, register Aggeratio::Aggregator classes"
       end
 
       # Adds initializers

@@ -249,98 +249,83 @@ module Ekylibre
           id
         end
 
+        # Defines geometric methods on the shape indicators (stored in product readings)
         def has_shape(*indicators)
-          options = (indicators[-1].is_a?(Hash) ? indicators.delete_at(-1) : {})
-          code = ''
+          indicators.pop if indicators.last.is_a?(Hash)
           indicators = [:shape] if indicators.empty?
           column = :geometry_value
 
           indicators.each do |indicator|
-            # code << "after_create :create_#{indicator}_images\n"
+            define_singleton_method("#{indicator}_view_box") do |options = {}|
+              expr = options[:srid] ? "ST_Transform(#{column}, #{srid(options[:srid])})" : column.to_s
+              ids = ProductReading.of_products(self, indicator, options[:at]).pluck(:id)
+              return [] unless ids.any?
 
-            # code << "before_update :update_#{indicator}_images\n"
-
-            code << "def self.#{indicator}_view_box(options = {})\n"
-            code << "  expr = (options[:srid] ? \"ST_Transform(#{column}, \#{self.srid(options[:srid])})\" : '#{column}')\n"
-            code << "  ids = ProductReading.of_products(self, :#{indicator}, options[:at]).pluck(:id)\n"
-            code << "  return [] unless ids.any?\n"
-            code << "  values = self.connection.select_one(\"SELECT min(ST_XMin(\#{expr})) AS x_min, min(ST_YMin(\#{expr})) AS y_min, max(ST_XMax(\#{expr})) AS x_max, max(ST_YMax(\#{expr})) AS y_max FROM \#{ProductReading.indicator_table_name(:#{indicator})} WHERE id IN (\#{ids.join(',')})\").symbolize_keys\n"
-            code << "  return [values[:x_min].to_f, -values[:y_max].to_f, (values[:x_max].to_f - values[:x_min].to_f), (values[:y_max].to_f - values[:y_min].to_f)]\n"
-            code << "end\n"
-
-            # As SVG
-            code << "def self.#{indicator}_svg(options = {})\n"
-            # code << "  options[:srid] ||= 2154\n"
-            code << "  ids = ProductReading.of_products(self, :#{indicator}, options[:at]).pluck(:product_id)\n"
-            code << "  svg = '<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"'\n"
-            code << "  return (svg + '/>').html_safe unless ids.any?\n"
-            code << "  svg << ' class=\"#{indicator}\" preserveAspectRatio=\"xMidYMid meet\" width=\"100%\" height=\"100%\" viewBox=\"' + #{indicator}_view_box(options).join(' ') + '\"'\n"
-            code << "  svg << '>'\n"
-            code << "  for product in Product.where(id: ids)\n"
-            code << "    svg << '<path d=\"' + product.#{indicator}_to_svg_path(options) + '\"/>'\n"
-            code << "  end\n"
-            code << "  svg << '</svg>'\n"
-            code << "  return svg.html_safe\n"
-            code << "end\n"
-
-            # Return SVG as String
-            code << "def #{indicator}_svg(options = {})\n"
-            code << "  options[:srid] ||= 2154\n"
-            code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  geom = Geo.new_geometry(self.#{indicator})\n"
-            code << "  geom = geom.transform(options[:srid]) if options[:srid]\n"
-            code << "  return geom.to_svg(options)\n"
-            # code << "  options[:srid] ||= 2154\n"
-            # code << "  return ('<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\""
-            # for attr, value in {:class => indicator, :preserve_aspect_ratio => 'xMidYMid meet', :width => 180, :height => 180, :view_box => "self.#{indicator}_view_box(options).join(' ')".c}
-            #   code << " #{attr.to_s.camelcase(:lower)}=\"' + (options[:#{attr}] || #{value.inspect}).to_s + '\""
-            # end
-            # code << "><path d=\"' + self.#{indicator}_to_svg(options).to_s + '\"/></svg>').html_safe\n"
-            code << "end\n"
-
-            # Return ViewBox
-            code << "def #{indicator}_view_box(options = {})\n"
-            code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  return [self.#{indicator}_x_min(options), -self.#{indicator}_y_max(options), self.#{indicator}_width(options), self.#{indicator}_height(options)]\n"
-            code << "end\n"
-
-            %i[x_min x_max y_min y_max to_svg to_svg_path to_gml to_kml to_geojson to_text to_binary to_ewkt centroid point_on_surface].each do |attr|
-              code << "def #{indicator}_#{attr.to_s.downcase}(options = {})\n"
-              code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-              code << "  geometry = Geo.new_geometry(reading.#{column})\n"
-              code << "  geometry = geometry.transform(options[:srid]) if options[:srid]\n"
-              code << "  return geometry.#{attr}\n"
-              code << "end\n"
+              values = connection.select_one(
+                "SELECT min(ST_XMin(#{expr})) AS x_min, min(ST_YMin(#{expr})) AS y_min, max(ST_XMax(#{expr})) AS x_max, max(ST_YMax(#{expr})) AS y_max " \
+                "FROM #{ProductReading.indicator_table_name(indicator)} WHERE id IN (#{ids.map(&:to_i).join(',')})"
+              ).symbolize_keys
+              [values[:x_min].to_f, -values[:y_max].to_f, (values[:x_max].to_f - values[:x_min].to_f), (values[:y_max].to_f - values[:y_min].to_f)]
             end
 
-            code << "def #{indicator}_area(options = {})\n"
-            code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  geometry = Geo.new_geometry(reading.#{column})\n"
-            code << "  geometry = geometry.transform(options[:srid]) if options[:srid]\n"
-            code << "  return geometry.area.in_square_meter\n"
-            code << "end\n"
+            # As SVG
+            define_singleton_method("#{indicator}_svg") do |options = {}|
+              ids = ProductReading.of_products(self, indicator, options[:at]).pluck(:product_id)
+              svg = +'<svg xmlns="http://www.w3.org/2000/svg" version="1.1"'
+              return (svg + '/>').html_safe unless ids.any?
 
-            # # add a method to convert polygon to point
-            # # TODO : change geometry_value to a variable :column
-            # for attr in [:centroid, :point_on_surface]
-            #   code << "def #{indicator}_#{attr.to_s.downcase}(options = {})\n"
-            #   code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            #   code << "  self.class.connection.select_value(\"SELECT ST_#{attr.to_s.camelcase}(geometry_value) FROM \#{ProductReading.indicator_table_name(:#{indicator})} WHERE id = \#{reading.id}\")\n"
-            #   code << "end\n"
-            # end
+              svg << %( class="#{indicator}" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" viewBox="#{public_send("#{indicator}_view_box", options).join(' ')}">)
+              Product.where(id: ids).each do |product|
+                svg << %(<path d="#{product.public_send("#{indicator}_to_svg_path", options)}"/>)
+              end
+              svg << '</svg>'
+              svg.html_safe
+            end
 
-            code << "def #{indicator}_width(options = {})\n"
-            code << "  return (self.#{indicator}_x_max(options) - self.#{indicator}_x_min(options))\n"
-            code << "end\n"
+            # Return SVG as String
+            define_method("#{indicator}_svg") do |options = {}|
+              options[:srid] ||= 2154
+              return nil unless reading(indicator, at: options[:at])
 
-            code << "def #{indicator}_height(options = {})\n"
-            code << "  return (self.#{indicator}_y_max(options) - self.#{indicator}_y_min(options))\n"
-            code << "end\n"
+              geom = Geo.new_geometry(public_send(indicator))
+              geom = geom.transform(options[:srid]) if options[:srid]
+              geom.to_svg(options)
+            end
+
+            # Return ViewBox
+            define_method("#{indicator}_view_box") do |options = {}|
+              return nil unless reading(indicator, at: options[:at])
+
+              [public_send("#{indicator}_x_min", options), -public_send("#{indicator}_y_max", options),
+               public_send("#{indicator}_width", options), public_send("#{indicator}_height", options)]
+            end
+
+            %i[x_min x_max y_min y_max to_svg to_svg_path to_gml to_kml to_geojson to_text to_binary to_ewkt centroid point_on_surface].each do |attr|
+              define_method("#{indicator}_#{attr.to_s.downcase}") do |options = {}|
+                return nil unless (reading = reading(indicator, at: options[:at]))
+
+                geometry = Geo.new_geometry(reading.public_send(column))
+                geometry = geometry.transform(options[:srid]) if options[:srid]
+                geometry.public_send(attr)
+              end
+            end
+
+            define_method("#{indicator}_area") do |options = {}|
+              return nil unless (reading = reading(indicator, at: options[:at]))
+
+              geometry = Geo.new_geometry(reading.public_send(column))
+              geometry = geometry.transform(options[:srid]) if options[:srid]
+              geometry.area.in_square_meter
+            end
+
+            define_method("#{indicator}_width") do |options = {}|
+              public_send("#{indicator}_x_max", options) - public_send("#{indicator}_x_min", options)
+            end
+
+            define_method("#{indicator}_height") do |options = {}|
+              public_send("#{indicator}_y_max", options) - public_send("#{indicator}_y_min", options)
+            end
           end
-
-          # code.split(/\n/).each_with_index{|l, i| puts (i+1).to_s.rjust(4) + ": " + l}
-
-          class_eval code
         end
       end
     end

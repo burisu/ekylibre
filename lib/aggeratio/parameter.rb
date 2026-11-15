@@ -40,9 +40,7 @@ module Aggeratio
     end
 
     TYPES.each do |type|
-      class_eval "def #{type}?\n" \
-                 "  !!(self.type == :#{type})\n" \
-                 'end'
+      define_method("#{type}?") { self.type == type }
     end
   end
 end

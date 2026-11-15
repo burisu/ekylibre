@@ -36,7 +36,7 @@ module Ekylibre
           entry.extract(path.join(entry.name))
         end
       end
-      infos = YAML.safe_load_file(path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true)
+      infos = YAML.safe_load_file(path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true)
       assert_equal name, infos['tenant']
 
       # # Restore

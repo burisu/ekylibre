@@ -27,12 +27,9 @@ module Backend
       t.column :description
     end
 
+    # One (empty) action per navigation part, rendering its dashboard view
     Ekylibre::Navigation.parts.each do |part|
-      code = "def #{part.name}\n"
-      # code << " notify_warning_now(:dashboard_is_being_developed)"
-      # code << "  render :file => 'backend/dashboards/#{part}', :layout => dialog_or_not\n"
-      code << "end\n"
-      class_eval code
+      define_method(part.name) {}
     end
 
     def home; end

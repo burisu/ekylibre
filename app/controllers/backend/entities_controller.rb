@@ -315,13 +315,16 @@ module Backend
       t.column :executor, url: true
     end
 
-    def self.entities_moves_client_conditions(params)
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, conditions: 'c', variable: -> { params[:b] }) + "\n"
-      code << "c[0] << ' AND #{JournalEntryItem.table_name}.account_id = ?'\n"
-      code << "c << Entity.find(#{params[:id]}).client_account_id\n"
-      code << "c\n"
-      eval code
+    ENTITY_MOVES_SEARCH = search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, variable: :b)
+
+    helper_method :entity_moves_conditions
+
+    # Conditions of the journal entry items of the entity account matching the search (params[:b])
+    private def entity_moves_conditions(account_id)
+      conditions = instance_exec(&ENTITY_MOVES_SEARCH)
+      conditions[0] += " AND #{JournalEntryItem.table_name}.account_id = ?"
+      conditions << account_id
+      conditions
     end
 
     list(:client_journal_entry_items, model: :journal_entry_items, conditions: { account_id: -> { Entity.find(params[:id]).client_account_id } }, line_class: ->(record) { (record.completely_lettered? ? 'lettered-item' : '') }, joins: :entry, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
@@ -338,15 +341,6 @@ module Backend
       t.column :credit, currency: true, hidden: true
       t.column :absolute_debit,  currency: :absolute_currency
       t.column :absolute_credit, currency: :absolute_currency
-    end
-
-    def self.entities_moves_supplier_conditions(params)
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number] }, conditions: 'c', variable: -> { params[:b] }) + "\n"
-      code << "c[0] << ' AND #{JournalEntryItem.table_name}.account_id = ?'\n"
-      code << "c << Entity.find(#{params[:id]}).supplier_account_id\n"
-      code << "c\n"
-      eval code
     end
 
     list(:supplier_journal_entry_items, model: :journal_entry_items, conditions: { account_id: -> { Entity.find(params[:id]).supplier_account_id } }, line_class: ->(record) { (record.completely_lettered? ? 'lettered-item' : '') }, joins: :entry, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|

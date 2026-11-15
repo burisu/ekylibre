@@ -3,10 +3,9 @@ module SVF
   end
 
   class << self
-    # Build submodule to handle format defined in the file
-    # Format must be defined in YAML
+    # Defines the submodule handling the format defined in the YAML file
     def load(name, file)
-      module_eval(::SVF::Formater.new(name, file).generate)
+      ::SVF::Format.new(name, file).define
     end
 
     # Convert an array of items to an array of occurrences

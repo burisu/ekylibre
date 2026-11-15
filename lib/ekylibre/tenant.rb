@@ -154,7 +154,7 @@ module Ekylibre
         if !archive_path.join('manifest.yml').exist?
           raise 'Cannot not handle this archive'
         else
-          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).symbolize_keys
+          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true).symbolize_keys
           # Bugfix
           if manifest[:tenant] == 'Ekylibre::Tenant'
             Dir.chdir(archive_path) do
@@ -467,7 +467,7 @@ module Ekylibre
           tables_path = archive_path.join('tables')
           files_path = archive_path.join('files')
 
-          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).symbolize_keys
+          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true).symbolize_keys
 
           database_version = manifest[:database_version].to_i
           if database_version > ActiveRecord::Migrator.current_version
@@ -515,7 +515,7 @@ module Ekylibre
               tenant: name,
               format_version: 3,
               database_version: version,
-              creation_at: Time.zone.now,
+              creation_at: Time.now.utc,
               created_with: "Ekylibre #{Ekylibre::VERSION}".strip
             )
             f.write options.stringify_keys.to_yaml

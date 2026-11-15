@@ -207,7 +207,7 @@
           -#= t.new(params: {controller: :journal_entries})
         - if resource.client_journal_entry_items.any?
 
-          - items = JournalEntryItem.joins(:entry).where(controller.class.entities_moves_client_conditions(params))
+          - items = JournalEntryItem.joins(:entry).where(entity_moves_conditions(resource.client_account_id))
           - totals = {}
           - totals[:debit]  = items.sum(:absolute_debit)
           - totals[:credit] = items.sum(:absolute_credit)
@@ -236,7 +236,7 @@
           -#= t.new(params: {controller: :journal_entries})
         - if resource.supplier_journal_entry_items.any?
 
-          - items = JournalEntryItem.joins(:entry).where(controller.class.entities_moves_supplier_conditions(params))
+          - items = JournalEntryItem.joins(:entry).where(entity_moves_conditions(resource.supplier_account_id))
           - totals = {}
           - totals[:debit]  = items.sum(:absolute_debit)
           - totals[:credit] = items.sum(:absolute_credit)

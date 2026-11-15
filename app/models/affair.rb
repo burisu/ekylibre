@@ -174,22 +174,14 @@ class Affair < ApplicationRecord
       end.join
       where(query).delete_all
     end
-
-    # Returns heterogen list of deals of the affair
-    def generate_deals_method
-      code  = "def deals\n".dup
-      array = affairable_types.collect do |class_name|
-        "#{class_name}.where(affair_id: self.id).to_a"
-      end.join(' + ')
-      code << "  return (#{array}).compact.sort do |a, b|\n"
-      code << "    a.dealt_at <=> b.dealt_at\n"
-      code << "  end\n"
-      code << "end\n"
-      class_eval code
-    end
   end
 
-  generate_deals_method
+  # Returns heterogen list of deals of the affair, sorted by date
+  def deals
+    self.class.affairable_types.flat_map do |class_name|
+      class_name.constantize.where(affair_id: id).to_a
+    end.compact.sort_by(&:dealt_at)
+  end
 
   # Returns the remaining balance of the affair
   # Positive result is a profit

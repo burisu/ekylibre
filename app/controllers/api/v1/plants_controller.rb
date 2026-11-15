@@ -8,7 +8,7 @@ module Api
         else
           plants = Plant.where('activity_production_id IS NOT NULL').includes(activity_production: :activity)
         end
-        render 'api/v1/plants/index.json', locals: { plants: plants }
+        render 'api/v1/plants/index', formats: :json, locals: { plants: plants }
       end
     end
   end

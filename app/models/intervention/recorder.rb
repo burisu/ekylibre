@@ -28,11 +28,10 @@ class Intervention
       cast
     end
 
-    %i[target doer tool input output].each do |name|
-      code = "def #{name}(name, *args)\n".dup
-      code << "  cast(:#{name}, name, *args)\n"
-      code << "end\n"
-      class_eval code
+    %i[target doer tool input output].each do |type|
+      define_method(type) do |name, *args|
+        cast(type, name, *args)
+      end
     end
   end
 end

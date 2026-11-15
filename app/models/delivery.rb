@@ -118,7 +118,7 @@ class Delivery < ApplicationRecord
   end
 
   def available_parcels
-    Parcel.where('(delivery_id = ?) OR ((delivery_id IS ?) AND (state != ?))', id, nil, :given).order(:number)
+    Parcel.where(delivery_id: id).or(Parcel.where(delivery_id: nil).where.not(state: :given)).order(:number)
   end
 
   def available_shipments

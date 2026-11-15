@@ -7,6 +7,10 @@ ENV['RAILS_ENV'] ||= 'test'
 require File.expand_path('../../config/environment', __FILE__)
 require 'rails/test_help'
 
+# Routes are loaded lazily since Rails 8: Devise mappings (devise_for) must
+# exist before the first sign_in
+Rails.application.reload_routes_unless_loaded
+
 require 'rake'
 require 'minitest/mock'
 require 'database_cleaner/active_record'
@@ -130,8 +134,7 @@ module ActionController
     end
 
     def fixture_files
-      #     Rails.root.join('test', 'fixture-files')
-      Pathname.new('../fixture-files')
+      Rails.root.join('test', 'fixture-files')
     end
 
     def file_upload(path, mime_type = nil, binary = false)
@@ -537,7 +540,7 @@ module ActionController
 end
 
 def without_output(&block)
-  main.stub :puts, Proc.new, &block
+  main.stub(:puts, ->(*) {}, &block)
 end
 
 module FFaker

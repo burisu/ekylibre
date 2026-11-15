@@ -1,0 +1,83 @@
+/* From the cartography gem (https://github.com/ekylibre/cartography, MIT License,
+ * Copyright (c) 2017 Nicolas PROCUREUR). Only its own rules: Leaflet and Leaflet.draw
+ * styles are imported separately by the themes. */
+.leaflet-div-icon, .leaflet-mouse-marker{
+	/*background: #fff;*/
+  border: 1px solid rgb(44,83,158);
+  border-radius: 50%;
+  background: rgb(255,255,255); /* Old browsers */
+  background: -moz-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 0%, rgba(246,246,246,1) 47%, rgba(237,237,237,1) 100%); /* FF3.6-15 */
+  background: -webkit-radial-gradient(center, ellipse cover, rgba(255,255,255,1) 0%,rgba(246,246,246,1) 47%,rgba(237,237,237,1) 100%); /* Chrome10-25,Safari5.1-6 */
+  background: radial-gradient(ellipse at center, rgba(255,255,255,1) 0%,rgba(246,246,246,1) 47%,rgba(237,237,237,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ededed',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+
+  margin-left: -8px !important;
+  margin-top: -8px !important;
+  width: 16px !important;
+  height: 16px !important;
+  box-sizing: border-box;
+}
+
+.leaflet-draw-guide-dash {
+  border-radius: 50%;
+  opacity: 1;
+  z-index: 1000;
+}
+
+.marker-origin {
+  animation: beat 1s infinite linear;
+	transform-origin: center;
+}
+
+@keyframes beat{
+  0% {
+    border-width: 1px;
+  }
+  50% {
+    border-width: 3px;
+  }
+  100% {
+    border-width: 1px;
+  }
+}
+
+
+
+.leaflet-control-controlPanel-title {
+  color: black;
+  font-weight: bold;
+  font-size: small;
+  border-bottom: 1px solid rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.legend{
+    border: 1px solid black;
+    width: 20px;
+    height: 10px;
+    display: inline-block;
+}
+
+.legend-area {
+  display: inline-block;
+  margin-left: 10px;
+}
+
+
+.leaflet-control-controlPanel-properties {
+  padding: 1%;
+  width: 98%;
+}
+
+.property-title {
+  color: grey;
+  font-weight: bold;
+  font-size: larger;
+}
+.animated-helper {
+  width: 100%;
+}
+
+.surface-row {
+  text-align: middle;
+}

@@ -35,7 +35,7 @@
   - if Devise.omniauth_providers.include? :ekylibre
     .separator= :or.tl
 
-    .field= button_to t('.sign_in_with_ekylibre', :default => 'Sign in with Ekylibre.com'), user_ekylibre_omniauth_authorize_path, method: :post, data: { turbolinks: false }, class: 'btn btn-primary btn-lg btn-block'
+    .field= button_to t('.sign_in_with_ekylibre', :default => 'Sign in with Ekylibre.com'), user_ekylibre_omniauth_authorize_path, method: :post, data: { turbo: false }, class: 'btn btn-primary btn-lg btn-block'
 
   - if demo_mode && !flash[:alert]
     #autologin

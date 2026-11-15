@@ -70,7 +70,7 @@ module Backend
       if reflection.macro == :has_many
         unless options[:new].is_a?(FalseClass)
           html << @template.content_tag(:div, class: 'links') do
-            @template.link_to_add_association(options[:button_label] || "labels.add_#{item}".t, self, association, 'data-no-turbolink' => true, partial: partial, render_options: { locals: options[:locals] }, class: "nested-add add-#{item}")
+            @template.link_to_add_association(options[:button_label] || "labels.add_#{item}".t, self, association, 'data-turbo' => false, partial: partial, render_options: { locals: options[:locals] }, class: "nested-add add-#{item}")
           end
         end
         if options[:minimum]

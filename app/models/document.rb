@@ -143,7 +143,10 @@ class Document < ApplicationRecord
     return nil unless file.attached?
     return file.blob.local_path unless style&.to_sym == :thumbnail
 
-    file.representation(resize_to_limit: [320, 320], format: :jpg).processed.image.blob.local_path
+    thumbnail = { resize_to_limit: [320, 320], format: :jpg }
+    # PDF and other previewable files: JPEG variant of the preview image
+    image = file.previewable? ? file.preview(thumbnail).processed.image : file.blob
+    image.variant(thumbnail).processed.image.blob.local_path
   end
 
   def file_size

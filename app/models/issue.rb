@@ -170,9 +170,6 @@ class Issue < ApplicationRecord
     I18n.t("tooltips.models.issue.#{status}")
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   def target_name
     target ? target.name : :none.tl

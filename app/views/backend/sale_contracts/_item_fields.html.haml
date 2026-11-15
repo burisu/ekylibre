@@ -12,4 +12,4 @@
     %td.decimal= f.input(:unit_pretax_amount, wrapper: :nested, input_html: {data: {trade_component: "unit_pretax_amount"}})
     %td.decimal= f.input(:pretax_amount, wrapper: :nested, input_html: {class: "pta", data: {trade_component: "pretax_amount"}})
     %td.currency= f.object.currency
-    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-no-turbolink' => true, class: 'remove-item')
+    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-turbo' => false, class: 'remove-item')

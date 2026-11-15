@@ -30,10 +30,57 @@ module Ekylibre
       plugins.flat_map(&:themes).map { |name| Ekylibre::Plugin::Theme.new(name) }
     end
 
-    # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 5.2
-    # Cache entries written with the 7.1 format (6.1 format is removed in Rails 7.2)
-    config.active_support.cache_format_version = 7.1
+    # Rails 8.1 framework defaults, except the ones below which keep the
+    # behaviour the application relies on
+    config.load_defaults 8.1
+
+    # lib/ files are required by name (config/initializers/20-start.rb)
+    config.add_autoload_paths_to_load_path = true
+    # Remote forms are still handled by jquery_ujs (form_with :local option)
+    config.action_view.form_with_generates_remote_forms = true
+    # Redirections to other hosts (OAuth, tenant subdomains, external links)
+    config.action_controller.raise_on_open_redirects = false
+    config.action_controller.action_on_open_redirect = :log
+    # Jobs enqueued in transactions (callbacks) run as before, see
+    # ApplicationJob for tenant handling
+    config.active_job.enqueue_after_transaction_commit = false
+    # Readonly attributes (currency, reference_name...) are assigned by forms
+    # and callbacks: changes are ignored, as before Rails 7.1
+    config.active_record.raise_on_assign_to_attr_readonly = false
+    # Path relative redirections (redirect_back from tests and old links)
+    # are kept, as before Rails 8.1
+    config.action_controller.action_on_path_relative_redirect = :log
+    # Inverse of has_many associations are not set on new records (Rails 6.1
+    # default): records duplicated with their parameters (interventions...)
+    # keep their own associations
+    config.active_record.has_many_inversing = false
+    config.active_record.automatic_scope_inversing = false
+    # Callbacks run as before: after_commit callbacks in reverse order of
+    # definition, on the instance saved last, before_committed! only on the
+    # first instance of a record
+    config.active_record.run_after_transaction_callbacks_in_order_defined = false
+    config.active_record.run_commit_callbacks_on_first_saved_instances_in_transaction = true
+    config.active_record.before_committed_on_all_records = false
+    # Inserts send all columns, and presence of belongs_to is always checked
+    config.active_record.partial_inserts = true
+    config.active_record.belongs_to_required_validates_foreign_key = true
+    config.active_record.generate_secure_token_on = :create
+    # Raw SQL results (select_all/select_value) keep dates as strings
+    config.active_record.postgresql_adapter_decode_dates = false
+    # first/last without explicit order keep working on any model
+    config.active_record.raise_on_missing_required_finder_order_columns = false
+    # Same markup as before: button_to renders an input, stylesheets are
+    # screen-only by default (print styles stay separate), no hidden field
+    # for multiple file inputs, autocomplete="off" on hidden fields
+    config.action_view.button_to_generates_button_tag = false
+    config.action_view.apply_stylesheet_media_default = true
+    config.active_storage.multiple_file_field_include_hidden = false
+    config.action_view.remove_hidden_field_autocomplete = false
+    config.action_view.sanitizer_vendor = Rails::HTML4::Sanitizer
+    # Forms keep their utf8=✓ hidden field (search URLs unchanged)
+    config.action_view.default_enforce_utf8 = true
+    # JSON params are not wrapped in a root key automatically
+    config.action_controller.wrap_parameters_by_default = false
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers

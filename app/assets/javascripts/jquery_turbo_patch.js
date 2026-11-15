@@ -1,5 +1,5 @@
 (function ($) {
     $.fn.ready = function (callback) {
-        $(this).on('turbolinks:load', callback)
+        $(this).on('turbo:load', callback)
     };
 })(jQuery);

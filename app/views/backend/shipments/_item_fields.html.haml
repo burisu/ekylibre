@@ -8,7 +8,7 @@
   %tr
     %td.act
       - if f.object.destroyable?
-        = link_to_remove_association(content_tag(:i) + h(:destroy.tl), f, 'data-no-turbolink' => true, class: 'destroy remove remove-item')
+        = link_to_remove_association(content_tag(:i) + h(:destroy.tl), f, 'data-turbo' => false, class: 'destroy remove remove-item')
     %td.annotable.annotable--shipments
       = f.input :sale_item_id, as: :hidden
       - scopes = { deliverables: true, alive: [at: planned_at], population_availables: [at: planned_at], of_variant_active: true }

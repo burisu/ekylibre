@@ -365,7 +365,14 @@ module ActiveList
 
         def record_url(context, record, url)
           url[:id] = ->(r) { r.id } if url[:id].nil? || url[:id] == ID_PLACEHOLDER
-          url[:redirect] = -> { params[:redirect] } unless url.key?(:redirect)
+          # Like the gem, which did `params[:redirect] ||= request.fullpath`
+          # before rendering: actions come back to the page showing the list
+          unless url.key?(:redirect)
+            url[:redirect] = lambda {
+              params[:redirect].presence ||
+                (request.fullpath if respond_to?(:request) && request && !request.xhr?)
+            }
+          end
           url = Evaluation.deep(context, url, record)
           url[:format] = @options[:format] if @options[:format]
           url.delete_if { |_k, v| v.nil? }

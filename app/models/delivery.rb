@@ -117,8 +117,11 @@ class Delivery < ApplicationRecord
     mode.text
   end
 
+  # Parcels of the delivery and parcels not given yet without delivery
   def available_parcels
-    Parcel.where(delivery_id: id).or(Parcel.where(delivery_id: nil).where.not(state: :given)).order(:number)
+    available = Parcel.where(delivery_id: nil).where.not(state: :given)
+    available = Parcel.where(delivery_id: id).or(available) if id
+    available.order(:number)
   end
 
   def available_shipments

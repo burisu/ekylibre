@@ -137,7 +137,7 @@ module ActiveList
           [nil, nil]
         when Definition::StatusColumn
           value = column.datum(record).to_s
-          lights = safe_join(LEVELS.map { |light| content_tag(:span, '', class: light) }, ' ')
+          lights = safe_join(LEVELS.map { |light| content_tag(:span, '', class: light) })
           [content_tag(:span, lights, class: 'lights lights-' + (LEVELS.include?(value) ? value : 'undefined'), data: { toggle: :tooltip, placement: :top }, title: column.tooltip_title(record)), nil]
         when Definition::DataColumn
           data_cell_value(column, record)
@@ -342,7 +342,9 @@ module ActiveList
         when Definition::DataColumn
           classes << :col
           classes << DATATYPE_ABBREVIATION[column.datatype]
-          classes << :url if column.options[:url].is_a?(Hash)
+          # The gem turned `url: true` into a Hash when rendering the body,
+          # so body cells got the class but not the headers
+          classes << :url if column.options[:url].is_a?(Hash) || (column.options[:url] && !without_id)
           label_method = column.respond_to?(:label_method) ? column.label_method : nil
           classes << label_method if label_method.is_a?(Symbol) && %i[code color].include?(label_method)
           if column.options[:mode] == :download

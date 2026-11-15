@@ -28,7 +28,7 @@
     return $.loadTypeahead.call(this);
   }));
 
-  $(document).on("turbolinks:load cocoon:after-insert dialog:show", () => $("input[data-autocomplete]").each(function() {
+  $(document).on("turbo:load cocoon:after-insert dialog:show", () => $("input[data-autocomplete]").each(function() {
     return $.loadTypeahead.call(this);
   }));
 

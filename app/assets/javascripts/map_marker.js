@@ -247,6 +247,6 @@
     });
   };
 
-  return $(document).on("turbolinks:load cocoon:after-insert cell:load dialog:show", $.loadMapMarker);
+  return $(document).on("turbo:load cocoon:after-insert cell:load dialog:show", $.loadMapMarker);
 
 })(jQuery);

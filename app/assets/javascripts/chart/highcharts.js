@@ -54,7 +54,7 @@
     });
   };
 
-  $(document).on("turbolinks:load cocoon:after-insert cell:load", $.loadHighcharts);
+  $(document).on("turbo:load cocoon:after-insert cell:load", $.loadHighcharts);
 
   return Highcharts.setOptions({
     lang: I18n.t("front-end.highcharts")

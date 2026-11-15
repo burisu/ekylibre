@@ -32,7 +32,7 @@
         url: beehive.data("beehive-reset-url"),
         type: 'post',
         success(data, status, request) {
-          return Turbolinks.visit();
+          return Turbo.visit(window.location.href);
         }
       });
     },
@@ -177,7 +177,7 @@
     });
   };
 
-  $(document).on('turbolinks:load', '.beehive .cell', $.fn.raiseContentErrorToCellTitle);
+  $(document).on('turbo:load', '.beehive .cell', $.fn.raiseContentErrorToCellTitle);
 
   $(document).ready(() => // Adds error style on title if necessary
   $(".beehive .cell").raiseContentErrorToCellTitle());

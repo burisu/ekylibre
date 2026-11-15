@@ -889,9 +889,6 @@ class Product < ApplicationRecord
     nil
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   # Returns all contained products of the given variant
   def localized_variants(variant, options = {})

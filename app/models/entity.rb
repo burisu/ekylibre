@@ -486,9 +486,6 @@ class Entity < ApplicationRecord
     subscriptions.where(nature: nature).order(stopped_on: :desc).first
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   def name_with_postal_code_and_city
     desc = (number.nil? ? '' : number) + '. ' + full_name

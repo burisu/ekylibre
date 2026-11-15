@@ -38,8 +38,7 @@
 - legacy/jquery-rails/jquery_ujs.js
 - legacy/remotipart/jquery.iframe-transport.js
 - legacy/remotipart/jquery.remotipart.js
-- jquery_turbolinks_patch.js
-- legacy/turbolinks-source/turbolinks.js
+- jquery_turbo_patch.js
 - active_list.jquery.js
 - legacy/vendor/knockout.js
 - behave_compat.js
@@ -222,7 +221,7 @@
 - legacy/vendor/tether.js
 - legacy/vendor/shepherd.js
 - tour.js
-- turbolinks_patch.js
+- turbo_patch.js
 - utils/unroll/plant-land-parcel-selector.js
 - visualization/color.js
 - visualization.js

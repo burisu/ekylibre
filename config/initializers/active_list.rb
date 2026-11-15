@@ -2,6 +2,9 @@
 
 require 'active_list'
 
+# Translations formerly shipped by the active_list gem
+Rails.application.config.i18n.load_path += Dir[Rails.root.join('lib', 'active_list', 'locales', '*.yml').to_s]
+
 ActiveSupport.on_load(:action_controller_base) do
   include ActiveList::Integration::ActionController
 end

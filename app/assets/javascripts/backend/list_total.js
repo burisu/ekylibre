@@ -24,7 +24,7 @@
   return $(document).ready(function() {
     absoluteSum();
 
-    $('*[data-list-source]').on('turbolinks:load', absoluteSum);
+    $('*[data-list-source]').on('turbo:load', absoluteSum);
 
     let timer = 0;
     return $('.list-selector').click(function() {

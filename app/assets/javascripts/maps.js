@@ -74,7 +74,7 @@
     $("*[data-map]").mapsFromData();
   };
 
-  $(document).on("turbolinks:load cocoon:after-insert cell:load", $.loadMaps);
+  $(document).on("turbo:load cocoon:after-insert cell:load", $.loadMaps);
 
   return true;
 })(jQuery);

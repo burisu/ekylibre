@@ -7,7 +7,7 @@ function onElementDetected(selector, callback) {
   });
 }
 function onDomReady(callback) {
-  document.addEventListener("turbolinks:load", callback);
+  document.addEventListener("turbo:load", callback);
 }
 function delegateListener(element, eventName, selector, callback) {
   element.addEventListener(

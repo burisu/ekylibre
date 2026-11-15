@@ -49,7 +49,7 @@
         return E.dialog.open(this.rebuildUrl(params), {
           returns: {
             success: (frame, data, status, request) => {
-              Turbolinks.visit('#', {action: 'replace'});
+              Turbo.visit(window.location.href, { action: 'replace' });
 
               frame.dialog("close");
             },

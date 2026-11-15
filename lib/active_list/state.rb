@@ -80,8 +80,21 @@ module ActiveList
         return {} unless user.respond_to?(:preference)
 
         value = user.preference(table.preference_key, YAML.dump({})).value
-        loaded = YAML.safe_load(value.to_s, permitted_classes: [Symbol], aliases: false) rescue nil
+        loaded = self.class.load_yaml(value)
         loaded.is_a?(Hash) ? loaded.symbolize_keys.slice(*PERSISTED_KEYS) : {}
+      end
+
+      class << self
+        # Preferences saved by the former active_list gem dumped the whole
+        # list params, including ActionController::Parameters and
+        # HashWithIndifferentAccess objects. Their tags are dropped so they
+        # load as plain hashes without instantiating any object.
+        def load_yaml(value)
+          YAML.safe_load(value.to_s.gsub(%r{!ruby/(?:hash|object|hash-with-ivars):[\w:]+}, ''),
+                         permitted_classes: [Symbol], aliases: true)
+        rescue Psych::Exception
+          nil
+        end
       end
   end
 end

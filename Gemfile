@@ -43,6 +43,8 @@ gem 'ros-apartment', '~> 3.1', require: 'apartment'
 gem 'dartsass-rails', '~> 0.5'
 gem 'importmap-rails', '~> 2.1'
 gem 'propshaft', '~> 1.1'
+gem 'stimulus-rails', '~> 1.3'
+gem 'turbo-rails', '~> 2.0'
 
 # CSS
 gem 'agric', github: 'ekylibre/agric', branch: 'master'
@@ -50,7 +52,6 @@ gem 'bootstrap-sass', '~> 3.4.1', require: false # SCSS sources only (see config
 gem 'font-awesome-sass', '~> 5.15', require: false
 
 # JS
-gem 'cocoon', '~> 1.2'
 gem 'simple_calendar', '~> 2.4.0'
 
 # Front

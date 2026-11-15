@@ -581,9 +581,6 @@ class ProductNatureVariant < ApplicationRecord
     variety == 'service' ? '' : current_outgoing_stock_ordered_not_delivered(into_default_unit: true)
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   def current_stock_per_storage(storage)
     ParcelItemStoring.where(storage: storage)

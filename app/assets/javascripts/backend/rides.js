@@ -125,10 +125,10 @@
           E.Dialog.open(this.href, {
               title,
               success: (response) => {
-                  // The server redirects (see TurbolinksRedirection): follow it without evaluating the response
+                  // The server redirects (see XhrRedirection): follow it without evaluating the response
                   const location = response.headers['x-xhr-redirect'];
                   if (location) {
-                      Turbolinks.visit(location, { action: 'replace' });
+                      Turbo.visit(location, { action: 'replace' });
                   } else {
                       window.location.reload();
                   }

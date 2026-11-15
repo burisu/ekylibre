@@ -282,6 +282,6 @@
     return instances.get(el);
   };
 
-  return $(document).on("turbolinks:load cocoon:after-insert cell:load", $.loadECharts);
+  return $(document).on("turbo:load cocoon:after-insert cell:load", $.loadECharts);
 
 })(jQuery);

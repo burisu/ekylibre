@@ -37,6 +37,7 @@ module Ekylibre
           attribute.human_value_name(self)
         end
         alias l text
+        alias localize text
         alias human_name text
 
         def encode_with(coder)
@@ -145,7 +146,18 @@ module Ekylibre
           enum name, values.index_with(&:itself), validate: (options[:validate] == false ? nil : { allow_nil: true }),
                                                   scopes: false, instance_methods: false
         elsif options[:validate] != false
-          validates name, inclusion: { in: values }, allow_blank: true
+          # Like enumerize, values assigned to the record are checked, while
+          # unknown values already stored in the database are left alone
+          validate do
+            if respond_to?(:read_attribute)
+              next unless new_record? || will_save_change_to_attribute?(name)
+
+              raw = read_attribute(name)
+            else
+              raw = public_send(name)
+            end
+            errors.add(name, :inclusion, value: raw) if raw.present? && !values.include?(raw.to_s)
+          end
         end
 
         # Defaults apply to records whose value is nil after initialization

@@ -8,4 +8,4 @@
     %td= f.input(:collected_tax_amount, wrapper: :nested, input_html: {data: {trade_component: "collected_tax_amount"}})
     %td= f.input(:collected_pretax_amount, wrapper: :nested, input_html: {data: {trade_component: "collected_pretax_amount"}})
     %td.currency= f.object.tax_declaration_currency
-    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-no-turbolink' => true, class: 'remove-item')
+    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-turbo' => false, class: 'remove-item')

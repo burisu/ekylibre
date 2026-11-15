@@ -1,7 +1,7 @@
 (function(E, $) {
   'use strict';
 
-  // Removed for now for performance reasons. Letting turbolinks handle that one.
+  // Removed for now for performance reasons. Letting Turbo handle that one.
   const ajax_toggle = false;
 
   $(document).on("click", "*[data-janus] a[data-toggle='face']", function() {

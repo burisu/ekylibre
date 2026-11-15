@@ -302,9 +302,6 @@ class ProductNature < ApplicationRecord
     linkage_points_list
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   # Return humanized duration
   def subscription_duration

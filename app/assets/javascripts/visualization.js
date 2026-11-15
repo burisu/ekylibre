@@ -732,6 +732,6 @@
     return mapElement.data("refreshTimeout", timeoutId);
   };
 
-  return $(document).on("turbolinks:load cocoon:after-insert cell:load dialog:show", $.loadVisualizations);
+  return $(document).on("turbo:load cocoon:after-insert cell:load dialog:show", $.loadVisualizations);
 
 })(visualization, jQuery);

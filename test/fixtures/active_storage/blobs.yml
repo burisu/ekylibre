@@ -1,0 +1,14 @@
+# Files of the document fixtures (stored in tmp/storage when fixtures are loaded)
+documents_001_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_002_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_003_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_004_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_005_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_006_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_007_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_008_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_009_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_010_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_011_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>
+documents_012_file: <%= ActiveStorage::FixtureSet.blob filename: "logo.png", content_type: "image/png", service_name: "test" %>
+documents_013_file: <%= ActiveStorage::FixtureSet.blob filename: "document.pdf", content_type: "application/pdf", service_name: "test" %>

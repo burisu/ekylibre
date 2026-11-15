@@ -64,11 +64,11 @@
 
 class ActivityBudgetItem < ApplicationRecord
   refers_to :currency
-  enumerize :direction, in: %i[revenue expense], predicates: true
-  enumerize :frequency, in: %i[per_day per_month per_year], predicates: true, default: :per_year, i18n_scope: "labels"
-  enumerize :origin, in: %i[manual itk automatic], predicates: true, default: :manual
-  enumerize :nature, in: %i[static dynamic], predicates: true, default: :static
-  enumerize :computation_method, in: %i[per_campaign per_production per_working_unit], default: :per_working_unit, predicates: true
+  has_enum :direction, in: %i[revenue expense], predicates: true
+  has_enum :frequency, in: %i[per_day per_month per_year], predicates: true, default: :per_year, i18n_scope: "labels"
+  has_enum :origin, in: %i[manual itk automatic], predicates: true, default: :manual
+  has_enum :nature, in: %i[static dynamic], predicates: true, default: :static
+  has_enum :computation_method, in: %i[per_campaign per_production per_working_unit], default: :per_working_unit, predicates: true
   # refers_to :variant_indicator, class_name: 'Indicator' # in: Activity.support_variant_indicator.values
   # refers_to :variant_unit, class_name: 'Unit'
 

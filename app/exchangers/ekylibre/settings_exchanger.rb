@@ -7,7 +7,7 @@ module Ekylibre
 
     # Create or updates main settings of folder
     def import
-      @manifest = YAML.load_file(file) || {}
+      @manifest = YAML.safe_load_file(file, permitted_classes: [Date, Time, Symbol], aliases: true) || {}
       @manifest.deep_symbolize_keys!
 
       @manifest[:company] ||= {}
@@ -154,7 +154,7 @@ module Ekylibre
       # Load accouting accounting_system
       unless accounting_system = @manifest[:accounting_system]
         if accounting_system = @manifest[:chart_of_accounts] || @manifest[:chart_of_account]
-          ActiveSupport::Deprecation.warn('chart_of_accounts has been deprecated in settings. Please use accounting_system instead.')
+          Ekylibre.deprecator.warn('chart_of_accounts has been deprecated in settings. Please use accounting_system instead.')
         end
       end
       if accounting_system
@@ -355,10 +355,10 @@ module Ekylibre
             record = options[:unless_exist] ? model.find_by(main_column => identifier) : nil
             record ||= model.new
             record.attributes = attributes
-            if record.save(attributes)
+            if record.save
               @records[records][identifier.to_s] = record
             else
-              w.error "\nError on #{record.inspect.red}: #{record.errors.full_messages.to_sentence}"
+              w.error "\nError on #{record.inspect}: #{record.errors.full_messages.to_sentence}"
               raise ActiveRecord::RecordInvalid.new(record)
             end
           end

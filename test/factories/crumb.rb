@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :crumb do
     nature { "point"}
-    geolocation { Charta.new_point(2.541493, 50.398378).to_rgeo }
+    geolocation { Geo.new_point(2.541493, 50.398378).to_rgeo }
     accuracy {4}
     device_uid {"samsys"}
     read_at { Time.now }

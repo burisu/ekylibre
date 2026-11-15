@@ -38,7 +38,7 @@
 #
 class GuideAnalysisPoint < ApplicationRecord
   belongs_to :analysis, class_name: 'GuideAnalysis', inverse_of: :points
-  enumerize :acceptance_status, in: %i[passed failed errored passed_with_warnings], predicates: true
+  has_enum :acceptance_status, in: %i[passed failed errored passed_with_warnings], predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :acceptance_status, :analysis, presence: true
   validates :advice_reference_name, length: { maximum: 500 }, allow_blank: true

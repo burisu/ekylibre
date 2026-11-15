@@ -30,7 +30,7 @@ module PurchaseInvoices
         generator = ExportTools::ZipFileGenerator.new
         generator.compress_folder(root) do |zip_file_path|
           name = :purchase_receipts_file_name.tl
-          Document.create!(name: "#{name}.zip", processable_attachment: false, file: File.open(zip_file_path), file_file_name: "#{name.parameterize}.zip")
+          Document.create!(name: "#{name}.zip", processable_attachment: false, file: { io: File.open(zip_file_path), filename: "#{name.parameterize}.zip", content_type: 'application/zip' })
         end
       end
     end
@@ -56,12 +56,12 @@ module PurchaseInvoices
             pdf << CombinePDF.load(document)
             invoice.attachments.each do |attachment|
               # get default path (pdf) evenif doc is image or text
-              pdf_attachment_path = attachment.document&.file&.path(:default)
+              pdf_attachment_path = attachment.document&.file_path
               if pdf_attachment_path
                 begin
                   attach_pdf = CombinePDF.load(pdf_attachment_path, allow_optional_content: true)
                 rescue
-                  puts "Error on merging PDF".inspect.yellow
+                  puts "Error on merging PDF".inspect
                 end
                 pdf << attach_pdf
               end

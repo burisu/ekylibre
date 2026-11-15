@@ -187,9 +187,9 @@ class Product < ApplicationRecord
   has_geometry :initial_shape, type: :multi_polygon
   has_geometry :initial_geolocation, type: :point
 
-  enumerize :type_of_occupancy, in: %i[owner rent sharecropper], predicates: true
+  has_enum :type_of_occupancy, in: %i[owner rent sharecropper], predicates: true
 
-  serialize :specie_variety, HashSerializer
+  serialize :specie_variety, coder: HashSerializer
   store_accessor :specie_variety, :specie_variety_name
 
   # find Product by work_numbers (work_numbers must be an Array)
@@ -303,7 +303,7 @@ class Product < ApplicationRecord
   scope :supporters, -> { where(id: ActivityProduction.pluck(:support_id)) }
   scope :available, -> {}
   scope :availables, ->(**args) {
-    ActiveSupport::Deprecation.warn("Product#availables and Product#available are deprecated, use Product#at instead")
+    Ekylibre.deprecator.warn("Product#availables and Product#available are deprecated, use Product#at instead")
 
     at = args[:at]
     return available if at.blank?
@@ -335,7 +335,7 @@ class Product < ApplicationRecord
     # Product.availables(at: date).where(id: product_ids, type: type)
     Product.availables(at: date).where(type: type)
   }
-  scope :excluding, ->(*ids) {
+  scope :excluding_ids, ->(*ids) {
     where.not(id: ids)
   }
   scope :alive, ->(at: Time.now) { where('products.dead_at IS NULL OR products.dead_at >= ?', at) }
@@ -385,7 +385,6 @@ class Product < ApplicationRecord
   # ]VALIDATORS]
   validates :derivative_of, :variety, length: { allow_nil: true, maximum: 120 }
   validates :uuid, :conditioning_unit, presence: true
-  validates_attachment_content_type :picture, content_type: /image/
 
   validate :born_at_in_interventions, if: ->(product) { product.born_at? && product.interventions_used_in.pluck(:started_at).any? }
   validate :dead_at_in_interventions, if: ->(product) { product.dead_at? && product.interventions.pluck(:stopped_at).any? }
@@ -393,7 +392,14 @@ class Product < ApplicationRecord
 
   delegate :dimension, :of_dimension?, to: :unit
 
-  alias_attribute :unit, :conditioning_unit
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def unit
+    conditioning_unit
+  end
+
+  def unit=(value)
+    self.conditioning_unit = value
+  end
 
   store :reading_cache, accessors: Onoma::Indicator.all, coder: ReadingsCoder
 
@@ -419,7 +425,7 @@ class Product < ApplicationRecord
   def dead_at_in_interventions
     last_used_at = interventions.order(stopped_at: :desc).first.stopped_at
     if dead_at < last_used_at
-      # puts ActivityProduction.find_by(support_id: self.id).id.green
+      # puts ActivityProduction.find_by(support_id: self.id).id
       errors.add(:dead_at, :on_or_after, restriction: last_used_at.l)
     end
   end
@@ -670,7 +676,7 @@ class Product < ApplicationRecord
   def choose_default_name
     return if name.present?
 
-    ActiveSupport::Deprecation.warn "Product#choose_default_name is deprecated."
+    Ekylibre.deprecator.warn "Product#choose_default_name is deprecated."
 
     if variant
       if last = variant.products.reorder(id: :desc).first
@@ -883,9 +889,6 @@ class Product < ApplicationRecord
     nil
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   # Returns all contained products of the given variant
   def localized_variants(variant, options = {})
@@ -999,7 +1002,7 @@ class Product < ApplicationRecord
   end
 
   def initial_shape_area
-    ::Charta.new_geometry(initial_shape).area.in_square_meter
+    ::Geo.new_geometry(initial_shape).area.in_square_meter
   end
 
   def get(indicator, *args)

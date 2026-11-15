@@ -56,7 +56,7 @@ module ActionIntegration
             to_execute = block || send(method_name).method(:execute)
             to_execute.call
           rescue ServiceNotIntegrated
-            Rails.logger.info "Integration not present on tenant #{Ekylibre::Tenant.current}".yellow
+            Rails.logger.info "Integration not present on tenant #{Ekylibre::Tenant.current}"
           end
         end
         Ekylibre::Hook.subscribe("every_#{every}", proc)
@@ -116,7 +116,7 @@ module ActionIntegration
       end
 
       def auth(type, &block)
-        ActiveSupport::Deprecation.warn 'ActionIntegration::Base.auth is deprecated. Please use ActionIntegration::Base.authenticate_with instead.'
+        Ekylibre.deprecator.warn 'ActionIntegration::Base.auth is deprecated. Please use ActionIntegration::Base.authenticate_with instead.'
         authenticate_with(type, &block)
       end
 

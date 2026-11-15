@@ -6,9 +6,4 @@ module ActiveSensor
 
   class MissingParameter < StandardError
   end
-
-  autoload :Connection, 'active_sensor/connection'
-  autoload :Controller, 'active_sensor/controller'
-  autoload :Equipment, 'active_sensor/equipment'
-  autoload :Parameter, 'active_sensor/parameter'
 end

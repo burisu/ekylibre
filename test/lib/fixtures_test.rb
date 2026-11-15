@@ -13,7 +13,7 @@ class FixturesTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
 
     test "all fixtures validity: #{model.name}" do
       invalids = []
-      # print "#{model.name.green}"
+      # print "#{model.name}"
       reflections = model.reflect_on_all_associations(:belongs_to).delete_if { |r| r.name.to_s == 'item' && model == Version }
       model.includes(reflections.collect(&:name)).each do |record|
         begin

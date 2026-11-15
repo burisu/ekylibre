@@ -1,4 +1,4 @@
-class InterventionExportJob < ActiveJob::Base
+class InterventionExportJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 
@@ -30,7 +30,7 @@ class InterventionExportJob < ActiveJob::Base
       document_name = "#{:document_intervention_traceability.tl} - #{compute_export_name}"
       filename = "#{:export_intervention_traceability.tl}_#{compute_export_name}.xlsx"
       # create document
-      document = Document.create!(key: "#{Time.now.to_i}-#{filename}", name: document_name, file: data, file_file_name: filename)
+      document = Document.create!(key: "#{Time.now.to_i}-#{filename}", name: document_name, file: { io: data.respond_to?(:read) ? data : StringIO.new(data), filename: filename })
       notification = user.notifications.build(success_full_interventions_registry_notification(document_name, document.id))
     rescue StandardError => e
       Rails.logger.error e

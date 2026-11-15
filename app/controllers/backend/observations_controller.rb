@@ -18,6 +18,6 @@
 
 module Backend
   class ObservationsController < Backend::BaseController
-    manage_restfully importance: 'Observation.importance.default_value'.c, except: %i[index show], observed_at: 'Time.zone.now'.c, destroy_to: '{controller: RECORD.subject_type.tableize.to_sym, action: :show, id: RECORD.subject_id}'.c
+    manage_restfully importance: -> { Observation.importance.default_value }, except: %i[index show], observed_at: -> { Time.zone.now }, destroy_to: ->(record) { {controller: record.subject_type.tableize.to_sym, action: :show, id: record.subject_id} }
   end
 end

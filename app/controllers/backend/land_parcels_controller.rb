@@ -33,15 +33,15 @@ module Backend
           )
       SQL
 
-      code = <<~RUBY
-        #{search_conditions(products: %i[name number])} ||= []
+      search = search_conditions(products: %i[name number])
+      lambda do
+        c = instance_exec(&search)
         if current_campaign
           c[0] << " AND #{LandParcel.table_name}.id IN (#{sql})"
           c << current_campaign.id
         end
         c
-      RUBY
-      code.c
+      end
     end
 
     list(conditions: list_conditions, joins: :nature) do |t|
@@ -54,7 +54,7 @@ module Backend
     end
 
     # List interventions for one production support linked to land parcel
-    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT activity_productions_interventions.intervention_id FROM activity_productions_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = activity_productions_interventions.intervention_id WHERE activity_production_id IN (SELECT activity_production_id FROM products WHERE products.id = ?) AND campaigns_interventions.campaign_id = ?)", 'record', 'params[:id]'.c, 'current_campaign'.c], order: { created_at: :desc }, line_class: :status) do |t|
+    list(:interventions, conditions: ["#{Intervention.table_name}.nature = ? AND interventions.id IN (SELECT activity_productions_interventions.intervention_id FROM activity_productions_interventions JOIN campaigns_interventions ON campaigns_interventions.intervention_id = activity_productions_interventions.intervention_id WHERE activity_production_id IN (SELECT activity_production_id FROM products WHERE products.id = ?) AND campaigns_interventions.campaign_id = ?)", 'record', -> { params[:id] }, -> { current_campaign&.id }], order: { created_at: :desc }, line_class: :status) do |t|
       t.column :name, url: true
       t.column :started_at
       t.column :human_working_duration
@@ -64,7 +64,7 @@ module Backend
       t.column :issue, url: true
     end
 
-    list(:plants, conditions: ["#{Plant.table_name}.activity_production_id IN (SELECT activity_production_id FROM products WHERE products.id = ?)", 'params[:id]'.c], order: { name: :asc }, line_class: :status) do |t|
+    list(:plants, conditions: ["#{Plant.table_name}.activity_production_id IN (SELECT activity_production_id FROM products WHERE products.id = ?)", -> { params[:id] }], order: { name: :asc }, line_class: :status) do |t|
       t.column :name, url: true
       t.column :work_number, hidden: true
       t.column :variety

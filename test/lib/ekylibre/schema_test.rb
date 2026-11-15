@@ -8,8 +8,8 @@ module Ekylibre
         columns.each do |n, column|
           next if column.references.nil?
 
-          puts table.inspect.red
-          puts column.inspect.yellow
+          puts table.inspect
+          puts column.inspect
 
           assert(column.references.present?, "#{table}.#{n} foreign key is not determined.")
           next if column.polymorphic?

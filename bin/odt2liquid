@@ -1,0 +1,437 @@
+#!/usr/bin/env python3
+"""One-off converter: odf-report ODT templates -> HTML + Liquid for WeasyPrint.
+
+Usage: bin/odt2liquid template.odt dynamic_names.txt > template.html
+
+dynamic_names.txt lists normalized table/section names filled by printers
+(add_table / add_section). Rows of such tables containing [FIELDS] become
+Liquid loops; such sections become loops over their items.
+
+Fields [NAME] become {{ sN.name | escape | newline_to_br }} where sN is the
+innermost scope (rows are merged with their parent scope at render time).
+"""
+import base64
+import html
+import re
+import sys
+import zipfile
+import xml.etree.ElementTree as ET
+
+NS = {
+    'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
+    'style': 'urn:oasis:names:tc:opendocument:xmlns:style:1.0',
+    'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0',
+    'table': 'urn:oasis:names:tc:opendocument:xmlns:table:1.0',
+    'draw': 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0',
+    'fo': 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0',
+    'xlink': 'http://www.w3.org/1999/xlink',
+    'svg': 'urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0',
+    'loext': 'urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0',
+}
+
+
+def q(tag):
+    prefix, name = tag.split(':')
+    return '{%s}%s' % (NS[prefix], name)
+
+
+def attr(el, name, default=None):
+    return el.get(q(name), default)
+
+
+def normalize(name):
+    return re.sub(r'[^a-z0-9]+', '_', name.lower()).strip('_')
+
+
+FIELD_RE = re.compile(r'\[([A-Za-z0-9_]+)\]')
+
+# ---------------------------------------------------------------- styles
+
+TEXT_PROPS = {
+    'fo:font-weight': 'font-weight', 'fo:font-style': 'font-style', 'fo:font-size': 'font-size',
+    'fo:color': 'color', 'fo:background-color': 'background-color', 'style:font-name': 'font-family',
+    'fo:text-transform': 'text-transform', 'fo:letter-spacing': 'letter-spacing',
+}
+PARA_PROPS = {
+    'fo:text-align': 'text-align', 'fo:margin-top': 'margin-top', 'fo:margin-bottom': 'margin-bottom',
+    'fo:margin-left': 'margin-left', 'fo:margin-right': 'margin-right', 'fo:text-indent': 'text-indent',
+    'fo:line-height': 'line-height', 'fo:background-color': 'background-color',
+    'fo:border': 'border', 'fo:border-top': 'border-top', 'fo:border-bottom': 'border-bottom',
+    'fo:border-left': 'border-left', 'fo:border-right': 'border-right',
+    'fo:padding': 'padding', 'fo:break-before': 'break-before', 'fo:break-after': 'break-after',
+}
+CELL_PROPS = {
+    'fo:background-color': 'background-color', 'fo:border': 'border', 'fo:border-top': 'border-top',
+    'fo:border-bottom': 'border-bottom', 'fo:border-left': 'border-left', 'fo:border-right': 'border-right',
+    'fo:padding': 'padding', 'fo:padding-top': 'padding-top', 'fo:padding-bottom': 'padding-bottom',
+    'fo:padding-left': 'padding-left', 'fo:padding-right': 'padding-right', 'style:vertical-align': 'vertical-align',
+}
+TABLE_PROPS = {'style:width': 'width', 'fo:margin-left': 'margin-left', 'fo:margin-right': 'margin-right',
+               'fo:margin-top': 'margin-top', 'fo:margin-bottom': 'margin-bottom', 'fo:background-color': 'background-color'}
+
+
+def css_value(prop, value):
+    if prop == 'text-align':
+        return {'start': 'left', 'end': 'right'}.get(value, value)
+    if prop in ('break-before', 'break-after'):
+        return {'page': 'page'}.get(value)
+    if prop == 'font-family':
+        return "'%s', sans-serif" % value
+    if prop == 'background-color' and value == 'transparent':
+        return None
+    return value
+
+
+class Styles:
+    def __init__(self):
+        self.rules = {}      # style name -> css declarations
+        self.parents = {}
+        self.columns = {}    # column style -> width
+
+    def load(self, root):
+        for st in root.iter(q('style:style')):
+            name = attr(st, 'style:name')
+            decls = {}
+            for child, mapping in ((q('style:text-properties'), TEXT_PROPS), (q('style:paragraph-properties'), PARA_PROPS),
+                                   (q('style:table-cell-properties'), CELL_PROPS), (q('style:table-properties'), TABLE_PROPS)):
+                for props in st.findall(child):
+                    for k, prop in mapping.items():
+                        v = props.get(q(k))
+                        if v is not None:
+                            v = css_value(prop, v)
+                            if v:
+                                decls[prop] = v
+                    if child == q('style:text-properties'):
+                        if props.get(q('style:text-underline-style')) not in (None, 'none'):
+                            decls['text-decoration'] = 'underline'
+            for props in st.findall(q('style:graphic-properties')):
+                pos = props.get(q('style:horizontal-pos'))
+                if pos in ('right', 'from-inside') and props.get(q('style:horizontal-rel')) != 'page-start-margin':
+                    decls['float'] = 'right' if pos == 'right' else 'none'
+                elif pos == 'left':
+                    decls['float'] = 'left'
+                elif pos == 'center':
+                    decls['display'] = 'block'
+                    decls['margin'] = '0 auto'
+                for k, prop in (('fo:border', 'border'), ('fo:padding', 'padding'), ('fo:background-color', 'background-color')):
+                    v = props.get(q(k))
+                    if v and v not in ('none', 'transparent'):
+                        decls[prop] = v
+            for props in st.findall(q('style:section-properties')):
+                cols = props.find(q('style:columns'))
+                if cols is not None and int(cols.get(q('fo:column-count'), '1')) > 1:
+                    decls['column-count'] = cols.get(q('fo:column-count'))
+                    decls['column-gap'] = cols.get(q('fo:column-gap'), '0.5cm')
+            for props in st.findall(q('style:table-column-properties')):
+                if props.get(q('style:column-width')):
+                    self.columns[name] = props.get(q('style:column-width'))
+            self.rules[name] = decls
+            parent = attr(st, 'style:parent-style-name')
+            if parent:
+                self.parents[name] = parent
+
+    def css(self):
+        out = []
+        for name, decls in sorted(self.rules.items()):
+            merged = {}
+            chain = []
+            n = name
+            while n and n not in chain:
+                chain.append(n)
+                n = self.parents.get(n)
+            for n in reversed(chain):
+                merged.update(self.rules.get(n, {}))
+            if merged:
+                out.append('.%s { %s }' % (css_class(name), '; '.join('%s: %s' % kv for kv in merged.items())))
+        return '\n'.join(out)
+
+
+UNITS_IN_CM = {'cm': 1.0, 'mm': 0.1, 'in': 2.54, 'pt': 2.54 / 72, 'pc': 2.54 / 6, 'px': 2.54 / 96}
+
+
+def to_cm(value):
+    m = re.match(r'^\s*(-?[0-9.]+)\s*([a-z]*)\s*$', value or '')
+    if not m:
+        return 0.0
+    return float(m.group(1)) * UNITS_IN_CM.get(m.group(2) or 'cm', 1.0)
+
+
+def css_class(style_name):
+    return 's-' + re.sub(r'[^A-Za-z0-9_-]', '_', style_name)
+
+
+# ---------------------------------------------------------------- body
+
+
+class Converter:
+    def __init__(self, archive, dynamic):
+        self.zip = archive
+        self.dynamic = dynamic
+        self.styles = Styles()
+        self.depth = 0
+        self.scope = 's0'
+        self.used_dynamic = set()
+        self.inline_depth = 0  # > 0 inside frames/shapes nested in paragraphs
+
+    def field(self, name):
+        return '{{ %s.%s | escape | newline_to_br }}' % (self.scope, name.lower())
+
+    def text(self, value):
+        if not value:
+            return ''
+        parts = []
+        last = 0
+        for m in FIELD_RE.finditer(value):
+            parts.append(html.escape(value[last:m.start()], quote=False))
+            parts.append(self.field(m.group(1)))
+            last = m.end()
+        parts.append(html.escape(value[last:], quote=False))
+        return ''.join(parts)
+
+    def children(self, el):
+        out = [self.text(el.text)]
+        for child in el:
+            out.append(self.node(child))
+            out.append(self.text(child.tail))
+        return ''.join(out)
+
+    def cls(self, el, extra=''):
+        style = attr(el, 'text:style-name') or attr(el, 'table:style-name') or attr(el, 'draw:style-name')
+        classes = ([css_class(style)] if style else []) + ([extra] if extra else [])
+        return ' class="%s"' % ' '.join(classes) if classes else ''
+
+    def has_field(self, el):
+        return any(FIELD_RE.search(t or '') for t in el.itertext())
+
+    def open_loop(self, name):
+        self.used_dynamic.add(name)
+        parent = self.scope
+        self.depth += 1
+        self.scope = 's%d' % self.depth
+        return '{%% assign c%d = %s | scope: "%s" %%}{%% for %s in c%d %%}' % (self.depth, parent, name, self.scope, self.depth)
+
+    def close_loop(self):
+        self.depth -= 1
+        self.scope = 's%d' % self.depth
+        return '{% endfor %}'
+
+    def node(self, el):
+        tag = el.tag
+        if tag == q('text:p'):
+            if self.inline_depth:
+                return '<span%s style="display: block">%s</span>' % (self.cls(el, 'p'), self.children(el) or '&nbsp;')
+            return '<p%s>%s</p>\n' % (self.cls(el), self.children(el) or '&nbsp;')
+        if tag == q('text:h'):
+            level = attr(el, 'text:outline-level', '1')
+            return '<h%s%s>%s</h%s>\n' % (level, self.cls(el), self.children(el), level)
+        if tag == q('text:span'):
+            return '<span%s>%s</span>' % (self.cls(el), self.children(el))
+        if tag == q('text:line-break'):
+            return '<br>'
+        if tag == q('text:tab'):
+            return '<span class="tab"></span>'
+        if tag == q('text:s'):
+            return '&nbsp;' * int(attr(el, 'text:c', '1'))
+        if tag == q('text:list'):
+            return '<ul>%s</ul>\n' % ''.join(self.node(c) for c in el)
+        if tag == q('text:list-item'):
+            return '<li>%s</li>' % ''.join(self.node(c) for c in el)
+        if tag == q('text:section'):
+            return self.section(el)
+        if tag == q('table:table'):
+            return self.table(el)
+        if tag == q('draw:frame'):
+            return self.frame(el)
+        if tag == q('text:a'):
+            return '<a href="%s">%s</a>' % (html.escape(el.get(q('xlink:href'), '')), self.children(el))
+        if tag == q('draw:custom-shape'):
+            return self.shape(el)
+        if tag == q('draw:line'):
+            return self.line(el)
+        if tag in (q('text:soft-page-break'), q('text:sequence-decls'), q('office:forms'), q('text:bookmark'),
+                   q('text:bookmark-start'), q('text:bookmark-end'), q('text:sequence-decl')):
+            return ''
+        if tag in (q('text:page-number'),):
+            return '<span class="page-number"></span>'
+        if tag in (q('text:page-count'),):
+            return '<span class="page-count"></span>'
+        return self.children(el)
+
+    def section(self, el):
+        name = normalize(attr(el, 'text:name', ''))
+        body_open = '<div%s data-section="%s">' % (self.cls(el, 'section'), name)
+        if name in self.dynamic:
+            loop = self.open_loop(name)
+            inner = self.children(el)
+            end = self.close_loop()
+            return '%s%s%s%s</div>\n' % (loop, body_open, inner, end)
+        return '%s%s</div>\n' % (body_open, self.children(el))
+
+    def table(self, el):
+        name = normalize(attr(el, 'table:name', ''))
+        dynamic = name in self.dynamic
+        cols = []
+        for col in el.iter(q('table:table-column')):
+            width = self.styles.columns.get(attr(col, 'table:style-name'))
+            for _ in range(int(attr(col, 'table:number-columns-repeated', '1'))):
+                cols.append(width)
+        out = ['<table%s data-table="%s">' % (self.cls(el, 'table'), name)]
+        if any(cols):
+            out.append('<colgroup>%s</colgroup>' % ''.join('<col%s>' % (' style="width: %s"' % w if w else '') for w in cols))
+        header = el.find(q('table:table-header-rows'))
+        if header is not None:
+            out.append('<thead>%s</thead>' % ''.join(self.row(r) for r in header.findall(q('table:table-row'))))
+        rows = [r for r in el if r.tag == q('table:table-row')]
+        for group in el.findall(q('table:table-rows')):
+            rows.extend(group.findall(q('table:table-row')))
+        out.append('<tbody>')
+        i = 0
+        while i < len(rows):
+            if dynamic and self.has_field(rows[i]):
+                j = i
+                while j < len(rows) and self.has_field(rows[j]):
+                    j += 1
+                out.append(self.open_loop(name))
+                out.extend(self.row(r) for r in rows[i:j])
+                out.append(self.close_loop())
+                i = j
+            else:
+                out.append(self.row(rows[i]))
+                i += 1
+        out.append('</tbody></table>\n')
+        return ''.join(out)
+
+    def row(self, row):
+        cells = []
+        for cell in row:
+            if cell.tag == q('table:covered-table-cell'):
+                continue
+            if cell.tag != q('table:table-cell'):
+                continue
+            span = ''
+            if attr(cell, 'table:number-columns-spanned', '1') != '1':
+                span += ' colspan="%s"' % attr(cell, 'table:number-columns-spanned')
+            if attr(cell, 'table:number-rows-spanned', '1') != '1':
+                span += ' rowspan="%s"' % attr(cell, 'table:number-rows-spanned')
+            content = ''.join(self.node(c) for c in cell)
+            for _ in range(int(attr(cell, 'table:number-columns-repeated', '1'))):
+                cells.append('<td%s%s>%s</td>' % (self.cls(cell), span, content))
+        return '<tr%s>%s</tr>\n' % (self.cls(row), ''.join(cells))
+
+    def frame(self, el):
+        name = normalize(attr(el, 'draw:name', ''))
+        width = el.get(q('svg:width'))
+        height = el.get(q('svg:height'))
+        size = '; '.join(s for s in ('width: %s' % width if width else '', 'height: %s' % height if height else '') if s)
+        x, y = el.get(q('svg:x')), el.get(q('svg:y'))
+        if x is not None and attr(el, 'text:anchor-type') in ('paragraph', 'char'):
+            size += '; position: absolute; left: %s; top: %s' % (x, y or '0cm')
+        image = el.find(q('draw:image'))
+        textbox = el.find(q('draw:text-box'))
+        if textbox is not None:
+            self.inline_depth += 1
+            inner = self.children(textbox)
+            self.inline_depth -= 1
+            return '<span%s style="display: block; %s">%s</span>' % (self.cls(el, 'frame'), size, inner)
+        frame_cls = self.cls(el, 'frame')
+        if image is None:
+            return ''
+        # Images named like an add_image field are dynamic
+        if name in self.dynamic or name.endswith('logo') or name.startswith('img'):
+            self.used_dynamic.add(name)
+            return ('{%% if %s.%s %%}<img%s src="{{ %s.%s }}" style="%s; object-fit: contain">{%% endif %%}'
+                    % (self.scope, name, frame_cls, self.scope, name, size))
+        href = image.get(q('xlink:href'), '')
+        try:
+            data = self.zip.read(href)
+            mime = 'image/png' if href.lower().endswith('png') else 'image/jpeg' if re.search(r'jpe?g$', href.lower()) else 'image/svg+xml' if href.lower().endswith('svg') else 'application/octet-stream'
+            return '<img%s src="data:%s;base64,%s" style="%s">' % (frame_cls, mime, base64.b64encode(data).decode(), size)
+        except KeyError:
+            return ''
+
+    def shape(self, el):
+        geometry = el.find(q('draw:enhanced-geometry'))
+        if geometry is None or geometry.get(q('draw:type')) not in ('rectangle', 'round-rectangle'):
+            return ''
+        style = 'position: absolute; left: %s; top: %s; width: %s; height: %s; border: 0.03cm solid #000' % (
+            el.get(q('svg:x'), '0'), el.get(q('svg:y'), '0'), el.get(q('svg:width'), '0'), el.get(q('svg:height'), '0'))
+        if geometry.get(q('draw:type')) == 'round-rectangle':
+            style += '; border-radius: 0.2cm'
+        self.inline_depth += 1
+        inner = ''.join(self.node(c) for c in el if c.tag != q('draw:enhanced-geometry'))
+        self.inline_depth -= 1
+        return '<span class="shape" style="display: block; %s">%s</span>' % (style, inner)
+
+    def line(self, el):
+        x1, x2 = el.get(q('svg:x1'), '0cm'), el.get(q('svg:x2'), '0cm')
+        y1 = el.get(q('svg:y1'), '0cm')
+        def num(v):
+            return float(re.sub(r'[a-z]+$', '', v))
+        unit = re.sub(r'^[-0-9.]+', '', x1) or 'cm'
+        left, right = sorted([num(x1), num(x2)])
+        return '<span class="line" style="display: block; position: absolute; left: %s%s; top: %s; width: %s%s; border-top: 0.03cm solid #000"></span>' % (left, unit, y1, right - left, unit)
+
+    def page(self, styles_root):
+        """@page rule and running header/footer from styles.xml"""
+        css = []
+        header = footer = ''
+        layouts = {attr(pl, 'style:name'): pl for pl in styles_root.iter(q('style:page-layout'))}
+        master = next(styles_root.iter(q('style:master-page')), None)
+        if master is not None:
+            layout = layouts.get(attr(master, 'style:page-layout-name'))
+            if layout is not None:
+                props = layout.find(q('style:page-layout-properties'))
+                if props is not None:
+                    w, h = props.get(q('fo:page-width')), props.get(q('fo:page-height'))
+                    rules = []
+                    if w and h:
+                        rules.append('size: %s %s' % (w, h))
+                    margins = [props.get(q('fo:margin-' + s), '1cm') for s in ('top', 'right', 'bottom', 'left')]
+                    def extra(kind):
+                        hf = layout.find(q('style:%s-style' % kind))
+                        hp = hf.find(q('style:header-footer-properties')) if hf is not None else None
+                        if hp is None:
+                            return 1.5
+                        return to_cm(hp.get(q('fo:min-height'), '0cm')) + to_cm(hp.get(q('fo:margin-bottom' if kind == 'header' else 'fo:margin-top'), '0cm')) + 0.8
+                    if master.find(q('style:header')) is not None:
+                        margins[0] = '%.3fcm' % (to_cm(margins[0]) + extra('header'))
+                    if master.find(q('style:footer')) is not None:
+                        margins[2] = '%.3fcm' % (to_cm(margins[2]) + extra('footer'))
+                    rules.append('margin: %s' % ' '.join(margins))
+            h_el = master.find(q('style:header'))
+            f_el = master.find(q('style:footer'))
+            if h_el is not None:
+                header = '<div class="page-header">%s</div>\n' % self.children(h_el)
+                rules.append('@top-center { content: element(page-header); width: 100% }')
+            if f_el is not None:
+                footer = '<div class="page-footer">%s</div>\n' % self.children(f_el)
+                rules.append('@bottom-center { content: element(page-footer); width: 100% }')
+            css.append('@page { %s }' % '; '.join(rules))
+        return '\n'.join(css), header, footer
+
+
+def main():
+    path, dynamic_file = sys.argv[1], sys.argv[2]
+    dynamic = set(line.strip() for line in open(dynamic_file) if line.strip())
+    archive = zipfile.ZipFile(path)
+    content = ET.fromstring(archive.read('content.xml'))
+    styles_root = ET.fromstring(archive.read('styles.xml'))
+    conv = Converter(archive, dynamic)
+    conv.styles.load(styles_root)
+    conv.styles.load(content)
+    page_css, header, footer = conv.page(styles_root)
+    body = content.find(q('office:body')).find(q('office:text'))
+    html_body = conv.children(body)
+    print('{%% comment %%}Converted from %s by odt2liquid. Data scope: s0 (document), s1.. (tables/sections).{%% endcomment %%}' % path.split('/')[-1])
+    print('<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n<style>')
+    print(page_css)
+    print('{{ base_css }}')
+    print(conv.styles.css())
+    print('</style>\n</head>\n<body>')
+    print(header + footer + html_body)
+    print('</body>\n</html>')
+    sys.stderr.write('dynamic used: %s\n' % ', '.join(sorted(conv.used_dynamic)))
+
+
+if __name__ == '__main__':
+    main()

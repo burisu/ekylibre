@@ -27,13 +27,15 @@ module Backend
     #   :state State search
     #   :current_campaign
     def self.cap_islets_conditions
-      code = ''
-      code = search_conditions(cap_islets: [:islet_number]) + " ||= []\n"
-      code << "if current_campaign\n"
-      code << "  c[0] << \" AND #{CapStatement.table_name}.campaign_id IN (?)\"\n"
-      code << "  c << current_campaign.id\n"
-      code << "end\n"
-      code.c
+      search1 = search_conditions(cap_islets: [:islet_number])
+      lambda do
+        c = instance_exec(&search1)
+        if current_campaign
+          c[0] << " AND #{CapStatement.table_name}.campaign_id IN (?)"
+          c << current_campaign.id
+        end
+        c
+      end
     end
 
     list(conditions: cap_islets_conditions, joins: [:cap_statement], order: { islet_number: :asc }) do |t|
@@ -44,7 +46,7 @@ module Backend
       t.column :net_surface_area
     end
 
-    list(:cap_land_parcels, conditions: { cap_islet_id: 'params[:id]'.c }, order: { land_parcel_number: :asc }) do |t|
+    list(:cap_land_parcels, conditions: { cap_islet_id: -> { params[:id] } }, order: { land_parcel_number: :asc }) do |t|
       t.column :land_parcel_number, url: true
       t.column :human_shape_area
     end

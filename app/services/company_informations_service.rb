@@ -2,7 +2,7 @@
 
 class CompanyInformationsService
   NETWORK_ERRORS = [
-    RestClient::Exception,
+    Faraday::Error,
     Errno::ECONNRESET,
     Errno::ECONNREFUSED,
     Errno::EHOSTUNREACH,
@@ -12,8 +12,8 @@ class CompanyInformationsService
     OpenSSL::SSL::SSLError
   ].freeze
 
-  def self.call(*args)
-    new(*args).call
+  def self.call(...)
+    new(...).call
   end
 
   def initialize(
@@ -46,7 +46,7 @@ class CompanyInformationsService
       @siret = etablissement[:siret]
     end
 
-    puts etablissement.inspect.green
+    puts etablissement.inspect
 
     return {} unless etablissement
 

@@ -162,7 +162,7 @@ class ActivityTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     )
   end
 
-  # assert_in_delta cause psql ST_Area([...]) ~= Charta::MultiPolygon.area
+  # assert_in_delta cause psql ST_Area([...]) ~= Geo::MultiPolygon.area
   test 'working zone area 1' do
     activity = Activity.find(1).decorate
     assert_in_delta 55.01438523657225, activity.working_zone_area(Campaign.find(4)).to_d, 0.0005

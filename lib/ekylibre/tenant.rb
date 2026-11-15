@@ -134,7 +134,7 @@ module Ekylibre
         if options[:s3_backup].present?
           backup_on_external_storage(name, options)
         end
-        puts "Done! (#{duration.round(2)}s)".yellow if verbose
+        puts "Done! (#{duration.round(2)}s)" if verbose
       end
 
       # Restore an archive
@@ -146,15 +146,15 @@ module Ekylibre
         FileUtils.rm_rf(archive_path)
         FileUtils.mkdir_p(archive_path)
 
-        puts "Decompressing #{archive_file.basename} to #{archive_path.basename}...".yellow if verbose
+        puts "Decompressing #{archive_file.basename} to #{archive_path.basename}..." if verbose
 
         system "unzip -d #{archive_path} #{archive_file} > /dev/null"
 
-        puts 'Checking archive...'.yellow if verbose
+        puts 'Checking archive...' if verbose
         if !archive_path.join('manifest.yml').exist?
           raise 'Cannot not handle this archive'
         else
-          manifest = YAML.load_file(archive_path.join('manifest.yml')).symbolize_keys
+          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true).symbolize_keys
           # Bugfix
           if manifest[:tenant] == 'Ekylibre::Tenant'
             Dir.chdir(archive_path) do
@@ -222,7 +222,7 @@ module Ekylibre
       end
 
       def load!
-        @list = (File.exist?(config_file) ? YAML.load_file(config_file) : {})
+        @list = (File.exist?(config_file) ? YAML.safe_load_file(config_file, permitted_classes: [Date, Time, Symbol], aliases: true) : {})
         @list ||= {}
       end
 
@@ -252,15 +252,15 @@ module Ekylibre
         if tenant_list.any?
           agg_list = tenant_list
         elsif File.exist?(config_file)
-          agg_list = YAML.load_file(config_file)
+          agg_list = YAML.safe_load_file(config_file, permitted_classes: [Date, Time, Symbol], aliases: true)
         else
           agg_list = {}
         end
 
         raise 'No tenant to build an aggregation schema' if agg_list[env].empty?
 
-        puts "Creating aggregation schema #{name} for tenants: #{agg_list[env].join(', ')}".yellow
-        puts "Creating aggregation schema #{name} for tables: #{agg_tables_name.join(', ')}".yellow
+        puts "Creating aggregation schema #{name} for tenants: #{agg_list[env].join(', ')}"
+        puts "Creating aggregation schema #{name} for tables: #{agg_tables_name.join(', ')}"
 
         connection = ActiveRecord::Base.connection
         connection.execute("CREATE SCHEMA IF NOT EXISTS #{name};")
@@ -276,7 +276,7 @@ module Ekylibre
       end
 
       def reset_search_path!
-        ActiveRecord::Base.connection.schema_search_path = Ekylibre::Application.config.database_configuration[::Rails.env]['schema_search_path']
+        ActiveRecord::Base.connection.schema_search_path = Ekylibre.primary_db_config['schema_search_path']
       end
 
       def list_tenants_with_migration_problem
@@ -303,12 +303,12 @@ module Ekylibre
           connection = ActiveRecord::Base.connection
           connection.execute('INSERT INTO schema_migrations SELECT * FROM public.schema_migrations')
 
-          puts (tenant[:name] + ' : done').yellow
+          puts (tenant[:name] + ' : done')
         end
 
         load!
 
-        puts 'Task done'.blue
+        puts 'Task done'
       end
 
       def list_tenant_with_table_not_exist(table_name)
@@ -358,7 +358,7 @@ module Ekylibre
 
         def backup_on_external_storage(name, options = {})
           start_backup_duration = Time.current
-          puts "Backup #{name} on S3 storage...".yellow
+          puts "Backup #{name} on S3 storage..."
           s3 = ::Aws::S3::Client.new(endpoint: ENV.fetch('S3_BACKUP_HOST', nil),
                                     access_key_id: ENV.fetch('S3_BACKUP_ACCESS_KEY', nil),
                                     secret_access_key: ENV.fetch('S3_BACKUP_SECRET_KEY', nil),
@@ -374,9 +374,9 @@ module Ekylibre
           if bucket_name.present? && file.present?
             s3.put_object(bucket: bucket_name, key: key, body: file)
             backup_duration = Time.current - start_backup_duration
-            puts "Backup #{name} on S3 storage Done! (#{backup_duration.round(2)}s)".green
+            puts "Backup #{name} on S3 storage Done! (#{backup_duration.round(2)}s)"
           else
-            puts "Fail ! Missing bucket_name : #{bucket_name} or archive_file : #{archive_file}".red
+            puts "Fail ! Missing bucket_name : #{bucket_name} or archive_file : #{archive_file}"
           end
         end
 
@@ -467,7 +467,7 @@ module Ekylibre
           tables_path = archive_path.join('tables')
           files_path = archive_path.join('files')
 
-          manifest = YAML.load_file(archive_path.join('manifest.yml')).symbolize_keys
+          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true).symbolize_keys
 
           database_version = manifest[:database_version].to_i
           if database_version > ActiveRecord::Migrator.current_version
@@ -475,20 +475,20 @@ module Ekylibre
           end
 
           verbose = !options[:verbose].is_a?(FalseClass)
-          puts "Resetting tenant #{name}...".yellow if verbose
+          puts "Resetting tenant #{name}..." if verbose
           drop(name) if exist?(name)
           create(name)
 
           switch(name) do
             if files_path.exist?
-              puts 'Restoring files...'.yellow if verbose
+              puts 'Restoring files...' if verbose
               FileUtils.rm_rf private_directory
               FileUtils.mv files_path, private_directory
             else
-              puts 'No files to restore'.yellow if verbose
+              puts 'No files to restore' if verbose
             end
 
-            puts 'Restoring database and migrating...'.yellow if verbose
+            puts 'Restoring database and migrating...' if verbose
             restore_options = options.merge(
               tenant_name: name,
               version: database_version,
@@ -496,11 +496,11 @@ module Ekylibre
               verbose: verbose
             )
             yield(restore_options)
-            puts 'Restored!'.yellow if verbose
+            puts 'Restored!' if verbose
           end
 
           duration = Time.current - start
-          puts "Done! (#{duration.round(2)}s)".yellow if verbose
+          puts "Done! (#{duration.round(2)}s)" if verbose
         end
 
         def dump_mimetype(archive_path)
@@ -515,7 +515,7 @@ module Ekylibre
               tenant: name,
               format_version: 3,
               database_version: version,
-              creation_at: Time.zone.now,
+              creation_at: Time.now.utc,
               created_with: "Ekylibre #{Ekylibre::VERSION}".strip
             )
             f.write options.stringify_keys.to_yaml
@@ -572,7 +572,7 @@ module Ekylibre
         end
 
         def db_config
-          Rails.application.config.database_configuration[Rails.env.to_s]
+          Ekylibre.primary_db_config
         end
 
         def zip_up(archive_path, into:)

@@ -27,7 +27,7 @@ module Ekylibre
 
     test 'when materialized, demo manifest.yml targets demo.ekylibre-dev.com and declares EX2026' do
       skip "demo folder absent, run bin/sync_demo_data to populate it" unless DEMO_DIR.join('manifest.yml').file?
-      manifest = YAML.load_file(DEMO_DIR.join('manifest.yml'))
+      manifest = YAML.safe_load_file(DEMO_DIR.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true)
       assert_equal 'demo.ekylibre-dev.com', manifest['host']
       assert manifest.dig('financial_years', 'EX2026'),
              'EX2026 missing from demo manifest'

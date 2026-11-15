@@ -58,7 +58,7 @@ module Ekylibre
         # Check outgoing payment mode
         payment_mode = IncomingPaymentMode.find_or_create_by(name: r.incoming_payment_mode_name)
         unless payment_mode
-          w.error "Cannot find incoming payment mode #{r.incoming_payment_mode_name} at line #{line_number.to_s.yellow}"
+          w.error "Cannot find incoming payment mode #{r.incoming_payment_mode_name} at line #{line_number.to_s}"
           valid = false
         end
 

@@ -18,7 +18,7 @@
 
 module Backend
   class FixedAssetsController < Backend::BaseController
-    manage_restfully currency: 'Preference[:currency]'.c, depreciation_method: 'linear'
+    manage_restfully currency: -> { Preference[:currency] }, depreciation_method: 'linear'
 
     unroll
 
@@ -33,32 +33,34 @@ module Backend
     #   :variant_id
     #   :activity_id
     def self.fixed_assets_conditions
-      code = search_conditions(fixed_assets: %i[name number description]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{FixedAsset.table_name}.started_on BETWEEN ? AND ?'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "unless params[:state].blank?\n"
-      code << "  c[0] << ' AND #{FixedAsset.table_name}.state IN (?)'\n"
-      code << "  c << params[:state]\n"
-      code << "end\n"
-      code << "if params[:fixed_asset_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{FixedAsset.table_name}.id = ?'\n"
-      code << "  c << params[:fixed_asset_id]\n"
-      code << "end\n"
-      code << "if params[:product_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{FixedAsset.table_name}.product_id = ?'\n"
-      code << "  c << params[:product_id]\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(fixed_assets: %i[name number description])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND #{FixedAsset.table_name}.started_on BETWEEN ? AND ?"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        unless params[:state].blank?
+          c[0] << " AND #{FixedAsset.table_name}.state IN (?)"
+          c << params[:state]
+        end
+        if params[:fixed_asset_id].to_i > 0
+          c[0] += " AND #{FixedAsset.table_name}.id = ?"
+          c << params[:fixed_asset_id]
+        end
+        if params[:product_id].to_i > 0
+          c[0] += " AND #{FixedAsset.table_name}.product_id = ?"
+          c << params[:product_id]
+        end
+        c
+      end
     end
 
     list(conditions: fixed_assets_conditions) do |t|
@@ -76,7 +78,7 @@ module Backend
       t.column :stopped_on
     end
 
-    list(:depreciations, model: :fixed_asset_depreciations, conditions: { fixed_asset_id: 'params[:id]'.c }, order: :position) do |t|
+    list(:depreciations, model: :fixed_asset_depreciations, conditions: { fixed_asset_id: -> { params[:id] } }, order: :position) do |t|
       # t.action :edit, if: "RECORD.journal_entry.nil?".c
       t.column :position
       t.column :accountable
@@ -153,7 +155,7 @@ module Backend
 
     def create
       @fixed_asset = resource_model.new(parameters_with_processed_percentage)
-      return if save_and_redirect(@fixed_asset, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: 'id'.c })), notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false), identifier: :name)
+      return if save_and_redirect(@fixed_asset, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: ->(record) { record.id } })), notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false), identifier: :name)
 
       render(locals: { cancel_url: { action: :index }, with_continue: false })
     end
@@ -182,7 +184,7 @@ module Backend
                        false
                      end
 
-      return if save_and_redirect(@fixed_asset, url: params[:redirect] || { action: :show, id: 'id'.c }, notify: notification, identifier: :name)
+      return if save_and_redirect(@fixed_asset, url: params[:redirect] || { action: :show, id: ->(record) { record.id } }, notify: notification, identifier: :name)
 
       render(locals: { cancel_url: { action: :index }, with_continue: false })
     end

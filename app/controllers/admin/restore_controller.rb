@@ -1,5 +1,5 @@
 class Admin::RestoreController < Admin::BaseController
-  REDIS_KEY = 'ekylibre:admin:restore'.freeze
+  STATUS_KEY = 'ekylibre:admin:restore'.freeze
 
   def create
     if current_status[:status] == 'running'
@@ -42,13 +42,11 @@ class Admin::RestoreController < Admin::BaseController
   private
 
     def current_status
-      Sidekiq.redis do |r|
-        result = r.hgetall(REDIS_KEY)
-        { status: result['status'] || 'idle', message: result['message'] || '' }
-      end
+      result = Ekylibre::TaskStatus.read(STATUS_KEY)
+      { status: result['status'] || 'idle', message: result['message'] || '' }
     end
 
     def reset!
-      Sidekiq.redis { |r| r.del(REDIS_KEY) }
+      Ekylibre::TaskStatus.delete(STATUS_KEY)
     end
 end

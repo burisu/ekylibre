@@ -1,4 +1,4 @@
-class AccountancyClassifierJob < ActiveJob::Base
+class AccountancyClassifierJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 

@@ -26,4 +26,4 @@
   %td.decimal= f.input(:amount, wrapper: :nested, input_html: { class: "wta", data: { trade_component: "amount", compute_from: :amount } })
   %td.currency= f.object.sale_currency
   %td.action
-    = link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-no-turbolink' => true, class: 'remove-item')
+    = link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-turbo' => false, class: 'remove-item')

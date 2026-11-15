@@ -2,7 +2,7 @@
 
 # Renders an <img> for a lexicon-owned agricultural picture (variety,
 # production, activity_family icon). Prefers BYTEA streamed from the
-# lexicon schema; falls back to a sprockets asset path if provided, and
+# lexicon schema; falls back to an asset path if provided, and
 # silently drops if neither exists — so pages don't 500 on missing icons.
 module LexiconPictureHelper
   def lexicon_image_tag(domain, name, fallback: nil, **opts)
@@ -11,8 +11,7 @@ module LexiconPictureHelper
     elsif fallback
       begin
         image_tag(fallback, **opts)
-      rescue Sprockets::Rails::Helper::AssetNotFound,
-             Sprockets::Rails::Helper::AssetNotPrecompiled
+      rescue Propshaft::MissingAssetError
         ''.html_safe
       end
     else

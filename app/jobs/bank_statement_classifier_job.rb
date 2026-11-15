@@ -1,4 +1,4 @@
-class BankStatementClassifierJob < ActiveJob::Base
+class BankStatementClassifierJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 

@@ -79,7 +79,7 @@
           return;
         }
         // Success: job lance, on redirige immediatement vers /admin
-        // qui poll Redis et affiche le flash final.
+        // qui interroge le statut et affiche le flash final.
         window.location.href = indexUrl;
       })
       .catch(function(e) {

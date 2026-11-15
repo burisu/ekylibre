@@ -155,8 +155,8 @@ module Telepac
         end
 
         # check if existing CultivableZone cover, overlap or intersect a cap_land_parcel
-        cap_islet_shape = ::Charta.new_geometry(cap_land_parcel.islet.shape)
-        cap_land_parcel_shape = ::Charta.new_geometry(cap_land_parcel.shape)
+        cap_islet_shape = ::Geo.new_geometry(cap_land_parcel.islet.shape)
+        cap_land_parcel_shape = ::Geo.new_geometry(cap_land_parcel.shape)
         # info = c.to_ewkt[0..100] + "...\n"
         cap_land_parcel_inside_cultivable_zone = CultivableZone.shape_covering(cap_land_parcel_shape, 0.05)
         unless cap_land_parcel_inside_cultivable_zone.any?
@@ -244,7 +244,7 @@ module Telepac
       end
 
       def transform_geometry(geometry, srid)
-        geom = ::Charta.from_gml(geometry, srid).transform(:WGS84)
+        geom = ::Geo.from_gml(geometry, srid).transform(:WGS84)
         if !geom.simple?
           corrected_geom = shape_corrector.try_fix(geom)
           raise StandardError.new('Invalid geometry') if !corrected_geom.simple?
@@ -262,7 +262,7 @@ module Telepac
           town_number = islet.css('commune').text
           srid = find_srid(town_number)
 
-          # islet shape, validate GML and transform into Charta
+          # islet shape, validate GML and transform into Geo
           geometry = islet.xpath('.//gml:Polygon')
           geometry.first['srsName'] = "EPSG:#{srid}"
           geom = transform_geometry(geometry.first.to_xml.to_s.squish, srid).convert_to(:multi_polygon)
@@ -311,7 +311,7 @@ module Telepac
           main_crop_code = land_parcel.css('culture-principale > code-culture').text
           main_crop_precision = land_parcel.css('precision').text
 
-          # land_parcel shape, validate GML and transform into Charta
+          # land_parcel shape, validate GML and transform into Geo
           geometry = land_parcel.xpath('.//gml:Polygon')
           geometry.first['srsName'] = "EPSG:#{srid}"
           geom = transform_geometry(geometry.first.to_xml.to_s.squish, srid).convert_to(:multi_polygon)
@@ -328,7 +328,7 @@ module Telepac
 
           # find and update or create land_parcel according to cap statement and islet
           if (cap_land_parcel = CapLandParcel.find_by(cap_land_parcel_attributes.slice(:land_parcel_number, :cap_islet)))
-            cap_land_parcel.update_attributes!(cap_land_parcel_attributes)
+            cap_land_parcel.update!(cap_land_parcel_attributes)
           else
             cap_land_parcel = CapLandParcel.create!(cap_land_parcel_attributes)
           end
@@ -389,7 +389,7 @@ module Telepac
 
           # find and update or create neutral_area according to cap statement
           if (cap_neutral_area = CapNeutralArea.find_by(cap_neutral_area_attributes.slice(:cap_statement_id, :number)))
-            cap_neutral_area.update_attributes!(cap_neutral_area_attributes)
+            cap_neutral_area.update!(cap_neutral_area_attributes)
           else
             CapNeutralArea.create!(cap_neutral_area_attributes)
           end

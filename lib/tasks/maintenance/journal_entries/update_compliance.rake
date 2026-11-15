@@ -8,12 +8,12 @@ namespace :maintenance do
 
       if tenant
         Ekylibre::Tenant.switch(tenant) do
-          puts "Switching to tenant #{tenant}".blue
+          puts "Switching to tenant #{tenant}"
           set_compliance(started_on, stopped_on)
         end
       else
         Ekylibre::Tenant.switch_each do |tenant|
-          puts "Switching to tenant #{tenant}".blue
+          puts "Switching to tenant #{tenant}"
           set_compliance(started_on, stopped_on)
         end
       end
@@ -34,10 +34,10 @@ namespace :maintenance do
           end
         end
 
-        puts "There are #{entries.count} to process".red
+        puts "There are #{entries.count} to process"
 
         entries = entries.where("compliance = '{}'")
-        puts "There are #{entries.count} left to process".blue
+        puts "There are #{entries.count} left to process"
 
         entries.each_with_index do |je, _index|
           compliance = { vendor: :fec, name: :journal_entries, data: { errors: FEC::Check::JournalEntry.validate(je) } }

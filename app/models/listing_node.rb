@@ -56,7 +56,7 @@ class ListingNode < ApplicationRecord
   acts_as_list scope: :listing
   acts_as_nested_set scope: :listing
   attr_readonly :listing_id, :nature
-  enumerize :nature, in: %i[root column datetime custom boolean string numeric belongs_to has_many]
+  has_enum :nature, in: %i[root column datetime custom boolean string numeric belongs_to has_many]
   belongs_to :listing, inverse_of: :nodes
   belongs_to :item_listing, class_name: 'Listing'
   belongs_to :item_listing_node, class_name: 'ListingNode'

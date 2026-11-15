@@ -15,8 +15,7 @@ class GeneralLedgerPrinterJob < ApplicationJob
         nature: template.nature,
         key: printer.key,
         name: printer.document_name,
-        file: StringIO.new(csv_string),
-        file_file_name: "#{printer.document_name}.#{extension}",
+        file: { io: StringIO.new(csv_string), filename: "#{printer.document_name}.#{extension}" },
         template: template
       )
 

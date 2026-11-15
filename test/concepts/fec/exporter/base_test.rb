@@ -1,6 +1,6 @@
 require 'test_helper'
 
-module Fec
+module FEC
   module Exporter
     class BaseTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
       # Add tests here...

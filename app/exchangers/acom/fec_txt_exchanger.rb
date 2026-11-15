@@ -64,24 +64,24 @@ module Acom
 
         fy_start = FinancialYear.at(row.printed_on)
         unless fy_start
-          w.error "FinancialYear does not exist for #{row.printed_on} in line : #{line_number} - #{valid}".red
+          w.error "FinancialYear does not exist for #{row.printed_on} in line : #{line_number} - #{valid}"
           valid = false
         end
 
         if (row.debit_amount - row.credit_amount) == 0.0
-          w.error "Errors on amount in line : #{line_number} - #{valid}".red
+          w.error "Errors on amount in line : #{line_number} - #{valid}"
           valid = false
         end
 
         if row.account_number.blank? || row.printed_on.blank? || row.entry_item_name.blank?
-          w.error "Errors on account (#{row.account_number}) or printed_on (#{row.printed_on.to_s}) or entry_item_name (#{row.entry_item_name}) in line : #{line_number} - #{valid}".red
+          w.error "Errors on account (#{row.account_number}) or printed_on (#{row.printed_on.to_s}) or entry_item_name (#{row.entry_item_name}) in line : #{line_number} - #{valid}"
           valid = false
         end
 
-        w.info "#{line_number} - #{valid}".green
+        w.info "#{line_number} - #{valid}"
 
       end
-      w.info "End validation : #{valid}".yellow
+      w.info "End validation : #{valid}"
       valid
     end
 
@@ -136,10 +136,10 @@ module Acom
             account = find_or_create_account(row.account_number, row.account_name)
             # find_or_create_entity(row.printed_on, account, row.account_number)
           end
-          w.info "third account & entity created: #{account.label.inspect.green}"
+          w.info "third account & entity created: #{account.label.inspect}"
         else
           account = find_or_create_account(row.account_number, row.account_name)
-          w.info "account created: #{account.label.inspect.green}"
+          w.info "account created: #{account.label.inspect}"
         end
 
         # create entry item attributes
@@ -156,9 +156,9 @@ module Acom
       w.reset!(entries.keys.size)
       # create entry
       entries.values.each do |entry|
-        w.info "JE : #{entry}".inspect.yellow
+        w.info "JE : #{entry}".inspect
         j = JournalEntry.create!(entry)
-        w.info "JE created: #{j.number} | #{j.printed_on}".inspect.yellow
+        w.info "JE created: #{j.number} | #{j.printed_on}".inspect
         w.check_point
       end
     end

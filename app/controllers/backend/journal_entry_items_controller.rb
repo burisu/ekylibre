@@ -21,24 +21,25 @@ module Backend
     unroll :entry_number, :name, :real_debit, :real_credit, :currency, account: :number
 
     def self.list_conditions
-      code = ''
-      code << search_conditions + ';'
-      code << "if params[:tax_declaration_item_id]\n"
-      code << "  c[0] += ' AND #{JournalEntryItem.table_name}.id IN (SELECT DISTINCT journal_entry_item_id FROM #{TaxDeclarationItemPart.table_name} WHERE tax_declaration_item_id = ?)'\n"
-      code << "  c << params[:tax_declaration_item_id].to_i\n"
-      code << "end\n"
-      code << "if params[:account_id].to_i > 0\n"
-      code << "  c[0] += ' AND account_id = ?'\n"
-      code << "  c << params[:account_id].to_i\n"
-      code << "end\n"
-      code << "unless params[:period].blank? or params[:period]='all'\n"
-      code << "  c[0] += ' AND id IN (SELECT account_id FROM #{JournalEntryItem.table_name} AS jel JOIN #{JournalEntry.table_name} AS je ON (entry_id=je.id) WHERE '+JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on], 'je')+')'\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions
+      lambda do
+        c = instance_exec(&search1)
+        if params[:tax_declaration_item_id]
+        c[0] += " AND #{JournalEntryItem.table_name}.id IN (SELECT DISTINCT journal_entry_item_id FROM #{TaxDeclarationItemPart.table_name} WHERE tax_declaration_item_id = ?)"
+        c << params[:tax_declaration_item_id].to_i
+        end
+        if params[:account_id].to_i > 0
+          c[0] += ' AND account_id = ?'
+          c << params[:account_id].to_i
+        end
+        unless params[:period].blank? or params[:period]='all'
+          c[0] += " AND id IN (SELECT account_id FROM #{JournalEntryItem.table_name} AS jel JOIN #{JournalEntry.table_name} AS je ON (entry_id=je.id) WHERE "+JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on], 'je')+')'
+        end
+        c
+      end
     end
 
-    list(conditions: list_conditions, joins: :entry, line_class: "(RECORD.position==1 ? 'first-item' : '') + (RECORD.entry_balanced? ? '' : ' error')".c, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
+    list(conditions: list_conditions, joins: :entry, line_class: ->(record) { (record.position==1 ? 'first-item' : '') + (record.entry_balanced? ? '' : ' error') }, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
       t.column :entry_number, url: true
       t.column :printed_on, through: :entry, datatype: :date
       t.column :account, url: true

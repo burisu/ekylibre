@@ -189,10 +189,9 @@ class Measure
   end
 
   # Returns if self is greater than other
+  # Returns nil if other is not a measure (as Comparable expects)
   def <=>(other)
-    unless other.is_a?(Measure)
-      raise ArgumentError.new('Only measure can be compared to another measure')
-    end
+    return nil unless other.is_a?(Measure)
 
     to_r <=> other.to_r(unit)
   end
@@ -211,6 +210,13 @@ class Measure
   end
 
   # Returns the dimension of a other
+  # Lets numeric zero be added to a measure, as Enumerable#sum starts from 0
+  def coerce(numeric)
+    raise TypeError.new("#{numeric.class} can't be coerced into Measure") unless numeric.is_a?(Numeric) && numeric.zero?
+
+    [Measure.new(0, unit), self]
+  end
+
   def +(other)
     unless other.is_a?(Measure)
       raise ArgumentError.new('Only measure can be added to another measure')

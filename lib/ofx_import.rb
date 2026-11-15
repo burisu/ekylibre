@@ -31,7 +31,7 @@ class OfxImport
     def read_and_parse_file
       encoding = detect_encoding(file)
       content = File.open(file.path, encoding: encoding).read
-      @parsed = OfxParser::OfxParser.parse(content)
+      @parsed = OfxParser.parse(content)
       true
     rescue => error
       message = I18n.translate('activerecord.errors.models.bank_statement.ofx_file_invalid')

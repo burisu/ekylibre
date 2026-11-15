@@ -51,7 +51,7 @@
 
 class SaleNature < ApplicationRecord
   include Providable
-  enumerize :payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
+  has_enum :payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
   refers_to :currency
   belongs_to :catalog
   belongs_to :journal
@@ -117,7 +117,7 @@ class SaleNature < ApplicationRecord
   end
 
   def with_accounting
-    ActiveSupport::Deprecation.warn("with_accounting column doesn't exist anymore in sale_natures table")
+    Ekylibre.deprecator.warn("with_accounting column doesn't exist anymore in sale_natures table")
     true
   end
 

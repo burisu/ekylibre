@@ -50,7 +50,7 @@ class TaxDeclaration < ApplicationRecord
   include Attachable
   attr_readonly :currency
   refers_to :currency
-  enumerize :mode, in: %i[debit payment], predicates: true
+  has_enum :mode, in: %i[debit payment], predicates: true
   belongs_to :financial_year
   belongs_to :journal_entry, dependent: :destroy
   belongs_to :responsible, class_name: 'User'

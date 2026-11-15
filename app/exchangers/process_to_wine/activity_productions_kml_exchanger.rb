@@ -45,7 +45,7 @@ module ProcessToWine
           end
           if data.attribute('name').value == 'coords' && data.at_css("value").present?
             geom = data.at_css("value").text
-            shape = ::Charta.new_geometry(geom, 4326).transform(:WGS84)
+            shape = ::Geo.new_geometry(geom, 4326).transform(:WGS84)
           end
         end
         find_or_create_production(id, name, shape) if id && name && shape

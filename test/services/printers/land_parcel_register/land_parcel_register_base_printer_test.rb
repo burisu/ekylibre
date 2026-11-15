@@ -51,7 +51,7 @@ module Printers
           { product: :prod2, working_area: 1.in_square_meter },
           { product: :prod1, working_area: 1.in_square_meter },
         ]
-        target_mocks = targets.map(&method(:make_target_mock))
+        target_mocks = targets.map { |target| make_target_mock(**target) }
 
         intervention = Minitest::Mock.new(Object.new)
         intervention.expect :targets, target_mocks
@@ -85,7 +85,7 @@ module Printers
           { product: :prod1, working_area: 1.in_square_meter },
           { product: :prod3, working_area: 1.in_square_meter },
         ]
-        target_mocks = targets.map(&method(:make_target_mock))
+        target_mocks = targets.map { |target| make_target_mock(**target) }
 
         intervention = Minitest::Mock.new(Object.new)
         intervention.expect :targets, target_mocks

@@ -15,12 +15,12 @@ module PurchaseInvoices
     def parse_and_create_invoice
       supplier = find_supplier || create_supplier
       unless supplier
-        puts "No supplier found and error on created".inspect.red
+        puts "No supplier found and error on created".inspect
         return nil
       end
       invoiced_at = Date.parse(@data.date[:value]).to_time if @data.date.present?
       unless invoiced_at
-        puts "Purchase date not present".inspect.red
+        puts "Purchase date not present".inspect
         return nil
       end
       purchase = PurchaseInvoice.new(
@@ -42,7 +42,7 @@ module PurchaseInvoices
         purchase.attachments.create!(document: @document)
         purchase.id
       else
-        puts purchase.errors.full_messages.inspect.red
+        puts purchase.errors.full_messages.inspect
         nil
       end
     end
@@ -52,7 +52,7 @@ module PurchaseInvoices
       items = []
       if @data.line_items.any?
         @data.line_items.each do |line|
-          puts line.inspect.yellow
+          puts line.inspect
           # :product_code=>nil,
           # :quantity=>nil,
           # :unit_price=>19.99,
@@ -68,7 +68,7 @@ module PurchaseInvoices
           else
             vat_percentage = 0.0
           end
-          puts vat_percentage.inspect.red
+          puts vat_percentage.inspect
           infos = guess_line_info(product_code: line[:product_code], description: line[:description], vat_percentage: vat_percentage, supplier: supplier)
           items << { role: 'merchandise',
                       annotation: line[:description],
@@ -84,7 +84,7 @@ module PurchaseInvoices
     end
 
     def guess_line_info(product_code: nil, description:, vat_percentage:, supplier:)
-      puts vat_percentage.inspect.yellow
+      puts vat_percentage.inspect
       variant = guess_variant(description, supplier)
       infos = {
         variant: variant,
@@ -102,7 +102,7 @@ module PurchaseInvoices
       else
         rate = 0.0
       end
-      puts rate.inspect.green
+      puts rate.inspect
       rate
     end
 
@@ -125,7 +125,7 @@ module PurchaseInvoices
           end
         end
       end
-      puts variant.inspect.green
+      puts variant.inspect
       variant
     end
 

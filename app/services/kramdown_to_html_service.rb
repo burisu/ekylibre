@@ -4,12 +4,12 @@ require 'kramdown'
 require 'gitlab_kramdown'
 
 class KramdownToHtmlService
-  def self.call(*args)
-    new(*args).call
+  def self.call(...)
+    new(...).call
   end
 
-  def self.pdf(*args)
-    new(*args).pdf
+  def self.pdf(...)
+    new(...).pdf
   end
 
   def initialize(content:)

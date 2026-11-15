@@ -41,7 +41,7 @@
 #  usage_limit_on     :date
 #
 class Tracking < ApplicationRecord
-  enumerize :usage_limit_nature, in: %i[no_limit used_by best_before], default: :no_limit, predicates: true
+  has_enum :usage_limit_nature, in: %i[no_limit used_by best_before], default: :no_limit, predicates: true
   belongs_to :producer, class_name: 'Entity'
   belongs_to :product
   has_many :products, class_name: 'Product', foreign_key: :tracking_id, inverse_of: :tracking

@@ -1,6 +1,6 @@
-import axios from 'axios';
+import http from "lib/http";
 
-const getCountryISO3 = require('country-iso-2-to-3');
+import getCountryISO3 from 'lib/countryIso3';
 
 class HereGeocoder {
     constructor(options) {
@@ -10,7 +10,7 @@ class HereGeocoder {
     async suggest(address, country) {
         const action = 'geocode';
         try {
-            const response = await axios.get(this.url(action, address, country));
+            const response = await http.get(this.url(action, address, country));
             return response.data.items;
         } catch (err) {
             console.error(err);
@@ -20,7 +20,7 @@ class HereGeocoder {
     async geocode(address) {
         const action = 'geocode';
         try {
-            const response = await axios.get(this.url(action, address));
+            const response = await http.get(this.url(action, address));
             return response.data.items;
         } catch (err) {
             console.error(err);

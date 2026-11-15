@@ -73,7 +73,7 @@
 class ParcelItem < ApplicationRecord
   attr_readonly :parcel_id
   attr_accessor :product_nature_variant_id
-  enumerize :delivery_mode, in: %i[transporter us third none], predicates: { prefix: true }, scope: true, default: :us
+  has_enum :delivery_mode, in: %i[transporter us third none], predicates: { prefix: true }, scope: true, default: :us
   belongs_to :analysis
   belongs_to :parcel, inverse_of: :items
   belongs_to :localization, inverse_of: :shipment_items, class_name: 'ProductLocalization', foreign_key: :source_product_id, primary_key: :product_id
@@ -112,7 +112,14 @@ class ParcelItem < ApplicationRecord
   validates :population, presence: true
 
   alias_attribute :quantity, :population
-  alias_attribute :unit, :conditioning_unit
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def unit
+    conditioning_unit
+  end
+
+  def unit=(value)
+    self.conditioning_unit = value
+  end
 
   accepts_nested_attributes_for :products
   accepts_nested_attributes_for :storings, allow_destroy: true

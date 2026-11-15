@@ -53,7 +53,7 @@ class RegisteredAreaItem < LexiconRecord
   # TODO: improve this once PostGIS has been updated to 2.5 as ST_Intersects now supports GEOMETRYCOLLECTION
   scope :buffer_intersecting, lambda { |buffer, *geometries|
     union = geometries.reduce { |geometry, union| union.merge(geometry) }
-    bounding_box = Charta.new_geometry(union).buffer(buffer).bounding_box
+    bounding_box = Geo.new_geometry(union).buffer(buffer).bounding_box
 
     in_bounding_box(bounding_box.to_bbox_string)
       .where("ST_Intersects(ST_Buffer(shape::geography, #{buffer}), '#{union}')

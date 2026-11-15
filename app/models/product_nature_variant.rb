@@ -81,7 +81,7 @@ class ProductNatureVariant < ApplicationRecord
   attr_readonly :number
   refers_to :variety
   refers_to :derivative_of, class_name: 'Variety'
-  enumerize :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "Variants::#{t}Variant" } +
+  has_enum :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "Variants::#{t}Variant" } +
                        %w[FarmProduct Fertilizer PlantMedicine SeedAndPlant].map { |t| "Variants::Articles::#{t}Article" } +
                        %w[FixedEquipment MotorizedEquipment Tool TrailedEquipment].map { |t| "Variants::Equipments::#{t}Equipment" }
   belongs_to :nature, class_name: 'ProductNature', inverse_of: :variants
@@ -128,7 +128,6 @@ class ProductNatureVariant < ApplicationRecord
   validates :gtin, length: { allow_nil: true, maximum: 14 }
   validates :default_quantity, numericality: { greater_than: 0, less_than: 1_000_000_000_000_000 }
   validate :readings_presence
-  validates_attachment_content_type :picture, content_type: /image/
 
   alias_attribute :commercial_name, :name
 
@@ -143,7 +142,7 @@ class ProductNatureVariant < ApplicationRecord
   accepts_nested_attributes_for :catalog_items, reject_if: :all_blank, allow_destroy: true
   validates_associated :components
 
-  enumerize :default_unit_name, in: Unit::BASE_UNIT_PER_DIMENSION.values
+  has_enum :default_unit_name, in: Unit::BASE_UNIT_PER_DIMENSION.values
 
   scope :active, -> { where(active: true) }
   scope :availables, -> { where(nature_id: ProductNature.availables).order(:name) }
@@ -582,9 +581,6 @@ class ProductNatureVariant < ApplicationRecord
     variety == 'service' ? '' : current_outgoing_stock_ordered_not_delivered(into_default_unit: true)
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   def current_stock_per_storage(storage)
     ParcelItemStoring.where(storage: storage)

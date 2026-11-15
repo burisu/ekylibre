@@ -16,10 +16,10 @@ module FormObjects
       end
 
       include Ekylibre::Model
-      extend Enumerize
+      extend Ekylibre::Record::HasEnum
 
       attr_accessor :first_name, :last_name, :language, :role_id, :email
-      enumerize :language, in: I18n.available_locales, i18n_scope: ["nomenclatures.languages.items"]
+      has_enum :language, in: I18n.available_locales, i18n_scope: ["nomenclatures.languages.items"]
 
       validates :first_name, :last_name, :language, :role_id, :email, presence: true
 

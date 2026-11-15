@@ -22,11 +22,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
 
-  sidekiq:
-    container_name: sidekiq
+  jobs:
+    container_name: jobs
     build:
       dockerfile: docker/dev/Dockerfile
       context: ../..
@@ -39,11 +37,9 @@ services:
       - ../../../ekylibre-plugins:/ekylibre-plugins
       - bundle-volume:/app/vendor/bundle
       - docker-dev:/app/docker/dev
-    command: /app/docker/dev/sidekiq_startup.sh
+    command: /app/docker/dev/jobs_startup.sh
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       app:
         condition: service_started
@@ -64,14 +60,6 @@ services:
     depends_on:
       - app
     restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   db:
     image: kartoza/postgis:13

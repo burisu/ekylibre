@@ -108,6 +108,6 @@ class FinancialYearExchangeImportTest < Ekylibre::Testing::ApplicationTestCase::
     import = FinancialYearExchangeImport.new(file, financial_year_exchange)
     assert import.run, "Error during import: #{import.error.inspect}"
     financial_year_exchange.reload
-    assert_equal financial_year_exchange.import_file.size, file.size
+    assert_equal financial_year_exchange.import_file.blob.byte_size, file.size
   end
 end

@@ -23,20 +23,22 @@ module Backend
     unroll
 
     def self.taxes_conditions
-      code = search_conditions(taxes: %i[amount reference_name name nature country], accounts: %i[number name]) + " ||= []\n"
-      code << "if params[:state].present?\n"
-      code << "  if params[:state] == 'active'\n"
-      code << "    c[0] << ' AND #{Tax.table_name}.active = TRUE'\n"
-      code << "  elsif params[:state] == 'inactive'\n"
-      code << "    c[0] << ' AND #{Tax.table_name}.active = FALSE'\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if params[:provider].present?\n"
-      code << "  c[0] += \" AND \#{Tax.table_name}.provider ->> 'vendor' = ?\"\n"
-      code << "  c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(taxes: %i[amount reference_name name nature country], accounts: %i[number name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:state].present?
+          if params[:state] == 'active'
+            c[0] << " AND #{Tax.table_name}.active = TRUE"
+          elsif params[:state] == 'inactive'
+            c[0] << " AND #{Tax.table_name}.active = FALSE"
+          end
+        end
+        if params[:provider].present?
+          c[0] += " AND #{Tax.table_name}.provider ->> 'vendor' = ?"
+          c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s
+        end
+        c
+      end
     end
 
     list(conditions: taxes_conditions, joins: %i[collect_account deduction_account]) do |t|
@@ -56,7 +58,7 @@ module Backend
       t.column :deduction_isacompta_code, hidden: true
       t.column :fixed_asset_deduction_isacompta_code, hidden: true
       t.column :fixed_asset_collect_isacompta_code, hidden: true
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, hidden: true
     end
 
     def load

@@ -52,7 +52,7 @@ module Backend
     def update
       @naming_format.update(valid_permitted_params)
 
-      if params[:update_records].to_bool
+      if ActiveModel::Type::Boolean.new.cast(params[:update_records])
         NamingFormats::LandParcels::ChangeLandParcelsNamesInteractor
           .call
       end

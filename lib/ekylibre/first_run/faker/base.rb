@@ -27,7 +27,7 @@ module Ekylibre
           label_size = options[:label_size] || 21
           label = name.to_s.humanize.rjust(label_size)
           label = Ekylibre::FirstRun::Base.ellipse(label, label_size)
-          print "[#{'FAKE'.magenta}] #{label.blue}: "
+          print "[#{'FAKE'}] #{label}: "
           begin
             yield(f)
             print ' ' * (@max - f.count) if @max > 0 && @max > f.count

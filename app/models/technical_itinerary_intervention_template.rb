@@ -42,7 +42,7 @@
 #
 
 class TechnicalItineraryInterventionTemplate < ApplicationRecord
-  enumerize :frequency, in: %i[per_day per_month per_year], predicates: true, default: :per_year
+  has_enum :frequency, in: %i[per_day per_month per_year], predicates: true, default: :per_year
   belongs_to :technical_itinerary, class_name: 'TechnicalItinerary'
   belongs_to :intervention_template, class_name: 'InterventionTemplate'
 

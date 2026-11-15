@@ -68,8 +68,12 @@ module Apartment
       def connect_to_new(tenant = nil)
         return reset if tenant.nil?
 
-        raise ActiveRecord::StatementInvalid, "Could not establish connection to database for schema #{tenant}" unless Apartment.connection.active?
-        # end
+        # Connections are established lazily since Rails 7.2: connect if needed
+        begin
+          Apartment.connection.verify!
+        rescue ActiveRecord::ConnectionNotEstablished => e
+          raise ActiveRecord::StatementInvalid, "Could not establish connection to database for schema #{tenant}: #{e.message}"
+        end
 
         unless Apartment.connection.schema_exists? tenant
           raise TenantNotFound, "Could not find schema #{tenant}. Search path: [#{full_search_path}]"
@@ -84,9 +88,11 @@ module Apartment
     end
 
     class PostgresqlSchemaFromSqlAdapter < PostgresqlSchemaAdapter
-      PSQL_DUMP_BLACKLISTED_STATEMENTS << /CREATE SCHEMA/i
-      PSQL_DUMP_BLACKLISTED_STATEMENTS << /\\restrict/i
-      PSQL_DUMP_BLACKLISTED_STATEMENTS << /\\unrestrict/i
+      # Statements of structure.sql that must not be replayed in tenant schemas
+      # (recent pg_dump adds \\restrict / \\unrestrict meta-commands)
+      blacklisted = PSQL_DUMP_BLACKLISTED_STATEMENTS + [/CREATE SCHEMA/i, /\\restrict/i, /\\unrestrict/i]
+      remove_const(:PSQL_DUMP_BLACKLISTED_STATEMENTS)
+      PSQL_DUMP_BLACKLISTED_STATEMENTS = blacklisted.freeze
     end
   end
 end

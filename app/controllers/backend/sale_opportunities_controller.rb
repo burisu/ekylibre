@@ -18,32 +18,33 @@
 
 module Backend
   class SaleOpportunitiesController < Backend::SaleAffairsController
-    manage_restfully currency: 'Preference[:currency]'.c, responsible: 'current_user.person'.c, probability_percentage: 50
+    manage_restfully currency: -> { Preference[:currency] }, responsible: -> { current_user.person }, probability_percentage: 50
 
     respond_to :csv, :ods, :xlsx, :pdf, :odt, :docx, :html, :xml, :json
 
     # management -> sales_conditions
     def self.conditions
-      code = ''
-      code = search_conditions(sale_opportunities: %i[pretax_amount number description], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += \" AND \#{SaleOpportunity.table_name}.responsible_id = ?\"\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "if params[:provider_id].to_i > 0\n"
-      code << "  c[0] += \" AND \#{SaleOpportunity.table_name}.provider_id = ?\"\n"
-      code << "  c << params[:provider_id]\n"
-      code << "end\n"
-      code << "if params[:nature_id].to_i > 0\n"
-      code << "  c[0] += \" AND \#{SaleOpportunity.table_name}.nature_id = ?\"\n"
-      code << "  c << params[:nature_id]\n"
-      code << "end\n"
-      code << "if params[:state].is_a?(Array) && !params[:state].empty?\n"
-      code << "  c[0] << ' AND #{SaleOpportunity.table_name}.state IN (?)'\n"
-      code << "  c << params[:state]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(sale_opportunities: %i[pretax_amount number description], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{SaleOpportunity.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        if params[:provider_id].to_i > 0
+          c[0] += " AND #{SaleOpportunity.table_name}.provider_id = ?"
+          c << params[:provider_id]
+        end
+        if params[:nature_id].to_i > 0
+          c[0] += " AND #{SaleOpportunity.table_name}.nature_id = ?"
+          c << params[:nature_id]
+        end
+        if params[:state].is_a?(Array) && !params[:state].empty?
+          c[0] << " AND #{SaleOpportunity.table_name}.state IN (?)"
+          c << params[:state]
+        end
+        c
+      end
     end
 
     list(conditions: conditions, joins: :client, order: { created_at: :desc, number: :desc }) do |t|
@@ -64,7 +65,7 @@ module Backend
       t.column :probability_percentage
     end
 
-    list(:tasks, conditions: { sale_opportunity_id: 'params[:id]'.c }, order: :state, line_class: 'RECORD.state'.c) do |t|
+    list(:tasks, conditions: { sale_opportunity_id: -> { params[:id] } }, order: :state, line_class: ->(record) { record.state }) do |t|
       t.action :edit
       t.action :destroy
       t.column :name, url: true
@@ -75,7 +76,7 @@ module Backend
       t.column :entity, url: true
     end
 
-    list(:sale_contracts, conditions: { sale_opportunity_id: 'params[:id]'.c }) do |t|
+    list(:sale_contracts, conditions: { sale_opportunity_id: -> { params[:id] } }) do |t|
       t.action :edit
       t.action :destroy, if: :destroyable?
       t.column :name, url: true
@@ -83,7 +84,7 @@ module Backend
       t.column :responsible
     end
 
-    list(:events, conditions: { affair_id: 'params[:id]'.c }, order: :started_at) do |t|
+    list(:events, conditions: { affair_id: -> { params[:id] } }, order: :started_at) do |t|
       t.action :edit
       t.action :destroy
       t.column :name, url: true

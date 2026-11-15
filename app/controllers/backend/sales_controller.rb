@@ -18,7 +18,7 @@
 
 module Backend
   class SalesController < Backend::BaseController
-    manage_restfully except: %i[index show new], redirect_to: '{action: :show, id: "id".c}'.c, continue: [:nature_id]
+    manage_restfully except: %i[index show new], redirect_to: ->(record) { { action: :show, id: record.id } }, continue: [:nature_id]
 
     respond_to :csv, :ods, :xlsx, :pdf, :odt, :docx, :html, :xml, :json
 
@@ -28,46 +28,48 @@ module Backend
 
     # management -> sales_conditions
     def self.sales_conditions
-      code = search_conditions(sales: %i[pretax_amount amount reference_number number initial_number description], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND ((#{Sale.table_name}.invoiced_at IS NULL AND #{Sale.table_name}.created_at::DATE BETWEEN ? AND ?)'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "  c[0] << ' OR (#{Sale.table_name}.invoiced_at::DATE BETWEEN ? AND ?))'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if params[:state].is_a?(Array) && !params[:state].empty?\n"
-      code << "  c[0] << ' AND #{Sale.table_name}.state IN (?)'\n"
-      code << "  c << params[:state]\n"
-      code << "end\n "
-      code << "if params[:nature].present? && params[:nature].to_s != 'all'\n"
-      code << "  if params[:nature] == 'unpaid'\n"
-      code << "    c[0] << ' AND NOT #{Affair.table_name}.closed'\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += \" AND \#{Sale.table_name}.responsible_id = ?\"\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "if params[:provider].present?\n"
-      code << "  c[0] += \" AND \#{Sale.table_name}.provider ->> 'vendor' = ?\"\n"
-      code << "  c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(sales: %i[pretax_amount amount reference_number number initial_number description], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND ((#{Sale.table_name}.invoiced_at IS NULL AND #{Sale.table_name}.created_at::DATE BETWEEN ? AND ?)"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+          c[0] << " OR (#{Sale.table_name}.invoiced_at::DATE BETWEEN ? AND ?))"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:state].is_a?(Array) && !params[:state].empty?
+          c[0] << " AND #{Sale.table_name}.state IN (?)"
+          c << params[:state]
+        end
+        if params[:nature].present? && params[:nature].to_s != 'all'
+          if params[:nature] == 'unpaid'
+            c[0] << " AND NOT #{Affair.table_name}.closed"
+          end
+        end
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{Sale.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        if params[:provider].present?
+          c[0] += " AND #{Sale.table_name}.provider ->> 'vendor' = ?"
+          c << params[:provider].tap { |e| e[0] = e[0].downcase }.to_s
+        end
+        c
+      end
     end
 
     list(conditions: sales_conditions, selectable: true, joins: %i[client affair], order: { created_at: :desc, number: :desc }) do |t| # , :line_class => 'RECORD.tags'
@@ -83,7 +85,7 @@ module Backend
       t.column :client, url: true
       t.column :responsible, hidden: true
       t.column :description, hidden: true
-      t.column :provider_vendor, label_method: 'provider_vendor&.capitalize', sort: :provider_vendor, hidden: true
+      t.column :provider_vendor, label_method: ->(record) { record.provider_vendor&.capitalize }, sort: :provider_vendor, hidden: true
       t.status
       t.column :state_label
       t.column :pretax_amount, currency: true, on_select: :sum
@@ -101,7 +103,7 @@ module Backend
       end
     end
 
-    list(:credits, model: :sales, conditions: { credited_sale_id: 'params[:id]'.c }, children: :items) do |t|
+    list(:credits, model: :sales, conditions: { credited_sale_id: -> { params[:id] } }, children: :items) do |t|
       t.column :number, url: true, children: :designation
       t.column :client, children: false
       t.column :created_at, children: false
@@ -109,7 +111,7 @@ module Backend
       t.column :amount, currency: true
     end
 
-    list(:shipments, children: :items, conditions: { sale_id: 'params[:id]'.c }) do |t|
+    list(:shipments, children: :items, conditions: { sale_id: -> { params[:id] } }) do |t|
       t.column :number, children: :product_name, url: true
       t.column :delivery_mode
       t.column :delivery
@@ -121,7 +123,7 @@ module Backend
       t.action :destroy, if: :destroyable?
     end
 
-    list(:subscriptions, joins: :sale, conditions: ['sales.id = ?', 'params[:id]'.c]) do |t|
+    list(:subscriptions, joins: :sale, conditions: ['sales.id = ?', -> { params[:id] }]) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -133,7 +135,7 @@ module Backend
       t.column :quantity
     end
 
-    list(:undelivered_items, model: :sale_items, conditions: { sale_id: 'params[:id]'.c }) do |t|
+    list(:undelivered_items, model: :sale_items, conditions: { sale_id: -> { params[:id] } }) do |t|
       t.column :name, through: :variant
       # t.column :pretax_amount, currency: true, through: :price
       t.column :quantity
@@ -143,7 +145,7 @@ module Backend
       # t.column :undelivered_quantity, :datatype => :decimal
     end
 
-    list(:items, model: :sale_items, conditions: { sale_id: 'params[:id]'.c }, order: { id: :asc }, export: false, line_class: "((RECORD.variant.subscribing? and RECORD.subscriptions.sum(:quantity) != RECORD.quantity) ? 'warning' : '')".c, include: %i[variant subscriptions]) do |t|
+    list(:items, model: :sale_items, conditions: { sale_id: -> { params[:id] } }, order: { id: :asc }, export: false, line_class: ->(record) { ((record.variant.subscribing? and record.subscriptions.sum(:quantity) != record.quantity) ? 'warning' : '') }, include: %i[variant subscriptions]) do |t|
       # t.action :edit, if: 'RECORD.sale.draft? and RECORD.reduction_origin_id.nil? '
       # t.action :destroy, if: 'RECORD.sale.draft? and RECORD.reduction_origin_id.nil? '
       # t.column :name, through: :variant
@@ -174,7 +176,7 @@ module Backend
         format.pdf do
           document_template = DocumentTemplate.find(params[:template])
 
-          if document_template.file_extension.odt?
+          if document_template.file_extension.html?
             generate_n_send_pdf_for(@sale, document_template) || redirect_to_back(fallback_location: backend_sale_path(@sale))
           else
             create_response
@@ -388,7 +390,7 @@ module Backend
       end
 
       existing_document = Document.of(nature.to_s, @sale.number).reorder(:created_at)
-      document_template = DocumentTemplate.find_active_template(nature, 'odt')
+      document_template = DocumentTemplate.find_active_template(nature, 'html')
 
       if existing_document.any?
         document = existing_document.last

@@ -10,7 +10,7 @@ class Loan
 
       test 'should not allow to confirm Loan if state is not draft' do
         %w[ongoing repaid].each do |state|
-          mock = MiniTest::Mock.new
+          mock = Minitest::Mock.new
           mock.expect(:state, state)
           mock.expect(:ongoing_at, nil)
 

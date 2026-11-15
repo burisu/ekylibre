@@ -29,7 +29,7 @@
       .control-group
         = label_tag(:create_zero_intial_stock, :create_zero_intial_stock.tl, class: 'control-label' )
         .controls
-          = check_box_tag(:create_zero_intial_stock, true, params['create_zero_intial_stock'].to_boolean)
+          = check_box_tag(:create_zero_intial_stock, true, ActiveModel::Type::Boolean.new.cast(params['create_zero_intial_stock']))
           %p.help-block= :product_will_be_imported_with_zero_stock.tl
     :ruby
       default_unit_updateable = f.object.default_unit_updateable?

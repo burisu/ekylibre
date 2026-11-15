@@ -26,7 +26,7 @@ module Backend
 
     after_action :open_activity, only: :create, unless: -> { @activity.new_record? }
 
-    list line_class: '(:success if RECORD.of_campaign?(current_campaign))'.c do |t|
+    list line_class: ->(record) { (:success if record.of_campaign?(current_campaign)) } do |t|
       # t.action :show, url: {format: :pdf}, image: :print
       t.action :edit
       t.action :destroy, if: :destroyable?
@@ -183,7 +183,7 @@ module Backend
     end
 
     # List of productions for one activity
-    list(:productions, model: :activity_production, conditions: { activity_id: 'params[:id]'.c, campaign_id: 'current_campaign'.c }, order: { started_on: :desc }) do |t|
+    list(:productions, model: :activity_production, conditions: { activity_id: -> { params[:id] }, campaign_id: -> { current_campaign&.id } }, order: { started_on: :desc }) do |t|
       t.action :edit
       t.action :destroy
       t.column :name, url: true
@@ -196,7 +196,7 @@ module Backend
     end
 
     # List of distribution for one activity
-    list(:distributions, model: :activity_distributions, conditions: { activity_id: 'params[:id]'.c }) do |t|
+    list(:distributions, model: :activity_distributions, conditions: { activity_id: -> { params[:id] } }) do |t|
       t.column :affectation_percentage, percentage: true
       t.column :main_activity, url: true
     end

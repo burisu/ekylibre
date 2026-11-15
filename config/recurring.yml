@@ -1,0 +1,35 @@
+# Recurring jobs run by Solid Queue (schedules use cron syntax, server time).
+# ScheduleJob subclasses run themselves on every tenant.
+default: &default
+  hourly_sensor_reading:
+    class: AllSensorsReadingJob
+    schedule: "5 * * * *"
+  activity_production_change:
+    class: ActivityProductionCheckJob
+    schedule: "10 1 * * *"
+  equipment_monitoring:
+    class: EquipmentLifeProgressCheckJob
+    schedule: "15 */7 * * *"
+  hourly:
+    class: HourlyTriggerJob
+    schedule: "20 * * * *"
+  daily:
+    class: DailyTriggerJob
+    schedule: "25 1 * * *"
+  daily_call_records_maintenance:
+    class: CallRecordsMaintenance
+    schedule: "0 3 * * *"
+  # Every 15 January at 06:00: leaves 16 days of slack before the
+  # 31 January regulatory deadline for previous-year records.
+  phytosanitary_register_yearly_archive:
+    class: ScheduledPhytosanitaryRegisterArchiveJob
+    schedule: "0 6 15 1 *"
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: "12 * * * *"
+
+development:
+  <<: *default
+
+production:
+  <<: *default

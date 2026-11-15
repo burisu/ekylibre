@@ -35,9 +35,9 @@
   - if Devise.omniauth_providers.include? :ekylibre
     .separator= :or.tl
 
-    .field= link_to t('.sign_in_with_ekylibre', :default => 'Sign in with Ekylibre.com'), user_ekylibre_omniauth_authorize_path, class: 'btn btn-primary btn-lg btn-block'
+    .field= button_to t('.sign_in_with_ekylibre', :default => 'Sign in with Ekylibre.com'), user_ekylibre_omniauth_authorize_path, method: :post, data: { turbo: false }, class: 'btn btn-primary btn-lg btn-block'
 
   - if demo_mode && !flash[:alert]
     #autologin
       :javascript
-        $(document).ready(function(){ window.setTimeout(function(){ $('#autologin').closest('form').submit(); }, 300); });
+        document.addEventListener('DOMContentLoaded', function(){ window.setTimeout(function(){ $('#autologin').closest('form').submit(); }, 300); });

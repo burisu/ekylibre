@@ -35,7 +35,7 @@ module Backend
       t.column :description, hidden: true
     end
 
-    list(:associate_journal_entry_items, model: :journal_entry_items, joins: :entry, conditions: ['journal_entries.financial_year_id = ? AND account_id = ?', 'params[:current_financial_year]'.c, "Associate.find_by(id: params[:id]).associate_account_id".c], line_class: "(RECORD.completely_lettered? ? 'lettered-item' : '')".c, order: "printed_on DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
+    list(:associate_journal_entry_items, model: :journal_entry_items, joins: :entry, conditions: ['journal_entries.financial_year_id = ? AND account_id = ?', -> { params[:current_financial_year] }, -> { Associate.find_by(id: params[:id]).associate_account_id }], line_class: ->(record) { (record.completely_lettered? ? 'lettered-item' : '') }, order: "printed_on DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
       t.column :journal, url: true
       t.column :entry_number, url: true
       t.column :printed_on, datatype: :date, label: :column

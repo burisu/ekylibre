@@ -27,7 +27,7 @@ module Api
           products = products.includes(association)
         end
 
-        render 'api/v1/products/index.json', locals: { products: products }
+        render 'api/v1/products/index', formats: :json, locals: { products: products }
       end
     end
   end

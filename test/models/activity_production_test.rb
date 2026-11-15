@@ -87,7 +87,7 @@ class ActivityProductionTest < Ekylibre::Testing::ApplicationTestCase::WithFixtu
     assert_equal Measure, result.class
   end
 
-  # assert_in_delta cause psql ST_Area([...]) ~= Charta::MultiPolygon.area
+  # assert_in_delta cause psql ST_Area([...]) ~= Geo::MultiPolygon.area
   test 'working zone area 8' do
     production = ActivityProduction.find(8).decorate
     assert_in_delta 21.56007722495018, production.working_zone_area(production.campaign).to_d, 0.0005

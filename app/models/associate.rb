@@ -31,7 +31,7 @@ class Associate < ApplicationRecord
   include Attachable
   include Customizable
 
-  enumerize :associate_nature, in: %i[owner usufructuary bare_owner], default: :owner, predicates: true
+  has_enum :associate_nature, in: %i[owner usufructuary bare_owner], default: :owner, predicates: true
   belongs_to :associate_account, class_name: 'Account'
   belongs_to :entity
   has_many :main_journal_entry_items, through: :associate_account, source: :journal_entry_items

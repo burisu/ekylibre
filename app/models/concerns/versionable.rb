@@ -4,7 +4,8 @@ module Versionable
   extend ActiveSupport::Concern
 
   included do
-    has_many :versions, -> { order(created_at: :desc) }, as: :item, dependent: :delete_all
+    # Versions are created explicitly and must never be re-saved by autosave
+    has_many :versions, -> { order(created_at: :desc) }, as: :item, dependent: :delete_all, autosave: false
 
     after_create :add_creation_version
     after_update :add_update_version
@@ -40,7 +41,8 @@ module Versionable
   def version_object
     hash = attributes.with_indifferent_access
     hash.delete_if { |k, _v| self.class.versioning_excluded_attributes.include?(k.to_sym) }
-    hash
+    # String subclasses (enumerize values...) are stored as plain strings in YAML
+    hash.transform_values { |v| v.is_a?(String) && !v.instance_of?(String) ? String.new(v) : v }
   end
 
   module ClassMethods

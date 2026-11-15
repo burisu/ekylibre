@@ -19,8 +19,8 @@ module Printers
     test 'should print a phytosanitary applicator sheet' do
       printer = Printers::PhytosanitaryApplicatorSheetPrinter.new(template: @template, intervention: intervention)
       generator = Ekylibre::DocumentManagement::DocumentGenerator.build
-      odf_data = generator.generate_odt(template: @template, printer: printer)
-      assert odf_data
+      html = generator.generate_html(template: @template, printer: printer)
+      assert_includes html, "<html>"
     end
   end
 end

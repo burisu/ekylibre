@@ -49,7 +49,7 @@ class Delivery < ApplicationRecord
   include Attachable
   include Customizable
   acts_as_numbered
-  enumerize :mode, in: %i[transporter us third], predicates: true, default: :us
+  has_enum :mode, in: %i[transporter us third], predicates: true, default: :us
   belongs_to :driver, -> { contacts }, class_name: 'Entity'
   belongs_to :responsible, -> { contacts }, class_name: 'Entity'
   belongs_to :transporter, class_name: 'Entity'
@@ -117,8 +117,11 @@ class Delivery < ApplicationRecord
     mode.text
   end
 
+  # Parcels of the delivery and parcels not given yet without delivery
   def available_parcels
-    Parcel.where('(delivery_id = ?) OR ((delivery_id IS ?) AND (state != ?))', id, nil, :given).order(:number)
+    available = Parcel.where(delivery_id: nil).where.not(state: :given)
+    available = Parcel.where(delivery_id: id).or(available) if id
+    available.order(:number)
   end
 
   def available_shipments

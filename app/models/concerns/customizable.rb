@@ -110,7 +110,7 @@ module Customizable
   end
 
   private def add_custom_field_error(field, message, **options)
-    custom_fields_model.errors.add(field, message, options)
+    custom_fields_model.errors.add(field, message, **options)
   end
 
   module ClassMethods

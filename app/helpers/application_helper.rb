@@ -183,13 +183,13 @@ module ApplicationHelper
   end
 
   def link_to_remove_nested_association(name, f, options = {})
-    link_to_remove_association(content_tag(:i) + h("labels.remove_#{name}".t(default: :destroy.ta)), f, options.deep_merge(data: { no_turbolink: true }, class: 'nested-remove'))
+    link_to_remove_association(content_tag(:i) + h("labels.remove_#{name}".t(default: :destroy.ta)), f, options.deep_merge(data: { turbo: false }, class: 'nested-remove'))
   end
 
   private def warn_link_to_params
     if !defined?(@@__warned_link_to)
       @@__warned_link_to = true
-      ActiveSupport::Deprecation.warn "Don't give params to `link_to`. Just don't."
+      Ekylibre.deprecator.warn "Don't give params to `link_to`. Just don't."
     end
   end
 
@@ -663,18 +663,18 @@ module ApplicationHelper
 
   def icon_tags(options = {})
     # Favicon
-    html = tag(:link, rel: 'icon', type: 'image/png', href: image_path('icon/favicon.png'), 'data-turbolinks-track' => "reload")
-    html << "\n".html_safe + tag(:link, rel: 'shortcut icon', href: image_path('icon/favicon.ico'), 'data-turbolinks-track' => "reload")
+    html = tag(:link, rel: 'icon', type: 'image/png', href: image_path('icon/favicon.png'), 'data-turbo-track' => 'reload')
+    html << "\n".html_safe + tag(:link, rel: 'shortcut icon', href: image_path('icon/favicon.ico'), 'data-turbo-track' => 'reload')
     # Apple touch icon
     icon_sizes = { iphone: '57x57', ipad: '72x72', 'iphone-retina' => '114x114', 'ipad-retina' => '144x144' }
     unless options[:app].is_a?(FalseClass)
       icon_sizes.each do |name, sizes|
-        html << "\n".html_safe + tag(:link, rel: 'apple-touch-icon', sizes: sizes, href: image_path("icon/#{name}.png"), 'data-turbolinks-track' => "reload")
+        html << "\n".html_safe + tag(:link, rel: 'apple-touch-icon', sizes: sizes, href: image_path("icon/#{name}.png"), 'data-turbo-track' => 'reload')
       end
     end
     if options[:precomposed]
       icon_sizes.each do |name, sizes|
-        html << "\n".html_safe + tag(:link, rel: 'apple-touch-icon-precomposed', sizes: sizes, href: image_path("icon/precomposed-#{name}.png"), 'data-turbolinks-track' => "reload")
+        html << "\n".html_safe + tag(:link, rel: 'apple-touch-icon-precomposed', sizes: sizes, href: image_path("icon/precomposed-#{name}.png"), 'data-turbo-track' => 'reload')
       end
     end
     html
@@ -688,7 +688,7 @@ module ApplicationHelper
     return nil unless theme
 
     html = ''
-    html << stylesheet_link_tag(theme_path('all.css', theme), media: :all, 'data-turbolinks-track' => "reload")
+    html << stylesheet_link_tag(theme_path('all.css', theme), media: :all, 'data-turbo-track' => 'reload')
     html.html_safe
   end
 
@@ -953,7 +953,7 @@ module ApplicationHelper
 
   # Wraps a label and its input in a standard wrapper
   def field(label, input = nil, options = {}, &block)
-    ActiveSupport::Deprecation.warn('field helper is deprecated, its time to switch to form objects!')
+    Ekylibre.deprecator.warn('field helper is deprecated, its time to switch to form objects!')
 
     options[:label] ||= {}
     options[:controls] ||= {}
@@ -1144,7 +1144,7 @@ module ApplicationHelper
 
   def no_turbolink?
     if content_for(:no_turbolink)
-      { data: { no_turbolink: true } }
+      { data: { turbo: false } }
     else
       { data: nil }
     end

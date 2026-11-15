@@ -4,8 +4,8 @@ module Rides
   DEFAULT_TOOL_WIDTH = 3.5
 
   class ComputeWorkingZone
-    def self.call(*args)
-      new(*args).call
+    def self.call(...)
+      new(...).call
     end
 
     def initialize(rides:)
@@ -19,7 +19,7 @@ module Rides
                else
                  points_from_rides_shapes
                end
-      line = ::Charta.make_line(points).to_rgeo
+      line = ::Geo.make_line(points).to_rgeo
       line.buffer( tool_width / 2 )
     end
 

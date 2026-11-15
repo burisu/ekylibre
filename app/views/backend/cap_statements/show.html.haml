@@ -99,7 +99,7 @@
             buildings_shape = ApplicationRecord.connection.execute(
               "SELECT ST_AsGeoJSON(ST_COLLECT(buildings.shape)) AS shape
                 FROM (#{z.select(:shape).to_sql}) AS buildings;").first["shape"]
-            building_zones = [{name: "Building", shape: ::Charta.new_geometry(buildings_shape).buffer(50)}]
+            building_zones = [{name: "Building", shape: ::Geo.new_geometry(buildings_shape).buffer(50)}]
           else
             building_zones = []
           end
@@ -109,7 +109,7 @@
               "SELECT ST_AsGeoJSON(ST_COLLECT(hydro.shape)) AS shape
                 FROM (#{h.select(:shape).to_sql}) AS hydro;").first["shape"]
 
-            water_hydro_items_zones = [{name: "Rivers", shape: ::Charta.new_geometry(water_hydro_items_shape).buffer(50)}]
+            water_hydro_items_zones = [{name: "Rivers", shape: ::Geo.new_geometry(water_hydro_items_shape).buffer(50)}]
           else
             water_hydro_items_zones = []
           end

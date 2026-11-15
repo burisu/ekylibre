@@ -18,7 +18,7 @@
 = main_list(:items)
 
 -# This line use a "c" variable which conflict with cobbles
-- conditions = eval(controller.class.journal_entries_conditions)
+- conditions = instance_exec(&controller.class.journal_entries_conditions)
 
 = cobbles do |c|
   -# - c.cobble :entry_items, title: Journal.human_attribute_name(:entry_items) do

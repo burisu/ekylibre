@@ -25,12 +25,15 @@ module Backend
     #   :state State search
     #   :current_campaign
     def self.cap_land_parcels_conditions
-      code = search_conditions(cap_land_parcels: [:land_parcel_number]) + " ||= []\n"
-      code << "if current_campaign\n"
-      code << "  c[0] << \" AND #{CapStatement.table_name}.campaign_id IN (?)\"\n"
-      code << "  c << current_campaign.id\n"
-      code << "end\n"
-      code.c
+      search1 = search_conditions(cap_land_parcels: [:land_parcel_number])
+      lambda do
+        c = instance_exec(&search1)
+        if current_campaign
+          c[0] << " AND #{CapStatement.table_name}.campaign_id IN (?)"
+          c << current_campaign.id
+        end
+        c
+      end
     end
 
     list(conditions: cap_land_parcels_conditions, joins: [:cap_statement], order: { land_parcel_number: :asc }) do |t|

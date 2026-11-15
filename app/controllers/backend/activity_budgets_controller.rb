@@ -5,13 +5,15 @@ module Backend
     unroll activity: :name, campaign: :name
 
     def self.itk_conditions
-      code = search_conditions(entities: [:full_name], analyses: %i[reference_number number]) + " ||= []\n"
-      code << "if params[:technical_itinerary_id].to_i > 0\n"
-      code << "  c[0] << ' AND #{TechnicalItineraryInterventionTemplate.table_name}.technical_itinerary_id = ?'\n"
-      code << "  c << params[:technical_itinerary_id].to_i\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(entities: [:full_name], analyses: %i[reference_number number])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:technical_itinerary_id].to_i > 0
+          c[0] << " AND #{TechnicalItineraryInterventionTemplate.table_name}.technical_itinerary_id = ?"
+          c << params[:technical_itinerary_id].to_i
+        end
+        c
+      end
     end
 
     # list to show intervention template of current itk matching

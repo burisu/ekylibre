@@ -126,7 +126,7 @@ class Sale < ApplicationRecord
 
   delegate :with_accounting, to: :nature
 
-  enumerize :payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
+  has_enum :payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
 
   scope :invoiced_between, lambda { |started_at, stopped_at|
     where(invoiced_at: started_at..stopped_at)
@@ -476,9 +476,8 @@ class Sale < ApplicationRecord
 
       client.add_event(:sales_invoice_creation, updater.person) if updater
 
-      return super
-    end
-    false
+      super
+    end || false
   end
 
   def duplicatable?

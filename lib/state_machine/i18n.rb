@@ -1,4 +1,4 @@
-module StateMachine
+module StateMachines
   class State
     def human_name(*_args)
       class_name = @machine.owner_class.name.underscore

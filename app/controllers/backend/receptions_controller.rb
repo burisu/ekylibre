@@ -17,56 +17,51 @@ module Backend
     #   :delivery_mode Choice
     #   :nature Choice
     def self.receptions_conditions
-      code = search_conditions(receptions: %i[number reference_number], entities: %i[full_name number]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period] != 'all'\n"
-      code << "  if params[:period] == 'interval' \n"
-      code << "    started_on = params[:started_on] \n"
-      code << "    stopped_on = params[:stopped_on] \n"
-      code << "  else \n"
-      code << "    interval = params[:period].split('_')\n"
-      code << "    started_on = interval.first\n"
-      code << "    stopped_on = interval.last\n"
-      code << "  end \n"
-      code << "  c[0] << \" AND #{Reception.table_name}.planned_at::DATE BETWEEN ? AND ?\"\n"
-      code << "  c << started_on\n"
-      code << "  c << stopped_on\n"
-      code << "end\n "
-
-      code << "if params[:recipient_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Reception.table_name}.recipient_id = ?\"\n"
-      code << "  c << params[:recipient_id].to_i\n"
-      code << "end\n"
-
-      code << "if params[:sender_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Reception.table_name}.sender_id = ?\"\n"
-      code << "  c << params[:sender_id].to_i\n"
-      code << "end\n"
-
-      code << "if params[:transporter_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Reception.table_name}.transporter_id = ?\"\n"
-      code << "  c << params[:transporter_id].to_i\n"
-      code << "end\n"
-
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Reception.table_name}.responsible_id = ?\"\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-
-      code << "if params[:delivery_mode].present? && params[:delivery_mode] != 'all'\n"
-      code << "  if Reception.delivery_mode.values.include?(params[:delivery_mode].to_sym)\n"
-      code << "    c[0] << ' AND #{Reception.table_name}.delivery_mode = ?'\n"
-      code << "    c << params[:delivery_mode]\n"
-      code << "  end\n"
-      code << "end\n"
-
-      code << "if params[:invoice_status] && params[:invoice_status] == 'invoiced'\n"
-      code << "   c[0] << ' AND #{Reception.table_name}.id IN (SELECT parcel_id FROM #{ReceptionItem.table_name} WHERE #{ReceptionItem.table_name}.type = \\'ReceptionItem\\' AND #{ReceptionItem.table_name}.purchase_invoice_item_id IS NOT NULL)'\n"
-      code << "elsif params[:invoice_status] && params[:invoice_status] == 'uninvoiced'\n"
-      code << "   c[0] << ' AND #{Reception.table_name}.id IN (SELECT parcel_id FROM #{ReceptionItem.table_name} WHERE #{ReceptionItem.table_name}.type = \\'ReceptionItem\\' AND #{ReceptionItem.table_name}.purchase_invoice_item_id IS NULL)'\n"
-      code << "end\n"
-      code << "c\n"
-
-      code.c
+      search1 = search_conditions(receptions: %i[number reference_number], entities: %i[full_name number])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period] != 'all'
+          if params[:period] == 'interval'
+            started_on = params[:started_on]
+            stopped_on = params[:stopped_on]
+          else
+            interval = params[:period].split('_')
+            started_on = interval.first
+            stopped_on = interval.last
+          end
+          c[0] << " AND #{Reception.table_name}.planned_at::DATE BETWEEN ? AND ?"
+          c << started_on
+          c << stopped_on
+        end
+        if params[:recipient_id].to_i > 0
+          c[0] << " AND #{Reception.table_name}.recipient_id = ?"
+          c << params[:recipient_id].to_i
+        end
+        if params[:sender_id].to_i > 0
+          c[0] << " AND #{Reception.table_name}.sender_id = ?"
+          c << params[:sender_id].to_i
+        end
+        if params[:transporter_id].to_i > 0
+          c[0] << " AND #{Reception.table_name}.transporter_id = ?"
+          c << params[:transporter_id].to_i
+        end
+        if params[:responsible_id].to_i > 0
+          c[0] << " AND #{Reception.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        if params[:delivery_mode].present? && params[:delivery_mode] != 'all'
+          if Reception.delivery_mode.values.include?(params[:delivery_mode].to_sym)
+            c[0] << " AND #{Reception.table_name}.delivery_mode = ?"
+            c << params[:delivery_mode]
+          end
+        end
+        if params[:invoice_status] && params[:invoice_status] == 'invoiced'
+          c[0] << " AND #{Reception.table_name}.id IN (SELECT parcel_id FROM #{ReceptionItem.table_name} WHERE #{ReceptionItem.table_name}.type = 'ReceptionItem' AND #{ReceptionItem.table_name}.purchase_invoice_item_id IS NOT NULL)"
+        elsif params[:invoice_status] && params[:invoice_status] == 'uninvoiced'
+          c[0] << " AND #{Reception.table_name}.id IN (SELECT parcel_id FROM #{ReceptionItem.table_name} WHERE #{ReceptionItem.table_name}.type = 'ReceptionItem' AND #{ReceptionItem.table_name}.purchase_invoice_item_id IS NULL)"
+        end
+        c
+      end
     end
 
     list(conditions: receptions_conditions, selectable: true, order: { planned_at: :desc }) do |t|
@@ -89,10 +84,10 @@ module Backend
       # t.column :purchase, url: true
     end
 
-    list(:items, model: :reception_items, order: { id: :asc }, conditions: { parcel_id: 'params[:id]'.c, role: 'service' }) do |t|
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
-      t.column :purchase_order_number, label: :order, through: :parcel_item, url: { controller: '/backend/purchase_orders', id: 'RECORD.purchase_order_item.purchase.id'.c }
-      t.column :purchase_invoice_number, label: :invoice, url: { controller: 'backend/purchase_invoices', id: 'RECORD.purchase_invoice_item.purchase.id'.c }
+    list(:items, model: :reception_items, order: { id: :asc }, conditions: { parcel_id: -> { params[:id] }, role: 'service' }) do |t|
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
+      t.column :purchase_order_number, label: :order, through: :parcel_item, url: { controller: '/backend/purchase_orders', id: ->(record) { record.purchase_order_item.purchase.id } }
+      t.column :purchase_invoice_number, label: :invoice, url: { controller: 'backend/purchase_invoices', id: ->(record) { record.purchase_invoice_item.purchase.id } }
       t.column :product_name
       t.column :product_work_number
       t.column :conditioning_unit
@@ -103,10 +98,10 @@ module Backend
       t.column :analysis, url: true
     end
 
-    list(:storings, model: :parcel_item_storings, order: { id: :asc }, conditions: { parcel_item_id: 'Reception.find(params[:id]).items.pluck(:id)'.c }) do |t|
-      t.column :variant, label_method: :name, through: :parcel_item, url: { controller: 'RECORD.parcel_item.variant.class.name.tableize'.c, id: 'RECORD.parcel_item.variant_id'.c, namespace: :backend }
-      t.column :purchase_order_number, label: :order, through: :parcel_item, url: { controller: '/backend/purchase_orders', id: 'RECORD.parcel_item.purchase_order_item.purchase.id'.c }
-      t.column :purchase_invoice_number, label: :invoice, through: :parcel_item, url: { controller: '/backend/purchase_invoices', id: 'RECORD.parcel_item.purchase_invoice_item.purchase.id'.c }
+    list(:storings, model: :parcel_item_storings, order: { id: :asc }, conditions: { parcel_item_id: -> { Reception.find(params[:id]).items.pluck(:id) } }) do |t|
+      t.column :variant, label_method: :name, through: :parcel_item, url: { controller: ->(record) { record.parcel_item.variant.class.name.tableize }, id: ->(record) { record.parcel_item.variant_id }, namespace: :backend }
+      t.column :purchase_order_number, label: :order, through: :parcel_item, url: { controller: '/backend/purchase_orders', id: ->(record) { record.parcel_item.purchase_order_item.purchase.id } }
+      t.column :purchase_invoice_number, label: :invoice, through: :parcel_item, url: { controller: '/backend/purchase_invoices', id: ->(record) { record.parcel_item.purchase_invoice_item.purchase.id } }
       t.column :product_name, through: :parcel_item
       t.column :product_work_number, through: :parcel_item
       t.column :storage, url: true
@@ -147,7 +142,7 @@ module Backend
         notify_error_now :reception_need_at_least_one_item
       else
         return if save_and_redirect(@reception,
-                                    url: (params[:create_and_continue] ? { action: :new, continue: true } : { action: :show, id: 'id'.c }),
+                                    url: (params[:create_and_continue] ? { action: :new, continue: true } : { action: :show, id: ->(record) { record.id } }),
                                     notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false),
                                     identifier: :number)
       end

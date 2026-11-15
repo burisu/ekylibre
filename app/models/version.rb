@@ -37,11 +37,11 @@
 #
 
 class Version < ActiveRecord::Base
-  extend Enumerize
+  extend Ekylibre::Record::HasEnum
   cattr_accessor :current_user
   belongs_to :creator, class_name: 'User'
   belongs_to :item, polymorphic: true
-  enumerize :event, in: %i[create update destroy], predicates: true
+  has_enum :event, in: %i[create update destroy], predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   # ]VALIDATORS]
 
@@ -54,8 +54,8 @@ class Version < ActiveRecord::Base
     where(created_at: started_at..stopped_at).order(created_at: :desc)
   }
 
-  serialize :item_object, HashWithIndifferentAccess
-  serialize :item_changes, HashWithIndifferentAccess
+  serialize :item_object, type: HashWithIndifferentAccess, coder: YAML
+  serialize :item_changes, type: HashWithIndifferentAccess, coder: YAML
 
   before_save do
     self.item_type = item.class.base_class.name if item

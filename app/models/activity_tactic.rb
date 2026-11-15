@@ -43,7 +43,7 @@
 #  updater_id             :integer(4)
 #
 class ActivityTactic < ApplicationRecord
-  enumerize :mode, in: %i[sowed harvested], default: :sowed
+  has_enum :mode, in: %i[sowed harvested], default: :sowed
 
   belongs_to :activity, class_name: 'Activity', inverse_of: :tactics
   belongs_to :campaign, class_name: 'Campaign', inverse_of: :tactics

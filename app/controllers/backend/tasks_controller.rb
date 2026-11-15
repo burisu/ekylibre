@@ -18,11 +18,11 @@
 
 module Backend
   class TasksController < Backend::BaseController
-    manage_restfully nature: 'params[:nature]'.c, due_at: '(params[:due_at] || Time.zone.now)'.c
+    manage_restfully nature: -> { params[:nature] }, due_at: -> { (params[:due_at] || Time.zone.now) }
 
     # unroll
 
-    list(line_class: 'RECORD.state'.c) do |t|
+    list(line_class: ->(record) { record.state }) do |t|
       t.action :edit
       t.action :destroy
       t.column :name, url: true

@@ -10,14 +10,15 @@ module Backend
     #   :period Two Dates with _ separator
     #   :variant_id
     def self.list_conditions
-      code = ''
-      code = search_conditions(projects: %i[name comment]) + " ||= []\n"
-      code << "  if params[:team_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{Team.table_name}.id = ?\"\n"
-      code << "    c << params[:team_id].to_i\n"
-      code << "  end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(projects: %i[name comment])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:team_id].to_i > 0
+          c[0] << " AND #{Team.table_name}.id = ?"
+          c << params[:team_id].to_i
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: %i[team]) do |t|
@@ -36,7 +37,7 @@ module Backend
       t.column :closed
     end
 
-    list :tasks, model: :project_tasks, conditions: { project_id: 'params[:id]'.c } do |t|
+    list :tasks, model: :project_tasks, conditions: { project_id: -> { params[:id] } } do |t|
       t.action :edit, if: :updateable?
       t.action :destroy, if: :destroyable?
       t.column :work_number

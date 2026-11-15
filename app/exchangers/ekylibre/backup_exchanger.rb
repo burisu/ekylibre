@@ -35,7 +35,7 @@ module Ekylibre
         end
 
         def schema
-          @schema ||= YAML.load_file(Pathname.new(__FILE__).dirname.join('backup', 'schema-0.4.yml')).deep_symbolize_keys.freeze
+          @schema ||= YAML.safe_load_file(Pathname.new(__FILE__).dirname.join('backup', 'schema-0.4.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys.freeze
         end
       end
 
@@ -77,8 +77,8 @@ module Ekylibre
         backup
       end
 
-      def initialize(*args)
-        super(*args)
+      def initialize(...)
+        super
         @matchings = {}.with_indifferent_access
         @indexes = {}.with_indifferent_access
       end
@@ -149,8 +149,8 @@ module Ekylibre
       end
 
       def import(backup_model, *args)
-        # puts "Import #{backup_model.to_s.red}"
-        # puts self[backup_model].first.inspect.yellow
+        # puts "Import #{backup_model.to_s}"
+        # puts self[backup_model].first.inspect
         options = args.extract_options!
         keys = args
         keys << :name if keys.empty?
@@ -180,7 +180,7 @@ module Ekylibre
         uniqify_doubles!(backup_model, keys, options.slice(:undoubler, :undoubler_separator))
 
         browse_and_match(backup_model) do |item|
-          # puts item.inspect.magenta
+          # puts item.inspect
           finder = keys.each_with_object({}) do |key, hash|
             new_column = renamings[key]
             hash.store(new_column, value_of(item, key, columns[key][:references], converters[new_column]))
@@ -308,7 +308,7 @@ module Ekylibre
       data.import(:journal_entry_line, :entry_id, :position, rename: { original_debit: :real_debit, original_credit: :real_credit }, model: :journal_entry_item)
       w.check_point
 
-      # puts (data.keys - data.matchings.keys).inspect.red
+      # puts (data.keys - data.matchings.keys).inspect
     end
   end
 end

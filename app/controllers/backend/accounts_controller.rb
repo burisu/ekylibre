@@ -18,7 +18,7 @@
 
 module Backend
   class AccountsController < Backend::BaseController
-    manage_restfully number: 'params[:number]'.c
+    manage_restfully number: -> { params[:number] }
 
     respond_to :pdf, :odt, :docx, :xml, :json, :html, :csv
 
@@ -27,23 +27,23 @@ module Backend
     before_action :save_search_preference, only: %i[index mark show]
 
     def self.accounts_conditions
-      code = ''
-      code << search_conditions(accounts: %i[name number description]) + ';'
-      code << "if params[:prefix]\n"
-      code << "  c[0] += ' AND number LIKE ?'\n"
-      code << "  c << params[:prefix].to_s+'%'\n"
-      code << "end\n"
-      code << "unless params[:period].blank? or params[:period]='all'\n"
-      code << "  c[0] += ' AND id IN (SELECT account_id FROM #{JournalEntryItem.table_name} AS jel JOIN #{JournalEntry.table_name} AS je ON (entry_id=je.id) WHERE '+JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on], 'je')+')'\n"
-      code << "end\n"
-      code << "if params[:state] == 'active'\n"
-      code << "  c[0] += ' AND #{Account.table_name}.active IS TRUE'\n"
-      code << "elsif params[:state] == 'inactive'\n"
-      code << "  c[0] += ' AND #{Account.table_name}.active IS FALSE'\n"
-      code << "end\n"
-      code << "c\n"
-      # list = code.split("\n"); list.each_index{|x| puts((x+1).to_s.rjust(4)+": "+list[x])}
-      code.c
+      search1 = search_conditions(accounts: %i[name number description])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:prefix]
+        c[0] += ' AND number LIKE ?'
+        c << params[:prefix].to_s+'%'
+        end
+        unless params[:period].blank? or params[:period]='all'
+          c[0] += " AND id IN (SELECT account_id FROM #{JournalEntryItem.table_name} AS jel JOIN #{JournalEntry.table_name} AS je ON (entry_id=je.id) WHERE "+JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on], 'je')+')'
+        end
+        if params[:state] == 'active'
+          c[0] += " AND #{Account.table_name}.active IS TRUE"
+        elsif params[:state] == 'inactive'
+          c[0] += " AND #{Account.table_name}.active IS FALSE"
+        end
+        c
+      end
     end
 
     list(conditions: accounts_conditions, order: :number, per_page: 20) do |t|
@@ -77,13 +77,6 @@ module Backend
       }
       respond_to do |format|
         format.html {}
-        format.odt do
-          return unless template = DocumentTemplate.find_by_nature(:account_journal_entry_sheet)
-
-          printer = Printers::AccountJournalEntrySheetPrinter.new(template: template, **dataset_params)
-          g = Ekylibre::DocumentManagement::DocumentGenerator.build
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
-        end
         format.pdf do
           return unless template = find_and_check(:document_template, params[:template])
 
@@ -95,24 +88,27 @@ module Backend
     end
 
     def self.account_moves_conditions(_options = {})
-      code = ''
-      code << search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number], product_nature_variant: [:name] }, conditions: 'c', variable: 'params[:b]'.c) + "\n"
-      code << journal_period_crit('params')
-      code << journal_letter_crit('params')
-      code << journal_entries_states_crit('params')
-      # code << journals_crit("params")
-      code << "c[0] << ' AND #{JournalEntryItem.table_name}.account_id = ?'\n"
-      code << "c << params[:id]\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions({ journal_entry_item: %i[name debit credit real_debit real_credit], journal_entry: [:number], product_nature_variant: [:name] }, conditions: 'c', variable: -> { params[:b] })
+      crit2 = journal_period_crit('params')
+      crit3 = journal_letter_crit('params')
+      crit4 = journal_entries_states_crit('params')
+      lambda do
+        c = instance_exec(&search1)
+        instance_exec(c, &crit2)
+        instance_exec(c, &crit3)
+        instance_exec(c, &crit4)
+        c[0] << " AND #{JournalEntryItem.table_name}.account_id = ?"
+        c << params[:id]
+        c
+      end
     end
 
-    list(:journal_entry_items, joins: :entry, conditions: account_moves_conditions, line_class: "(RECORD.completely_lettered? ? 'lettered-item' : '')".c, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
+    list(:journal_entry_items, joins: :entry, conditions: account_moves_conditions, line_class: ->(record) { (record.completely_lettered? ? 'lettered-item' : '') }, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
       t.column :journal, url: true
       t.column :entry_number, url: true
       t.column :printed_on, datatype: :date, label: :column
       t.column :name
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :state_label
       t.column :letter
       t.column :main_client_or_supplier_account, through: :entry, url: true
@@ -124,24 +120,28 @@ module Backend
       t.column :absolute_credit, currency: :absolute_currency, on_select: :sum
     end
 
-    list(:entities, conditions: ['? IN (client_account_id, supplier_account_id)', 'params[:id]'.c], order: { created_at: :desc }) do |t|
+    list(:entities, conditions: ['? IN (client_account_id, supplier_account_id)', -> { params[:id] }], order: { created_at: :desc }) do |t|
       t.column :number, url: true
       t.column :full_name, url: true
       t.column :client_account, url: true
       t.column :supplier_account, url: true
     end
 
-    list(:product_nature_variants, joins: :category, conditions: ['? IN (product_nature_categories.charge_account_id, product_nature_categories.product_account_id, product_nature_categories.fixed_asset_account_id, product_nature_categories.stock_account_id)', 'params[:id]'.c], order: { created_at: :desc }) do |t|
+    list(:product_nature_variants, joins: :category, conditions: ['? IN (product_nature_categories.charge_account_id, product_nature_categories.product_account_id, product_nature_categories.fixed_asset_account_id, product_nature_categories.stock_account_id)', -> { params[:id] }], order: { created_at: :desc }) do |t|
       t.column :number, url: { namespace: :backend }
       t.column :name, url: { namespace: :backend }
     end
 
     def self.account_reconciliation_conditions
-      code = search_conditions(accounts: %i[name number]) + "[0] += ' AND reconcilable = ?'\n"
-      code << "c << true\n"
-      code << account_lettering_states_crit('params')
-      code << 'c'
-      code.c
+      search = search_conditions(accounts: %i[name number])
+      lettering = account_lettering_states_crit('params')
+      lambda do
+        c = instance_exec(&search)
+        c[0] += ' AND reconcilable = ?'
+        c << true
+        instance_exec(c, &lettering)
+        c
+      end
     end
 
     list(:reconciliation, model: :accounts, conditions: account_reconciliation_conditions, order: 'accounts.number', distinct: true) do |t|

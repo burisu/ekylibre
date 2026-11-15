@@ -167,7 +167,7 @@ S'assurer que `secrets/` est dans `.gitignore` (le `.gitignore` du projet contie
 Le mount GPG est déjà déclaré dans les deux composes prod (`docker-compose.yml` et `docker-compose.dokploy.yml`), paramétré par la variable `GPG_KEYRING_PATH`. Aucune édition du YAML n'est nécessaire — il suffit de renseigner les variables dans `.env`.
 
 ```yaml
-# Extrait de docker-compose.yml — déjà présent sur app ET sidekiq
+# Extrait de docker-compose.yml — déjà présent sur app ET jobs
 volumes:
   - ${GPG_KEYRING_PATH:-./secrets/gnupg}:/home/ekylibre/.gnupg
 ```
@@ -191,7 +191,7 @@ GPG_EMAIL=ekylibre@example.com
 ### 5.2 Redémarrer le stack
 
 ```bash
-docker compose -f docker/prod/docker-compose.yml up -d --force-recreate app sidekiq
+docker compose -f docker/prod/docker-compose.yml up -d --force-recreate app jobs
 ```
 
 ---
@@ -323,4 +323,4 @@ chmod 600 secrets/gnupg/private-keys-v1.d/*
 
 ### Le bundle `gpgme` n'a pas trouvé `libgpgme` au build de l'image
 
-Si vous customisez l'image, s'assurer que les paquets sont présents : `apt-get install -y libgpgme-dev gnupg`. L'image de base `ghcr.io/ekylibre/docker-base-images/ruby2.6:latest` les inclut déjà.
+Si vous customisez l'image, s'assurer que les paquets sont présents : `apt-get install -y libgpgme-dev gnupg`. L'image (`docker/prod/Dockerfile`, basée sur `ruby:4.0-trixie`) les installe déjà.

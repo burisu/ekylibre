@@ -47,8 +47,8 @@ class Task < ApplicationRecord
   include Commentable
   include Versionable
   include Customizable
-  enumerize :state, in: %i[todo doing done], default: :todo, predicates: true
-  enumerize :nature, in: %i[incoming_call outgoing_call incoming_mail outgoing_mail incoming_email outgoing_email], default: :outgoing_call, predicates: true # , :quote, :document
+  has_enum :state, in: %i[todo doing done], default: :todo, predicates: true
+  has_enum :nature, in: %i[incoming_call outgoing_call incoming_mail outgoing_mail incoming_email outgoing_email], default: :outgoing_call, predicates: true # , :quote, :document
   belongs_to :entity
   belongs_to :sale_opportunity
   belongs_to :executor, -> { responsibles }, class_name: 'Entity'

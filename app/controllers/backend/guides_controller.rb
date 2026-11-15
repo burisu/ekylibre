@@ -34,7 +34,7 @@ module Backend
       t.column :external
     end
 
-    list(:analyses, model: :guide_analyses, conditions: { guide_id: 'params[:id]'.c }, order: { execution_number: :desc }) do |t|
+    list(:analyses, model: :guide_analyses, conditions: { guide_id: -> { params[:id] } }, order: { execution_number: :desc }) do |t|
       t.column :execution_number, url: true
       t.status
       t.column :started_at, hidden: true

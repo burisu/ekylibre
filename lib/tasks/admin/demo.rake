@@ -1,10 +1,10 @@
 namespace :admin do
   namespace :demo do
-    desc 'Clone demo-data repo and load demo first_run (tracks progress in Redis)'
+    desc 'Clone demo-data repo and load demo first_run (tracks progress in Ekylibre::TaskStatus)'
     task load: :environment do
       require 'ekylibre/first_run'
 
-      redis_key   = 'ekylibre:admin:demo'
+      status_key   = 'ekylibre:admin:demo'
       demo_repo   = 'https://github.com/ekylibre/demo-data.git'
       demo_folder = 'demo'
       tenant_name = 'demo'
@@ -29,11 +29,9 @@ namespace :admin do
       }
 
       set_status = lambda do |status, message, step = nil, total = nil|
-        Sidekiq.redis do |r|
-          args = [redis_key, 'status', status, 'message', message.to_s]
-          args += ['step', step.to_s, 'total_steps', total.to_s] if step && total
-          r.hmset(*args)
-        end
+        fields = { status: status, message: message }
+        fields.update(step: step, total_steps: total) if step && total
+        Ekylibre::TaskStatus.update(status_key, **fields)
       end
 
       # -- Step 1: Clone if needed --

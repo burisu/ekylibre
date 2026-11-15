@@ -60,7 +60,7 @@ class EntityAddress < ApplicationRecord
   has_many :purchases, foreign_key: :delivery_address_id
   has_many :sales, foreign_key: :address_id
   has_many :subscriptions, foreign_key: :address_id
-  enumerize :canal, in: %i[mail email phone mobile fax website], default: :email, predicates: true
+  has_enum :canal, in: %i[mail email phone mobile fax website], default: :email, predicates: true
   has_geometry :mail_geolocation, type: :point
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :by_default, :mail_auto_update, inclusion: { in: [true, false] }
@@ -133,7 +133,7 @@ class EntityAddress < ApplicationRecord
   def geolocate_address
     if mail_line_4.present? && mail_line_6.present? && mail_country.present?
       self.geocode
-      c = ::Charta.new_point(latitude, longitude) if latitude && longitude
+      c = ::Geo.new_point(latitude, longitude) if latitude && longitude
       self.mail_geolocation = c if c.present?
     end
   end

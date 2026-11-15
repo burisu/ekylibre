@@ -1,0 +1,9 @@
+// Asset URLs (Sprockets helpers): absolute logical paths that Propshaft
+// rewrites to digested URLs
+@function image-url($path) {
+  @return url("/#{$path}");
+}
+
+@function font-url($path) {
+  @return url("/#{$path}");
+}

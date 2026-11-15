@@ -39,7 +39,7 @@
     %td= f.input(:pretax_amount, wrapper: :nested, input_html: {class: "pta lg-numeric", size: 6, maxlength: 6, data: {trade_component: "pretax_amount", compute_from: :pretax_amount }})
     %td= f.input(:amount, wrapper: :nested, input_html: { class: "wta lg-numeric", size: 6, data: { trade_component: "amount", compute_from: :amount } })
     %td.currency.right-align= f.object.sale_currency
-    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-no-turbolink' => true, class: 'remove-item')
+    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-turbo' => false, class: 'remove-item')
 
   - attrs = {}
   - attrs[:style] = 'display: none' unless f.object.subscription

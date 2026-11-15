@@ -26,7 +26,7 @@ module Interventions
             targets_data.flat_map do |data|
               id = data[:id].to_i
               target = plants_by_id[id] || land_parcels_by_id[id]
-              shape = Charta::new_geometry(data[:shape])
+              shape = Geo.new_geometry(data[:shape])
               working_zone_area_value = Measure.new(data[:working_zone_area_value]&.to_f || 0, :hectare).in(:square_meter)
 
               if target.present?
@@ -41,7 +41,7 @@ module Interventions
         attr_reader :target, :shape, :area
 
         # @param [LandParcel, Plant] target
-        # @param [Charta::Geometry] shape
+        # @param [Geo::Geometry] shape
         # @param [Measure] area in square meter
         def initialize(target, shape, area)
           @target = target

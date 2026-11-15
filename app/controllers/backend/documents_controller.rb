@@ -27,26 +27,26 @@ module Backend
     # respond_to :html, :json, :xml
 
     def self.list_conditions
-      code = search_conditions(documents: %i[name]) + " ||= []\n"
-
-      code << "if params[:created_at].present? && params[:created_at].to_s != 'all'\n"
-      code << " c[0] << ' AND #{Document.table_name}.created_at::DATE BETWEEN ? AND ?'\n"
-      code << " if params[:created_at].to_s == 'interval'\n"
-      code << "   c << params[:created_at_started_on]\n"
-      code << "   c << params[:created_at_stopped_on]\n"
-      code << " else\n"
-      code << "   interval = params[:created_at].to_s.split('_')\n"
-      code << "   c << interval.first\n"
-      code << "   c << interval.second\n"
-      code << " end\n"
-      code << "end\n"
-
-      code << "if params[:nature].present?\n"
-      code << " c[0] << ' AND #{Document.table_name}.nature = ?'\n"
-      code << " c << params[:nature]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(documents: %i[name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:created_at].present? && params[:created_at].to_s != 'all'
+          c[0] << " AND #{Document.table_name}.created_at::DATE BETWEEN ? AND ?"
+          if params[:created_at].to_s == 'interval'
+            c << params[:created_at_started_on]
+            c << params[:created_at_stopped_on]
+          else
+            interval = params[:created_at].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:nature].present?
+          c[0] << " AND #{Document.table_name}.nature = ?"
+          c << params[:nature]
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions) do |t|
@@ -76,7 +76,7 @@ module Backend
         redirect_to backend_documents_path
       else
         @document = resource_model.new(permitted_params)
-        return if save_and_redirect(@document, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: 'id'.c })), notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false), identifier: :name)
+        return if save_and_redirect(@document, url: (params[:create_and_continue] ? { action: :new, continue: true } : (params[:redirect] || { action: :show, id: ->(record) { record.id } })), notify: ((params[:create_and_continue] || params[:redirect]) ? :record_x_created : false), identifier: :name)
 
         render(locals: { cancel_url: { action: :index }, with_continue: false })
       end
@@ -103,13 +103,13 @@ module Backend
       respond_to do |format|
         format.html { t3e @document }
         format.json
-        format.xlsx { send_data(File.read(@document.file.path), type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename: @document.file_file_name) }
-        format.ods { send_data(File.read(@document.file.path), type: 'application/vnd.oasis.opendocument.spreadsheet', filename: @document.file_file_name) }
-        format.xml { send_data(File.read(@document.file.path), type: 'application/xml', filename: @document.file_file_name) }
-        format.text { send_data(File.read(@document.file.path), type: 'text/plain', filename: @document.file_file_name) }
-        format.pdf { send_file(@document.file.path(params[:format] != :default ? :original : :default), disposition: 'inline', filename: @document.file_file_name) }
-        format.jpg { send_file(@document.file.path(:thumbnail), disposition: 'inline') }
-        format.zip { send_file(@document.file.path, type: 'application/zip', filename: @document.name) }
+        format.xlsx { send_data(@document.file.download, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename: @document.file_file_name) }
+        format.ods { send_data(@document.file.download, type: 'application/vnd.oasis.opendocument.spreadsheet', filename: @document.file_file_name) }
+        format.xml { send_data(@document.file.download, type: 'application/xml', filename: @document.file_file_name) }
+        format.text { send_data(@document.file.download, type: 'text/plain', filename: @document.file_file_name) }
+        format.pdf { send_file(@document.file_path, disposition: 'inline', filename: @document.file_file_name) }
+        format.jpg { send_file(@document.file_path(:thumbnail), type: 'image/jpeg', disposition: 'inline') }
+        format.zip { send_file(@document.file_path, type: 'application/zip', filename: @document.name) }
       end
     end
 

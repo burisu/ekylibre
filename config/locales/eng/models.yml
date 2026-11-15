@@ -700,7 +700,6 @@ eng:
       variants/zone_variant: "Variants/zone variant"
       vegetative_stage: "Vegetative stage"
       version: "Version"
-      wice_grid_serialized_query: "Wice grid serialized query"
       wine_incoming_harvest: "Wine incoming harvest"
       wine_incoming_harvest_input: "Wine incoming harvest input"
       wine_incoming_harvest_plant: "Wine incoming harvest plan"

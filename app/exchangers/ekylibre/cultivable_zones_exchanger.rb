@@ -8,7 +8,7 @@ module Ekylibre
     category :plant_farming
     vendor :ekylibre
 
-    DEFAULT_SHAPE = Charta.new_geometry('MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))').freeze
+    DEFAULT_SHAPE = Geo.new_geometry('MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0)))').freeze
 
     def find_zone_by_matching_shape(shape)
       CultivableZone.shape_covering(shape, 0.02).first || CultivableZone.shape_matching(shape, 0.02).first

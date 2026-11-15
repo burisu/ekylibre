@@ -22,17 +22,6 @@ Rails.application.configure do
   # Apache or NGINX already handles this.
   config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present?
 
-  # Compress JavaScripts and CSS.
-  config.assets.configure do |env|
-    env.js_compressor  = Uglifier.new(harmony: true) # or :closure, :yui
-    env.css_compressor = :sass   # or :yui
-  end
-
-  # config.assets.css_compressor = :sass
-
-  # Do not fallback to assets pipeline if a precompiled asset is missed.
-  config.assets.compile = false
-
   # Allow every Ekylibre url to subscribe to actionCable
   config.action_cable.allowed_request_origins = [/https?:\/\/.{1,40}\.#{Regexp.quote(ENV.fetch('HOST_DOMAIN_NAME', 'ekylibre.farm'))}/]
   # `config.assets.precompile` and `config.assets.version` have moved to config/initializers/assets.rb
@@ -61,10 +50,10 @@ Rails.application.configure do
   config.log_tags = [ :request_id ]
 
   # Use a different cache store in production.
-  # config.cache_store = :mem_cache_store
+  config.cache_store = :solid_cache_store
 
-  # Use a real queuing backend for Active Job (and separate queues per environment)
-  # config.active_job.queue_adapter     = :resque
+  # Jobs run by Solid Queue (bin/jobs), stored in the queue database
+  config.solid_queue.connects_to = { database: { writing: :queue } }
   # config.active_job.queue_name_prefix = "ekylibre_#{Rails.env}"
 
   config.action_mailer.perform_caching = false

@@ -18,7 +18,7 @@
 
 module Backend
   class SaleContractsController < Backend::BaseController
-    manage_restfully currency: 'Preference[:currency]'.c
+    manage_restfully currency: -> { Preference[:currency] }
 
     unroll
 
@@ -27,14 +27,15 @@ module Backend
     #   :state State search
     #   :period Two dates with "_" separator
     def self.conditions
-      code = ''
-      code = search_conditions(contracts: %i[pretax_amount number], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] += \" AND \#{SaleContract.table_name}.responsible_id = ?\"\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(contracts: %i[pretax_amount number], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:responsible_id].to_i > 0
+          c[0] += " AND #{SaleContract.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        c
+      end
     end
 
     list(conditions: conditions, joins: :client, order: { created_at: :desc, number: :desc }) do |t|
@@ -51,7 +52,7 @@ module Backend
       t.column :pretax_amount, currency: true
     end
 
-    list(:items, model: :sale_contract_items, conditions: { sale_contract_id: 'params[:id]'.c }) do |t|
+    list(:items, model: :sale_contract_items, conditions: { sale_contract_id: -> { params[:id] } }) do |t|
       t.column :variant, url: true
       t.column :quantity
       t.column :quantity_unit
@@ -61,7 +62,7 @@ module Backend
       t.column :real_duration
     end
 
-    list(:projects, conditions: { sale_contract_id: 'params[:id]'.c }) do |t|
+    list(:projects, conditions: { sale_contract_id: -> { params[:id] } }) do |t|
       t.column :name, url: true
       t.column :responsible
       t.column :started_on

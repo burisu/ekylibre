@@ -1,4 +1,11 @@
-@import "agric/paths";
+// Agric icon font (agric gem fonts, see config/initializers/assets.rb)
+@font-face {
+  font-family: 'Agric';
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+  src: url("/agric.woff2") format("woff2"), url("/agric.woff") format("woff"), url("/agric.ttf") format("truetype");
+}
 
 $font-faces: (Light 300) (Regular 400) (Semibold 600) (Bold 700) (ExtraBold 800);
 

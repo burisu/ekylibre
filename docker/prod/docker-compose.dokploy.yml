@@ -29,8 +29,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1"]
@@ -47,7 +45,7 @@ services:
     #   qui termine TLS avec ses propres certs Let's Encrypt (provisionning on-demand)
     # Voir DOKPLOY.md.
 
-  sidekiq:
+  jobs:
     image: ghcr.io/ekylibre/ekylibre/app:${EKYLIBRE_IMAGE_TAG:-latest}
     pull_policy: always
     user: ekylibre
@@ -58,31 +56,16 @@ services:
       # cf. commentaire sur le service `app` : mount RW obligatoire pour gpg-agent.
       - ${GPG_KEYRING_PATH:-./secrets/gnupg}:/home/ekylibre/.gnupg
       - ${TENANTS_YML_PATH:-./tenants.yml}:/app/config/tenants.yml
-    command: docker/prod/sidekiq_startup.sh
+    command: docker/prod/jobs_startup.sh
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
       app:
         # Wait for app healthcheck (Puma up + /health 200) before starting.
-        # Sinon Sidekiq tente de charger ses modeles avant la fin du lexicon load
+        # Sinon Solid Queue tente de charger ses modeles avant la fin du lexicon load
         # -> erreurs `relation "master_legal_positions" does not exist` en boucle.
         condition: service_healthy
     restart: on-failure
-    networks:
-      - default
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
     networks:
       - default
 
@@ -215,7 +198,6 @@ services:
 
 volumes:
   database-prod-volume:
-  redis-data:
   log:
   uploads:
   postgres-duke-data:

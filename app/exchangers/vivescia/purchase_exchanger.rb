@@ -78,16 +78,16 @@ module Vivescia
 
             edi_purchase.items.each do |edi_purchase_item|
               # transcode detail number in EDI into variant nomen
-              w.info "EDI work number : #{edi_purchase_item.work_number}".yellow
+              w.info "EDI work number : #{edi_purchase_item.work_number}"
               pivot = catalog_transcode[edi_purchase_item.work_number.to_s]
               pivot ||= catalog_transcode[edi_purchase_item.detail.description.to_s]
               unless pivot
-                w.error "No item in pivot availables for #{edi_purchase_item.work_number}".red
+                w.error "No item in pivot availables for #{edi_purchase_item.work_number}"
                 next
               end
               account_number = pivot[:account_number].sub!(/0+$/, '')
-              w.info "pivot : #{pivot}".yellow
-              w.info "account_number : #{account_number}".yellow
+              w.info "pivot : #{pivot}"
+              w.info "account_number : #{account_number}"
 
               # try to find the correct variant from id of provider
               product_nature_variant = ProductNatureVariant.where('providers ->> ? = ?', sender.id, edi_purchase_item.work_number).first if edi_purchase_item.work_number.present?
@@ -99,12 +99,12 @@ module Vivescia
                 account = Account.find_or_create_by_number(account_number) do |a|
                   a.name = pivot[:account_name]
                 end
-                w.info "account name : #{account.name}".yellow
+                w.info "account name : #{account.name}"
                 # find category by charge or product account
                 pnc = ProductNatureCategory.where(charge_account_id: account.id).first
                 pnc ||= ProductNatureCategory.where(product_account_id: account.id).first
                 unless pnc
-                  w.error "No categories availables for account : #{account.name}".red
+                  w.error "No categories availables for account : #{account.name}"
                   next
                 end
                 pnv = ProductNatureVariant.where(category_id: pnc.id).first
@@ -115,7 +115,7 @@ module Vivescia
                   product_nature_variant.unit_name = Onoma::Unit[pivot[:unit]].human_name
                   product_nature_variant.save!
                 else
-                  w.error "No variant availables for EDI work number : #{edi_purchase_item.work_number}".red
+                  w.error "No variant availables for EDI work number : #{edi_purchase_item.work_number}"
                 end
               end
 
@@ -128,8 +128,8 @@ module Vivescia
 
               next unless tax && product_nature_variant
 
-              w.info "quantity : #{edi_purchase_item.quantity}".yellow
-              w.info "price unit : #{edi_purchase_item.price_unit}".yellow
+              w.info "quantity : #{edi_purchase_item.quantity}"
+              w.info "price unit : #{edi_purchase_item.price_unit}"
 
               # set price unit to 1 if 0
 
@@ -169,8 +169,8 @@ module Vivescia
 
           unless sale = Sale.find_by(reference_number: edi_purchase.header.purchase_number)
 
-            w.info "printed_on : #{edi_purchase.header.purchase_printed_on}".yellow
-            w.info "purchase_number : #{edi_purchase.header.purchase_number}".yellow
+            w.info "printed_on : #{edi_purchase.header.purchase_printed_on}"
+            w.info "purchase_number : #{edi_purchase.header.purchase_number}"
 
             sale = Sale.create!(
               invoiced_at: Time.parse(edi_purchase.header.purchase_printed_on),
@@ -182,16 +182,16 @@ module Vivescia
 
             edi_purchase.items.each do |edi_sale_item|
               # transcode detail number in EDI into variant nomen
-              w.info "EDI work number : #{edi_sale_item.work_number}".yellow
+              w.info "EDI work number : #{edi_sale_item.work_number}"
               pivot = catalog_transcode[edi_sale_item.work_number.to_s]
               pivot ||= catalog_transcode[edi_sale_item.detail.description.to_s]
               unless pivot
-                w.error "No item in pivot availables for #{edi_sale_item.work_number}".red
+                w.error "No item in pivot availables for #{edi_sale_item.work_number}"
                 next
               end
               account_number = pivot[:account_number].sub!(/0+$/, '')
-              w.info "pivot : #{pivot}".yellow
-              w.info "account_number : #{account_number}".yellow
+              w.info "pivot : #{pivot}"
+              w.info "account_number : #{account_number}"
 
               # try to find the correct variant from id of provider
               product_nature_variant = ProductNatureVariant.where('providers ->> ? = ?', sender.id, edi_sale_item.work_number).first if edi_sale_item.work_number.present?
@@ -203,12 +203,12 @@ module Vivescia
                 account = Account.find_or_create_by_number(account_number) do |a|
                   a.name = pivot[:account_name]
                 end
-                w.info "account name : #{account.name}".yellow
+                w.info "account name : #{account.name}"
                 # find category by charge or product account
                 pnc = ProductNatureCategory.where(charge_account_id: account.id).first
                 pnc ||= ProductNatureCategory.where(product_account_id: account.id).first
                 unless pnc
-                  w.error "No categories availables for account : #{account.name}".red
+                  w.error "No categories availables for account : #{account.name}"
                   next
                 end
                 pnv = ProductNatureVariant.where(category_id: pnc.id).first
@@ -219,7 +219,7 @@ module Vivescia
                   product_nature_variant.unit_name = Onoma::Unit[pivot[:unit]].human_name
                   product_nature_variant.save!
                 else
-                  w.error "No variant availables for EDI work number : #{edi_sale_item.work_number}".red
+                  w.error "No variant availables for EDI work number : #{edi_sale_item.work_number}"
                 end
               end
 

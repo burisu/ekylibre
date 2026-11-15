@@ -3,18 +3,18 @@
 class CviShapedRecord < ApplicationRecord
   self.abstract_class = true
 
-  before_save :set_calculated_area, on: %i[create update], if: :shape_changed?
+  before_save :set_calculated_area, if: :shape_changed?
 
   scope :in_bounding_box, lambda { |bounding_box|
     where("#{self.table_name}.shape && ST_MakeEnvelope(#{bounding_box})")
   }
 
   def shape
-    Charta.new_geometry(self[:shape])
+    Geo.new_geometry(self[:shape])
   end
 
   def shape_changed?
-    Charta.new_geometry(shape_before_last_save) != shape
+    Geo.new_geometry(shape_before_last_save) != shape
   end
 
   def set_calculated_area

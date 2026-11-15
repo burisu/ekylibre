@@ -34,7 +34,7 @@ module Ekylibre
             travel_expense_details: (s.cell('F', row_number).blank? ? nil : s.cell('F', row_number).to_s)
           }.to_struct
 
-          w.info "----------------------#{row_number}----------------------".inspect.yellow
+          w.info "----------------------#{row_number}----------------------".inspect
 
           unless r.duration
             w.error 'Missing duration'
@@ -66,7 +66,7 @@ module Ekylibre
             w.error "Cannot find user with #{r.worker_code}"
           end
 
-          w.info "worker : #{worker.name} | project_task : #{project_task.work_number}".inspect.yellow
+          w.info "worker : #{worker.name} | project_task : #{project_task.work_number}".inspect
 
           # find or create task log
           next unless worker && project_task && r.started_on && r.duration
@@ -76,7 +76,7 @@ module Ekylibre
           p = WorkerTimeLog.where(project_task_id: project_task.id, started_at: started_at, duration: (r.duration * 3600).to_i, worker_id: worker.id, description: r.description).first
 
           if p
-            w.info "Log already exist : #{p.id}".inspect.red if p
+            w.info "Log already exist : #{p.id}".inspect if p
           else
             p = WorkerTimeLog.create!(started_at: started_at,
                                      project_task_id: project_task.id,
@@ -85,7 +85,7 @@ module Ekylibre
                                      worker_id: worker.id,
                                      travel_expense: !r.travel_expense_details.nil?,
                                      travel_expense_details: (r.travel_expense_details.nil? ? nil : r.travel_expense_details),)
-            w.info "Log created : #{p.id}".inspect.yellow if p
+            w.info "Log created : #{p.id}".inspect if p
           end
         end
       end

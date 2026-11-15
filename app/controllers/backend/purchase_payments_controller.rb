@@ -1,28 +1,25 @@
 module Backend
   class PurchasePaymentsController < Backend::OutgoingPaymentsController
     manage_restfully(
-      to_bank_at: 'Time.zone.today'.c,
-      paid_at: 'Time.zone.today'.c,
-      responsible_id: 'current_user.id'.c,
-      mode_id: 'params[:mode_id] ? params[:mode_id] : (payer = Entity.find_by(id: params[:payee_id].to_i)) ? payer.outcoming_payments.reorder(id: :desc).first&.mode_id : nil'.c,
+      to_bank_at: -> { Time.zone.today },
+      paid_at: -> { Time.zone.today },
+      responsible_id: -> { current_user.id },
+      mode_id: -> { params[:mode_id] ? params[:mode_id] : (payer = Entity.find_by(id: params[:payee_id].to_i)) ? payer.outcoming_payments.reorder(id: :desc).first&.mode_id : nil },
       t3e: {
-        payee: 'RECORD&.payee&.full_name'.c
+        payee: ->(record) { record&.payee&.full_name }
       }
     )
 
     def self.list_conditions
-      code = search_conditions(outgoing_payments: %i[amount bank_check_number number], entities: %i[number full_name]) + " ||= []\n"
-      code << "if params[:s] == 'not_delivered'\n"
-      code << "  c[0] += ' AND delivered = ?'\n"
-      code << "  c << false\n"
-      # code << "elsif params[:s] == 'waiting'\n"
-      # code << "  c[0] += ' AND to_bank_at > ?'\n"
-      # code << "  c << Time.zone.today\n"
-      # code << "elsif params[:s] == 'not_closed'\n"
-      # code << "  c[0] += ' AND used_amount != amount'\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(outgoing_payments: %i[amount bank_check_number number], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:s] == 'not_delivered'
+          c[0] += ' AND delivered = ?'
+          c << false
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: :payee, order: { to_bank_at: :desc }) do |t|
@@ -37,8 +34,8 @@ module Backend
       t.column :to_bank_at
       t.column :delivered, hidden: true
       t.column :work_name, through: :affair, label: :affair_number, url: { controller: :purchase_affairs }
-      t.column :deal_work_name, through: :affair, label: :purchase_number, url: { controller: :purchase_invoices, id: 'RECORD.affair.deals_of_type(Purchase).first.id'.c }
-      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: 'RECORD.journal_entry.bank_statements.first.id'.c }, label: :bank_statement_number
+      t.column :deal_work_name, through: :affair, label: :purchase_number, url: { controller: :purchase_invoices, id: ->(record) { record.affair.deals_of_type(Purchase).first.id } }
+      t.column :bank_statement_number, through: :journal_entry, url: { controller: :bank_statements, id: ->(record) { record.journal_entry.bank_statements.first.id } }, label: :bank_statement_number
     end
   end
 end

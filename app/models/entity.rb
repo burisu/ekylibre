@@ -95,11 +95,11 @@ class Entity < ApplicationRecord
   refers_to :currency
   refers_to :language
   refers_to :country
-  enumerize :nature, in: %i[organization contact], default: :organization, predicates: true
-  enumerize :supplier_payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
-  enumerize :client_payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
+  has_enum :nature, in: %i[organization contact], default: :organization, predicates: true
+  has_enum :supplier_payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
+  has_enum :client_payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
   # TODO: it should be rewritten when refers_to_lexicon is available
-  enumerize :legal_position_code, in: MasterLegalPosition.pluck(:code)
+  has_enum :legal_position_code, in: MasterLegalPosition.pluck(:code)
   versionize exclude: [:full_name]
   belongs_to :client_account, class_name: 'Account'
   belongs_to :employee_account, class_name: 'Account'
@@ -195,7 +195,6 @@ class Entity < ApplicationRecord
   validates :deliveries_conditions, :number, length: { allow_nil: true, maximum: 60 }
   validates :iban, iban: true, allow_blank: true
   validates :siret_number, siret_format: { if: :in_france? }, allow_blank: true, length: { allow_nil: true, maximum: 14 }
-  validates_attachment_content_type :picture, content_type: /image/
   validates_delay_format_of :supplier_payment_delay
   validates_with SEPA::BICValidator, field_name: :bank_identifier_code
 
@@ -367,7 +366,7 @@ class Entity < ApplicationRecord
   end
 
   def siren
-    ActiveSupport::Deprecation.warn('Entity#siren is deprecated. Please use Entity#siren_number instead. This method will be removed in Ekylibre 3.')
+    Ekylibre.deprecator.warn('Entity#siren is deprecated. Please use Entity#siren_number instead. This method will be removed in Ekylibre 3.')
     siren_number
   end
 
@@ -487,9 +486,6 @@ class Entity < ApplicationRecord
     subscriptions.where(nature: nature).order(stopped_on: :desc).first
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   def name_with_postal_code_and_city
     desc = (number.nil? ? '' : number) + '. ' + full_name
@@ -538,8 +534,8 @@ class Entity < ApplicationRecord
       %i[currency country last_name first_name activity_code description born_at dead_at deliveries_conditions first_met_at meeting_origin proposer siret_number supplier_account client_account vat_number language authorized_payments_count].each do |attr|
         send("#{attr}=", other.send(attr)) if send(attr).blank?
       end
-      if other.picture.file? && !picture.file?
-        self.picture = File.open(other.picture.path(:original))
+      if other.picture.attached? && !picture.attached?
+        picture.attach(other.picture.blob)
       end
 
       # Update custom fields

@@ -13,7 +13,7 @@ namespace :clean do
         next if r.options[:through]
 
         # puts model.name.to_s + '.' + r.name.to_s
-        # puts r.inspect.yellow
+        # puts r.inspect
         dependent = r.options[:dependent]
         unless r.polymorphic?
           begin

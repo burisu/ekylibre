@@ -1,7 +1,7 @@
-\restrict ZIDToUzcuDflAVCg2qzZTgkdX7Ye4ADzB1LMKXw2z5aRXmMQGJ2BRWchn1IusrN
+\restrict SzPa8TnftQvyvap1v1RrZ9LpiKtiCTt57QozYgl4PYCfAVkzKaoMYU4MyT4ixP7
 
 -- Dumped from database version 13.4 (Debian 13.4-1.pgdg110+1)
--- Dumped by pg_dump version 13.23 (Debian 13.23-1.pgdg11+1)
+-- Dumped by pg_dump version 13.23 (Debian 13.23-2.pgdg11+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -15,6 +15,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
 -- Name: lexicon; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -26,13 +40,6 @@ CREATE SCHEMA lexicon;
 --
 
 CREATE SCHEMA postgis;
-
-
---
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA public;
 
 
 --
@@ -196,6 +203,24 @@ $$;
 
 
 --
+-- Name: st_asbinary(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.st_asbinary(text) RETURNS bytea
+    LANGUAGE sql IMMUTABLE STRICT
+    AS $_$ SELECT ST_AsBinary($1::geometry);$_$;
+
+
+--
+-- Name: st_astext(bytea); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.st_astext(bytea) RETURNS text
+    LANGUAGE sql IMMUTABLE STRICT
+    AS $_$ SELECT ST_AsText($1::geometry);$_$;
+
+
+--
 -- Name: synchronize_jei_with_entry(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -237,6 +262,13 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+
+--
+-- Name: gist_geometry_ops; Type: OPERATOR FAMILY; Schema: public; Owner: -
+--
+
+CREATE OPERATOR FAMILY public.gist_geometry_ops USING gist;
 
 
 SET default_tablespace = '';
@@ -1716,6 +1748,105 @@ CREATE SEQUENCE public.accounts_id_seq
 --
 
 ALTER SEQUENCE public.accounts_id_seq OWNED BY public.accounts.id;
+
+
+--
+-- Name: active_storage_attachments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_attachments (
+    id bigint NOT NULL,
+    name character varying NOT NULL,
+    record_type character varying NOT NULL,
+    record_id bigint NOT NULL,
+    blob_id bigint NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_attachments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_attachments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_attachments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_attachments_id_seq OWNED BY public.active_storage_attachments.id;
+
+
+--
+-- Name: active_storage_blobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_blobs (
+    id bigint NOT NULL,
+    key character varying NOT NULL,
+    filename character varying NOT NULL,
+    content_type character varying,
+    metadata text,
+    service_name character varying NOT NULL,
+    byte_size bigint NOT NULL,
+    checksum character varying,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: active_storage_blobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_blobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_blobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_blobs_id_seq OWNED BY public.active_storage_blobs.id;
+
+
+--
+-- Name: active_storage_variant_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.active_storage_variant_records (
+    id bigint NOT NULL,
+    blob_id bigint NOT NULL,
+    variation_digest character varying NOT NULL
+);
+
+
+--
+-- Name: active_storage_variant_records_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.active_storage_variant_records_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: active_storage_variant_records_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.active_storage_variant_records_id_seq OWNED BY public.active_storage_variant_records.id;
 
 
 --
@@ -10355,38 +10486,6 @@ ALTER SEQUENCE public.purchases_id_seq OWNED BY public.purchases.id;
 
 
 --
--- Name: regularizations; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.regularizations (
-    id integer NOT NULL,
-    affair_id integer NOT NULL,
-    journal_entry_id integer NOT NULL,
-    currency character varying NOT NULL,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
-    creator_id integer,
-    updater_id integer,
-    lock_version integer DEFAULT 0 NOT NULL
-);
-
-
---
--- Name: regularizations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.regularizations_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: regularizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
 -- Name: qonto_inbound_invoices; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -10473,6 +10572,38 @@ CREATE SEQUENCE public.qonto_outbound_invoices_id_seq
 ALTER SEQUENCE public.qonto_outbound_invoices_id_seq OWNED BY public.qonto_outbound_invoices.id;
 
 
+--
+-- Name: regularizations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.regularizations (
+    id integer NOT NULL,
+    affair_id integer NOT NULL,
+    journal_entry_id integer NOT NULL,
+    currency character varying NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    creator_id integer,
+    updater_id integer,
+    lock_version integer DEFAULT 0 NOT NULL
+);
+
+
+--
+-- Name: regularizations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.regularizations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: regularizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.regularizations_id_seq OWNED BY public.regularizations.id;
@@ -11949,40 +12080,6 @@ ALTER SEQUENCE public.versions_id_seq OWNED BY public.versions.id;
 
 
 --
--- Name: wice_grid_serialized_queries; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.wice_grid_serialized_queries (
-    id integer NOT NULL,
-    name character varying,
-    grid_name character varying,
-    query text,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone
-);
-
-
---
--- Name: wice_grid_serialized_queries_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.wice_grid_serialized_queries_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: wice_grid_serialized_queries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.wice_grid_serialized_queries_id_seq OWNED BY public.wice_grid_serialized_queries.id;
-
-
---
 -- Name: wine_incoming_harvest_inputs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -12590,6 +12687,27 @@ ALTER TABLE ONLY public.account_balances ALTER COLUMN id SET DEFAULT nextval('pu
 --
 
 ALTER TABLE ONLY public.accounts ALTER COLUMN id SET DEFAULT nextval('public.accounts_id_seq'::regclass);
+
+
+--
+-- Name: active_storage_attachments id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments ALTER COLUMN id SET DEFAULT nextval('public.active_storage_attachments_id_seq'::regclass);
+
+
+--
+-- Name: active_storage_blobs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_blobs ALTER COLUMN id SET DEFAULT nextval('public.active_storage_blobs_id_seq'::regclass);
+
+
+--
+-- Name: active_storage_variant_records id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records ALTER COLUMN id SET DEFAULT nextval('public.active_storage_variant_records_id_seq'::regclass);
 
 
 --
@@ -13888,6 +14006,20 @@ ALTER TABLE ONLY public.purchases ALTER COLUMN id SET DEFAULT nextval('public.pu
 
 
 --
+-- Name: qonto_inbound_invoices id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_inbound_invoices ALTER COLUMN id SET DEFAULT nextval('public.qonto_inbound_invoices_id_seq'::regclass);
+
+
+--
+-- Name: qonto_outbound_invoices id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_outbound_invoices ALTER COLUMN id SET DEFAULT nextval('public.qonto_outbound_invoices_id_seq'::regclass);
+
+
+--
 -- Name: regularizations id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -13918,20 +14050,6 @@ ALTER TABLE ONLY public.rides ALTER COLUMN id SET DEFAULT nextval('public.rides_
 --
 -- Name: roles id; Type: DEFAULT; Schema: public; Owner: -
 --
-
---
--- Name: qonto_inbound_invoices id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_inbound_invoices ALTER COLUMN id SET DEFAULT nextval('public.qonto_inbound_invoices_id_seq'::regclass);
-
-
---
--- Name: qonto_outbound_invoices id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_outbound_invoices ALTER COLUMN id SET DEFAULT nextval('public.qonto_outbound_invoices_id_seq'::regclass);
-
 
 ALTER TABLE ONLY public.roles ALTER COLUMN id SET DEFAULT nextval('public.roles_id_seq'::regclass);
 
@@ -14151,13 +14269,6 @@ ALTER TABLE ONLY public.vegetative_stages ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.versions ALTER COLUMN id SET DEFAULT nextval('public.versions_id_seq'::regclass);
-
-
---
--- Name: wice_grid_serialized_queries id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.wice_grid_serialized_queries ALTER COLUMN id SET DEFAULT nextval('public.wice_grid_serialized_queries_id_seq'::regclass);
 
 
 --
@@ -14950,6 +15061,30 @@ ALTER TABLE ONLY public.account_balances
 
 ALTER TABLE ONLY public.accounts
     ADD CONSTRAINT accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_attachments active_storage_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT active_storage_attachments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_blobs active_storage_blobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_blobs
+    ADD CONSTRAINT active_storage_blobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: active_storage_variant_records active_storage_variant_records_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT active_storage_variant_records_pkey PRIMARY KEY (id);
 
 
 --
@@ -16401,6 +16536,22 @@ ALTER TABLE ONLY public.purchases
 
 
 --
+-- Name: qonto_inbound_invoices qonto_inbound_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_inbound_invoices
+    ADD CONSTRAINT qonto_inbound_invoices_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: qonto_outbound_invoices qonto_outbound_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_outbound_invoices
+    ADD CONSTRAINT qonto_outbound_invoices_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: regularizations regularizations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -16430,22 +16581,6 @@ ALTER TABLE ONLY public.ride_sets
 
 ALTER TABLE ONLY public.rides
     ADD CONSTRAINT rides_pkey PRIMARY KEY (id);
-
-
---
--- Name: qonto_inbound_invoices qonto_inbound_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_inbound_invoices
-    ADD CONSTRAINT qonto_inbound_invoices_pkey PRIMARY KEY (id);
-
-
---
--- Name: qonto_outbound_invoices qonto_outbound_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_outbound_invoices
-    ADD CONSTRAINT qonto_outbound_invoices_pkey PRIMARY KEY (id);
 
 
 --
@@ -16710,14 +16845,6 @@ ALTER TABLE ONLY public.vegetative_stages
 
 ALTER TABLE ONLY public.versions
     ADD CONSTRAINT versions_pkey PRIMARY KEY (id);
-
-
---
--- Name: wice_grid_serialized_queries wice_grid_serialized_queries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.wice_grid_serialized_queries
-    ADD CONSTRAINT wice_grid_serialized_queries_pkey PRIMARY KEY (id);
 
 
 --
@@ -18263,6 +18390,34 @@ CREATE INDEX index_accounts_on_updated_at ON public.accounts USING btree (update
 --
 
 CREATE INDEX index_accounts_on_updater_id ON public.accounts USING btree (updater_id);
+
+
+--
+-- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_active_storage_attachments_on_blob_id ON public.active_storage_attachments USING btree (blob_id);
+
+
+--
+-- Name: index_active_storage_attachments_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_attachments_uniqueness ON public.active_storage_attachments USING btree (record_type, record_id, name, blob_id);
+
+
+--
+-- Name: index_active_storage_blobs_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_blobs USING btree (key);
+
+
+--
+-- Name: index_active_storage_variant_records_uniqueness; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
 
 
 --
@@ -26869,38 +27024,6 @@ CREATE INDEX index_purchases_on_updater_id ON public.purchases USING btree (upda
 
 
 --
--- Name: index_regularizations_on_affair_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_regularizations_on_affair_id ON public.regularizations USING btree (affair_id);
-
-
---
--- Name: index_regularizations_on_created_at; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_regularizations_on_created_at ON public.regularizations USING btree (created_at);
-
-
---
--- Name: index_regularizations_on_creator_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_regularizations_on_creator_id ON public.regularizations USING btree (creator_id);
-
-
---
--- Name: index_regularizations_on_journal_entry_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_regularizations_on_journal_entry_id ON public.regularizations USING btree (journal_entry_id);
-
-
---
--- Name: index_regularizations_on_updated_at; Type: INDEX; Schema: public; Owner: -
---
-
---
 -- Name: index_qonto_inbound_invoices_on_document_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -26962,6 +27085,38 @@ CREATE UNIQUE INDEX index_qonto_outbound_invoices_on_sale_id ON public.qonto_out
 
 CREATE INDEX index_qonto_outbound_invoices_on_status ON public.qonto_outbound_invoices USING btree (status);
 
+
+--
+-- Name: index_regularizations_on_affair_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_regularizations_on_affair_id ON public.regularizations USING btree (affair_id);
+
+
+--
+-- Name: index_regularizations_on_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_regularizations_on_created_at ON public.regularizations USING btree (created_at);
+
+
+--
+-- Name: index_regularizations_on_creator_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_regularizations_on_creator_id ON public.regularizations USING btree (creator_id);
+
+
+--
+-- Name: index_regularizations_on_journal_entry_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_regularizations_on_journal_entry_id ON public.regularizations USING btree (journal_entry_id);
+
+
+--
+-- Name: index_regularizations_on_updated_at; Type: INDEX; Schema: public; Owner: -
+--
 
 CREATE INDEX index_regularizations_on_updated_at ON public.regularizations USING btree (updated_at);
 
@@ -28612,20 +28767,6 @@ CREATE INDEX index_versions_on_item_type_and_item_id ON public.versions USING bt
 
 
 --
--- Name: index_wice_grid_serialized_queries_on_grid_name; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_wice_grid_serialized_queries_on_grid_name ON public.wice_grid_serialized_queries USING btree (grid_name);
-
-
---
--- Name: index_wice_grid_serialized_queries_on_grid_name_and_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_wice_grid_serialized_queries_on_grid_name_and_id ON public.wice_grid_serialized_queries USING btree (grid_name, id);
-
-
---
 -- Name: index_wine_incoming_harvest_inputs_on_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -29482,6 +29623,14 @@ ALTER TABLE ONLY public.cvi_cadastral_plant_cvi_land_parcels
 
 
 --
+-- Name: qonto_inbound_invoices fk_rails_0f816e7164; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_inbound_invoices
+    ADD CONSTRAINT fk_rails_0f816e7164 FOREIGN KEY (document_id) REFERENCES public.documents(id);
+
+
+--
 -- Name: incoming_harvests fk_rails_10884b32e0; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -29511,14 +29660,6 @@ ALTER TABLE ONLY public.parcel_items
 
 ALTER TABLE ONLY public.technical_itinerary_intervention_templates
     ADD CONSTRAINT fk_rails_12463de838 FOREIGN KEY (intervention_template_id) REFERENCES public.intervention_templates(id);
-
-
---
--- Name: qonto_inbound_invoices fk_rails_0f816e7164; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_inbound_invoices
-    ADD CONSTRAINT fk_rails_0f816e7164 FOREIGN KEY (document_id) REFERENCES public.documents(id);
 
 
 --
@@ -29874,6 +30015,22 @@ ALTER TABLE ONLY public.tax_declaration_item_parts
 
 
 --
+-- Name: qonto_outbound_invoices fk_rails_5c65bf8c77; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_outbound_invoices
+    ADD CONSTRAINT fk_rails_5c65bf8c77 FOREIGN KEY (sale_id) REFERENCES public.sales(id);
+
+
+--
+-- Name: qonto_inbound_invoices fk_rails_5cf1c5d818; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_inbound_invoices
+    ADD CONSTRAINT fk_rails_5cf1c5d818 FOREIGN KEY (purchase_id) REFERENCES public.purchases(id);
+
+
+--
 -- Name: products fk_rails_5e587cedec; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -29898,27 +30055,19 @@ ALTER TABLE ONLY public.pfi_intervention_parameters
 
 
 --
+-- Name: qonto_inbound_invoices fk_rails_60521fbf5c; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.qonto_inbound_invoices
+    ADD CONSTRAINT fk_rails_60521fbf5c FOREIGN KEY (entity_id) REFERENCES public.entities(id);
+
+
+--
 -- Name: activity_budgets fk_rails_60e5867b44; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.activity_budgets
     ADD CONSTRAINT fk_rails_60e5867b44 FOREIGN KEY (technical_itinerary_id) REFERENCES public.technical_itineraries(id);
-
-
---
--- Name: qonto_outbound_invoices fk_rails_5c65bf8c77; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_outbound_invoices
-    ADD CONSTRAINT fk_rails_5c65bf8c77 FOREIGN KEY (sale_id) REFERENCES public.sales(id);
-
-
---
--- Name: qonto_inbound_invoices fk_rails_5cf1c5d818; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_inbound_invoices
-    ADD CONSTRAINT fk_rails_5cf1c5d818 FOREIGN KEY (purchase_id) REFERENCES public.purchases(id);
 
 
 --
@@ -29943,14 +30092,6 @@ ALTER TABLE ONLY public.intervention_proposals
 
 ALTER TABLE ONLY public.intervention_template_product_parameters
     ADD CONSTRAINT fk_rails_65829c9376 FOREIGN KEY (product_nature_variant_id) REFERENCES public.product_nature_variants(id);
-
-
---
--- Name: qonto_inbound_invoices fk_rails_60521fbf5c; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.qonto_inbound_invoices
-    ADD CONSTRAINT fk_rails_60521fbf5c FOREIGN KEY (entity_id) REFERENCES public.entities(id);
 
 
 --
@@ -30242,6 +30383,14 @@ ALTER TABLE ONLY public.intervention_participations
 
 
 --
+-- Name: active_storage_variant_records fk_rails_993965df05; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_variant_records
+    ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
 -- Name: parcel_items fk_rails_995fb20943; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -30487,6 +30636,14 @@ ALTER TABLE ONLY public.payslips
 
 ALTER TABLE ONLY public.intervention_parameter_settings
     ADD CONSTRAINT fk_rails_c2a2d75e30 FOREIGN KEY (intervention_id) REFERENCES public.interventions(id);
+
+
+--
+-- Name: active_storage_attachments fk_rails_c3b3935057; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.active_storage_attachments
+    ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
 
 
 --
@@ -30789,7 +30946,7 @@ ALTER TABLE ONLY public.projects
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZIDToUzcuDflAVCg2qzZTgkdX7Ye4ADzB1LMKXw2z5aRXmMQGJ2BRWchn1IusrN
+\unrestrict SzPa8TnftQvyvap1v1RrZ9LpiKtiCTt57QozYgl4PYCfAVkzKaoMYU4MyT4ixP7
 
 SET search_path TO public,postgis,lexicon;
 
@@ -31515,6 +31672,9 @@ INSERT INTO "schema_migrations" (version) VALUES
 ('20260726120001'),
 ('20260726120002'),
 ('20260726120003'),
-('20261010200000');
+('20261010200000'),
+('20261114100000'),
+('20261114120000'),
+('20261115005745');
 
 

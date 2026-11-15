@@ -1,5 +1,7 @@
 module Ekylibre
   module Record
+    # Saves associated records again after a record is saved or destroyed
+    # (for their callbacks to compute their state from it).
     module Autosave #:nodoc:
       def self.included(base)
         base.extend(ClassMethods)
@@ -7,40 +9,27 @@ module Ekylibre
 
       module ClassMethods
         def autosave(*reflections_list)
-          code = ''
           options = { callbacks: %i[after_save after_destroy] }
-          options.merge(reflections_list.delete_at(-1)) if reflections_list.last.is_a? Hash
+          options = options.merge(reflections_list.pop) if reflections_list.last.is_a?(Hash)
 
-          method_name = options[:method] || 'autosave_' + reflections_list.join('_and_')
-          options[:callbacks].each do |callback|
-            code << "#{callback} :#{method_name}\n"
+          reflections = reflections_list.map do |name|
+            reflect_on_association(name) ||
+              raise(ArgumentError.new("Reflection #{name.inspect} unknown (#{reflect_on_all_associations.map(&:name).to_sentence} available)"))
           end
 
-          code << "def #{method_name}\n"
-          reflections_list.each do |reflection|
-            unless ref = reflect_on_association(reflection)
-              raise ArgumentError.new("Reflection #{reflection.inspect} unknown (#{reflect_on_all_associations.map(&:name).to_sentence} available)")
-            end
+          method_name = (options[:method] || "autosave_#{reflections_list.join('_and_')}").to_sym
+          define_method(method_name) do
+            reflections.each do |reflection|
+              records = %i[belongs_to has_one].include?(reflection.macro) ? [public_send(reflection.name)] : public_send(reflection.name).to_a
+              records.compact.each do |record|
+                next if record.destroyed? || record.marked_for_destruction?
 
-            if ref.macro == :belongs_to || ref.macro == :has_one
-              code << "  if self.#{reflection} and not (self.#{reflection}.destroyed? or self.#{reflection}.marked_for_destruction?)\n"
-              code << "    unless self.#{reflection}.reload.save\n"
-              code << "      errors.add_from_record(self.#{reflection})\n"
-              code << "    end\n"
-              code << "  end\n"
-            else
-              code << "  for item in self.#{reflection}\n"
-              code << "    unless item.#{reflection}.destroyed? or item.#{reflection}.marked_for_destruction?\n"
-              code << "      unless item.reload.save\n"
-              code << "        errors.add_from_record(item)\n"
-              code << "      end\n"
-              code << "    end\n"
-              code << "  end\n"
+                errors.add_from_record(record) unless record.reload.save
+              end
             end
           end
-          code << "end\n"
-          # list = code.split("\n"); list.each_index{|x| puts((x+1).to_s.rjust(4)+": "+list[x])}
-          class_eval code
+
+          options[:callbacks].each { |callback| send(callback, method_name) }
         end
       end
     end

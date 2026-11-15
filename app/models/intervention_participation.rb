@@ -38,8 +38,8 @@
 #  updater_id        :integer(4)
 #
 class InterventionParticipation < ApplicationRecord
-  enumerize :state, in: %i[in_progress done validated]
-  enumerize :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures']
+  has_enum :state, in: %i[in_progress done validated]
+  has_enum :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures']
   belongs_to :intervention
   belongs_to :product
 
@@ -156,7 +156,7 @@ class InterventionParticipation < ApplicationRecord
     unless @working_zone && @working_width == working_width
       @working_width = working_width
       if crumbs.size > 1
-        line = Charta.make_line(crumbs.order(:read_at).map(&:geolocation))
+        line = Geo.make_line(crumbs.order(:read_at).map(&:geolocation))
         @working_zone = line.buffer(@working_width)
       end
     end
@@ -207,7 +207,7 @@ class InterventionParticipation < ApplicationRecord
             attributes[key] << {
               reference_name: parameter.name,
               # working_zone: target.shape,
-              working_zone: Charta.new_geometry(intersection).convert_to(:multi_polygon),
+              working_zone: Geo.new_geometry(intersection).convert_to(:multi_polygon),
               product_id: target.id
             }
           end

@@ -50,7 +50,7 @@ class ActivityBudget < ApplicationRecord
   has_many :purchase_items, dependent: :nullify
   has_many :sale_items, dependent: :nullify
 
-  enumerize :nature, in: %i[manual compute_from_lexicon], default: :manual, predicates: true
+  has_enum :nature, in: %i[manual compute_from_lexicon], default: :manual, predicates: true
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :currency, presence: true, length: { maximum: 500 }
@@ -125,7 +125,7 @@ class ActivityBudget < ApplicationRecord
       ratio = 0.0
       if b.activity.distribution_key == :gross_margin
         ratio = gross_margin_ratio
-        # puts gross_margin_ratio.to_f.inspect.yellow
+        # puts gross_margin_ratio.to_f.inspect
 
       elsif b.activity.distribution_key == :percentage
         # compute ratio with opened activities
@@ -137,7 +137,7 @@ class ActivityBudget < ApplicationRecord
         ratio = 1.0 / main_budgets_count
       end
       h[b] = ratio
-      # puts h.inspect.red
+      # puts h.inspect
     end
   end
 

@@ -86,7 +86,7 @@
       }
     });
   };
-  $(document).on('turbolinks:load', '.fieldset .fieldset-fields', $.fn.raiseContentErrorToFieldSet);
+  $(document).on('turbo:load', '.fieldset .fieldset-fields', $.fn.raiseContentErrorToFieldSet);
   $(document).ready(function () {
     $(".fieldset .fieldset-fields").raiseContentErrorToFieldSet();
     $('[data-toggle="tooltip"]').tooltip()

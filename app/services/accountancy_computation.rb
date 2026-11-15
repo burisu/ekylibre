@@ -90,6 +90,6 @@ class AccountancyComputation
   # load config file depends on accounting_system
   def load_accountancy_reference_file
     source = Rails.root.join('config', 'accountancy', "accountancy_mandatory_documents_#{@accounting_system.to_s}.yml")
-    data = YAML.load_file(source).deep_symbolize_keys.stringify_keys if source.file?
+    data = YAML.safe_load_file(source, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys.stringify_keys if source.file?
   end
 end

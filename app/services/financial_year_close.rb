@@ -41,17 +41,17 @@ class FinancialYearClose
 
   def say(message)
     now = Time.now
-    moment = '[' + sprintf('%.1f', now - @start).rjust(6).red + ' '
-    # puts @counts.stringify_keys.to_yaml.cyan if @counts
+    moment = '[' + sprintf('%.1f', now - @start).rjust(6) + ' '
+    # puts @counts.stringify_keys.to_yaml if @counts
 
     if @previous_now
-      moment << sprintf('%.2f', now - @previous_now).rjust(6).green
+      moment << sprintf('%.2f', now - @previous_now).rjust(6)
     else
       moment << '—' * 6
     end
     moment << '] '
 
-    t = moment + message.yellow
+    t = moment + message
     # puts t
     Rails.logger.info(t)
     now
@@ -69,13 +69,13 @@ class FinancialYearClose
 
   def benchmark(message)
     start = Time.now
-    moment = '[' + format('%.1f', start - @start).rjust(6).red + '] '
-    Rails.logger.info(moment + message.yellow + '...')
-    # puts moment + message.yellow + '...'
+    moment = '[' + format('%.1f', start - @start).rjust(6) + '] '
+    Rails.logger.info(moment + message + '...')
+    # puts moment + message + '...'
     yield
     stop = Time.now
-    # puts moment + message.yellow + " (done in #{sprintf('%.2f', stop - start).green}s)"
-    Rails.logger.info(moment + message.yellow + " (done in #{format('%.2f', stop - start).green}s)")
+    # puts moment + message + " (done in #{sprintf('%.2f', stop - start)}s)"
+    Rails.logger.info(moment + message + " (done in #{format('%.2f', stop - start)}s)")
   end
 
   def execute
@@ -89,7 +89,7 @@ class FinancialYearClose
     ApplicationRecord.transaction do
 
       @logger.info((CLOSURE_STEPS[0]).to_s)
-      @year.update_attributes({ state: 'opened' })
+      @year.update({ state: 'opened' })
       @logger.info('1 - Dump tenant')
       dump_tenant
       @logger.info('2 - Generate documents')
@@ -146,7 +146,7 @@ class FinancialYearClose
       generate_documents('post_closure')
       @progress.increment!
 
-      @year.update_attributes(stopped_on: @to_close_on, closed: true, state: 'closed')
+      @year.update(stopped_on: @to_close_on, closed: true, state: 'closed')
     end
     @closer.notify(:financial_year_x_successfully_closed, { name: @year.name }, level: :success)
     true
@@ -634,11 +634,11 @@ class FinancialYearClose
         levels: []
       )
 
-      printer = Printers::TrialBalancePrinter.new(full_params)
+      printer = Printers::TrialBalancePrinter.new(**full_params)
 
       document = print_and_archive(template, printer)
 
-      copy_generated_documents(timing, 'trial_balance', "#{template.nature.human_name} - #{printer.key}", document.file.path)
+      copy_generated_documents(timing, 'trial_balance', "#{template.nature.human_name} - #{printer.key}", document)
     end
 
     def print_and_archive(template, printer)
@@ -656,7 +656,7 @@ class FinancialYearClose
 
       document = print_and_archive(template, printer)
 
-      copy_generated_documents(timing, 'general_ledger', "#{template.nature.human_name} - #{printer.key}", document.file.path)
+      copy_generated_documents(timing, 'general_ledger', "#{template.nature.human_name} - #{printer.key}", document)
     end
 
     def generate_journals_documents(timing, params)
@@ -669,19 +669,19 @@ class FinancialYearClose
         template: template
       )
 
-      printer = Printers::JournalLedgerPrinter.new(full_params)
+      printer = Printers::JournalLedgerPrinter.new(**full_params)
 
       document = print_and_archive(template, printer)
 
-      copy_generated_documents(timing, 'journal_ledger', "#{template.nature.human_name} - #{printer.key}", document.file.path)
+      copy_generated_documents(timing, 'journal_ledger', "#{template.nature.human_name} - #{printer.key}", document)
     end
 
-    def copy_generated_documents(timing, nature, key, file_path)
-      destination_path = Ekylibre::Tenant.private_directory.join('attachments', 'documents', 'financial_year_closures', @year.id.to_s, timing.to_s, nature.to_s, "#{key}.pdf")
-      signature_path = Ekylibre::Tenant.private_directory.join('attachments', 'documents', 'financial_year_closures', @year.id.to_s, timing.to_s, nature.to_s, "#{key}.asc")
-      FileUtils.mkdir_p destination_path.dirname
-      FileUtils.ln file_path, destination_path
-      FileUtils.ln file_path.gsub(/\.pdf/, '.asc'), signature_path
+    # Copies the archived document and its signature in the closure directory
+    def copy_generated_documents(timing, nature, key, document)
+      directory = Ekylibre::Tenant.private_directory.join('attachments', 'documents', 'financial_year_closures', @year.id.to_s, timing.to_s, nature.to_s)
+      FileUtils.mkdir_p directory
+      FileUtils.cp document.file_path, directory.join("#{key}.pdf")
+      File.write(directory.join("#{key}.asc"), document.signature) if document.signature.present?
     end
 
     def generate_archive(timing)

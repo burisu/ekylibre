@@ -5,7 +5,7 @@ module Pesticide
         unless @data
           source = Rails.root.join('config', 'specialities.yml')
           @data = if source.exist?
-                    YAML.load_file(source).deep_symbolize_keys.stringify_keys
+                    YAML.safe_load_file(source, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys.stringify_keys
                   else
                     {}
                   end

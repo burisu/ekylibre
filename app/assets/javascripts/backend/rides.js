@@ -125,7 +125,13 @@
           E.Dialog.open(this.href, {
               title,
               success: (response) => {
-                  eval(response.data);
+                  // The server redirects (see XhrRedirection): follow it without evaluating the response
+                  const location = response.headers['x-xhr-redirect'];
+                  if (location) {
+                      Turbo.visit(location, { action: 'replace' });
+                  } else {
+                      window.location.reload();
+                  }
               },
           });
         });

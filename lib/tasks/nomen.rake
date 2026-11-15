@@ -54,7 +54,7 @@ namespace :nomen do
   task list: :environment do
     Onoma.all.each do |n|
       if n.name.to_s.classify.tableize != n.name.to_s
-        puts n.name.to_s.red
+        puts n.name.to_s
       else
         puts n.name
       end
@@ -78,7 +78,7 @@ namespace :nomen do
   namespace :migrate do
     desc 'Generate migration file (in db/migrate) for corresponding'
     task generate: :environment do
-      puts 'DEPRECATION WARNING: `rake nomen:migrate:generate` is deprecated. Please use `rails g nomenclature_migration` instead.'.yellow
+      puts 'DEPRECATION WARNING: `rake nomen:migrate:generate` is deprecated. Please use `rails g nomenclature_migration` instead.'
       unless name = ENV['NAME']
         puts 'Use command with NAME: rake nomen:migrate:generate NAME=add_some_stuff'
         exit 1
@@ -91,7 +91,7 @@ namespace :nomen do
       xml << "  <!-- Add your changes here -->\n"
       xml << "</migration>\n"
       File.write(file, xml)
-      puts "Create #{file.relative_path_from(Rails.root).to_s.yellow}"
+      puts "Create #{file.relative_path_from(Rails.root).to_s}"
     end
 
     task model: :environment do
@@ -117,7 +117,7 @@ namespace :nomen do
   task migrate: :environment do
     Rails.application.eager_load! if Rails.env.development?
     Onoma.missing_migrations.each do |migration|
-      puts migration.name.yellow
+      puts migration.name
       Onoma::Migrator::Reference.run(migration)
       Onoma::Migrator::Model.run(migration)
       Onoma::Migrator::Translation.run(migration)

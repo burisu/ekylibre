@@ -28,18 +28,17 @@ module Clients
         @content_to_send[:messages][0][:content] = instructions
         @content_to_send[:messages][1][:content] = data
         # call Mistral API
-        # call = RestClient.post BASE_URL, @content_to_send.to_json, headers
-        call = RestClient::Request.execute(method: :post, url: BASE_URL, timeout: nil, payload: @content_to_send.to_json, headers: headers)
+        call = Clients::Http.post(BASE_URL, @content_to_send.to_json, headers: headers, timeout: 600)
         response = JSON.parse(call.body).deep_symbolize_keys
         # get content only
         json_response = response[:choices][0][:message][:content]
         JSON.parse(json_response).deep_symbolize_keys
-      rescue RestClient::ExceptionWithResponse => err
+      rescue Clients::Http::Error => err
         { error: err }
       end
 
       def headers
-        { content_type: 'application/json', accept: 'application/json', authorization: "Bearer #{@api_key}" }
+        { 'Content-Type' => 'application/json', 'Accept' => 'application/json', 'Authorization' => "Bearer #{@api_key}" }
       end
 
     end

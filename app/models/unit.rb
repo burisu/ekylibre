@@ -72,8 +72,8 @@ class Unit < ApplicationRecord
   has_many :derivative_units, class_name: 'Unit', foreign_key: :base_unit_id
   belongs_to :base_unit, class_name: 'ReferenceUnit'
 
-  enumerize :type, in: %w[ReferenceUnit Conditioning]
-  enumerize :dimension, in: BASE_UNIT_PER_DIMENSION.keys
+  has_enum :type, in: %w[ReferenceUnit Conditioning]
+  has_enum :dimension, in: BASE_UNIT_PER_DIMENSION.keys
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :coefficient, presence: true, numericality: { greater_than: -10_000_000_000, less_than: 10_000_000_000 }

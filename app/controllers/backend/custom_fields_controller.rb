@@ -28,14 +28,14 @@ module Backend
       t.action :edit
       t.action :destroy, if: :destroyable?
       t.column :name, url: true
-      t.column :customized_type, label_method: 'customized_type.to_s.underscore.tl'
+      t.column :customized_type, label_method: ->(record) { record.customized_type.to_s.underscore.tl }
       t.column :nature
       t.column :required
       t.column :active
       t.column :choices_count, datatype: :integer
     end
 
-    list(:choices, model: :custom_field_choices, conditions: { custom_field_id: 'params[:id]'.c }, order: 'position') do |t|
+    list(:choices, model: :custom_field_choices, conditions: { custom_field_id: -> { params[:id] } }, order: 'position') do |t|
       t.action :up, unless: :first?, method: :post
       t.action :down, unless: :last?, method: :post
       t.column :name

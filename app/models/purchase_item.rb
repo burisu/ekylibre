@@ -85,7 +85,7 @@ class PurchaseItem < ApplicationRecord
   has_many :products, through: :parcels_purchase_invoice_items, source: :product
   has_one :product_nature_category, through: :variant, source: :category
 
-  enumerize :role, in: %i[merchandise service fees], predicates: true
+  has_enum :role, in: %i[merchandise service fees], predicates: true
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :accounting_label, length: { maximum: 500 }, allow_blank: true
@@ -117,7 +117,14 @@ class PurchaseItem < ApplicationRecord
   # accepts_nested_attributes_for :fixed_asset
 
   alias_attribute :name, :label
-  alias_attribute :unit, :conditioning_unit
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def unit
+    conditioning_unit
+  end
+
+  def unit=(value)
+    self.conditioning_unit = value
+  end
 
   acts_as_list scope: :purchase
   sums :purchase, :items, :pretax_amount, :amount

@@ -49,7 +49,7 @@ module Ekylibre
           members = cultivable_zone.current_cultivations(issue_observed_at) if cultivable_zone
           plant = members if members.any?
           if plant.nil?
-            cultivable_zone_shape = Charta.new_geometry(cultivable_zone.shape) if cultivable_zone.shape
+            cultivable_zone_shape = Geo.new_geometry(cultivable_zone.shape) if cultivable_zone.shape
             if cultivable_zone_shape && product_around = Plant.shape_within(cultivable_zone_shape).first
               plant = product_around
             end
@@ -229,7 +229,7 @@ module Ekylibre
           ##
           path = self.path('demo_spraying', 'ticsad_simulation.shp')
           if path.exist? && intervention && sprayer = intervention.product_parameters.find_by(reference_name: 'sprayer')
-            # puts "ticsad import OK".inspect.green
+            # puts "ticsad import OK".inspect
             count :ticsad_simulation do |_w|
               #############################################################################
               read_at = Time.new(2014, 6, 5, 10, 0, 0, '+00:00')
@@ -265,7 +265,7 @@ module Ekylibre
               end
             end
           else
-            puts 'Cannot import ticsad simulation'.red
+            puts 'Cannot import ticsad simulation'
           end
         end
       end

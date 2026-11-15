@@ -154,7 +154,7 @@ module Procedo
           return nil unless candidates.any?
 
           candidates.first
-        elsif quantity.is_a?(Charta::Geometry)
+        elsif quantity.is_a?(Geo::Geometry)
           candidates = handlers.select { |h| h.indicator.datatype == :multi_polygon }
           return nil unless candidates.any?
 

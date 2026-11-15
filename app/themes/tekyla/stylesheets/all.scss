@@ -1,8 +1,5 @@
-/*
- * This is a manifest file that'll be compiled into screen.css, which will include all the files
- * listed below.
- *= require_self
- */
+// Theme stylesheet, built by Dart Sass (config/initializers/dartsass.rb)
+@import "asset_urls";
 
 // Core variables and mixins
 @import "variables";
@@ -12,13 +9,13 @@
 @import "reset";
 @import "fonts";
 @import "print";
-@import 'bootstrap-sprockets';
+$icon-font-path: "/bootstrap/";
 
 // Plugins
 @import "vendor/flatpickr";
 @import "bootstrap-slider";
 @import "wice_grid";
-@import "font-awesome-sprockets";
+$fa-font-path: "/font-awesome";
 
 // Specific
 @import "abilities";

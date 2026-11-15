@@ -66,7 +66,7 @@ class Journal < ApplicationRecord
   has_many :purchase_natures, dependent: :restrict_with_exception
   has_many :sale_natures, dependent: :restrict_with_exception
   has_many :inventories, inverse_of: :journal
-  enumerize :nature, in: %i[sales purchases fixed_assets bank forward various cash stocks closure result payslip], default: :various, predicates: true
+  has_enum :nature, in: %i[sales purchases fixed_assets bank forward various cash stocks closure result payslip], default: :various, predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :closed_on, presence: true, timeliness: { on_or_after: -> { Time.new(1, 1, 1).in_time_zone }, on_or_before: -> { Time.zone.today + 100.years }, type: :date }
   validates :code, :name, presence: true, length: { maximum: 500 }
@@ -283,7 +283,7 @@ class Journal < ApplicationRecord
     private
       # @deprecated
       def condition_builder
-        ActiveSupport::Deprecation.warn 'Journal condition methods are deprecated, use Accountancy::ConditionBuilder::* instead'
+        Ekylibre.deprecator.warn 'Journal condition methods are deprecated, use Accountancy::ConditionBuilder::* instead'
         Accountancy::ConditionBuilder::JournalConditionBuilder.new(connection: self.class.connection)
       end
   end
@@ -357,7 +357,7 @@ class Journal < ApplicationRecord
 
   # this method searches the last entries according to a number.
   def last_entries(period, count = 30)
-    period.entries.order("LPAD(number, 20, '0') DESC").limit(count)
+    period.entries.order(Arel.sql("LPAD(number, 20, '0') DESC")).limit(count)
   end
 
   def entry_items_between(started_on, stopped_on)
@@ -499,7 +499,7 @@ class Journal < ApplicationRecord
 
     # @deprecated
     def trial_balance_calculator
-      ActiveSupport::Deprecation.warn "trial_balance* methods are deprecated, use "
+      Ekylibre.deprecator.warn "trial_balance* methods are deprecated, use "
       Accountancy::TrialBalanceCalculator.build(connection: connection)
     end
 

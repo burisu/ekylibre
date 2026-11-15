@@ -24,7 +24,7 @@ module Ekylibre
 
       rows.each_with_index do |row, index|
         line_number = index + 2
-        prompt = "L#{line_number.to_s.yellow}"
+        prompt = "L#{line_number.to_s}"
 
         r = {
           invoiced_at:        (row[0].blank? ? nil : Date.parse(row[0].to_s)),
@@ -198,7 +198,7 @@ module Ekylibre
         unless purchase.items.find_by(pretax_amount: r.pretax_amount, variant_id: variant.id, tax_id: tax.id)
           raise "Missing quantity at line #{line_index}" unless r.quantity
 
-          # puts r.variant_code.inspect.red
+          # puts r.variant_code.inspect
           conditioning_data = variant.guess_conditioning
           purchase.items.create!(role: r.role,
                                  conditioning_quantity: r.quantity * conditioning_data[:quantity],

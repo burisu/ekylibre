@@ -5,7 +5,7 @@ module ReadingStorable
 
   included do
     refers_to :indicator
-    enumerize :indicator_datatype, in: %i[string integer decimal boolean choice measure point geometry multi_polygon], predicates: { prefix: true }
+    has_enum :indicator_datatype, in: %i[string integer decimal boolean choice measure point geometry multi_polygon], predicates: { prefix: true }
     refers_to :measure_value_unit, class_name: 'Unit'
 
     has_geometry :geometry_value
@@ -75,7 +75,7 @@ module ReadingStorable
       end
     end
     if datatype == :geometry || datatype == :multi_polygon || datatype == :point
-      object = Charta.new_geometry(object)
+      object = Geo.new_geometry(object)
     end
     send("#{datatype}_value=", object)
   end

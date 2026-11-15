@@ -18,7 +18,7 @@ module Printers
         itk_service.perform
         ti = TechnicalItinerary.find_by(activity: activity)
       rescue => error
-        puts error.inspect.red
+        puts error.inspect
       end
 
       assert ti.valid?, "Technical itinerary must be valid (#{ti.errors.inspect})"

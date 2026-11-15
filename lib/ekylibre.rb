@@ -1,25 +1,18 @@
 module Ekylibre
-  autoload :Access,            'ekylibre/access'
-  autoload :Bookkeeper,        'ekylibre/bookkeeper'
-  autoload :CorporateIdentity, 'ekylibre/corporate_identity'
-  autoload :Export,            'ekylibre/export'
-  autoload :FirstRun,          'ekylibre/first_run'
-  autoload :Hook,              'ekylibre/hook'
-  autoload :Navigation,        'ekylibre/navigation'
-  autoload :Record,            'ekylibre/record'
-  autoload :Reporting,         'ekylibre/reporting'
-  autoload :Plugin,            'ekylibre/plugin'
-  autoload :Schema,            'ekylibre/schema'
-  autoload :Secret,            'ekylibre/secret'
-  autoload :Snippet,           'ekylibre/snippet'
-  autoload :Support,           'ekylibre/support'
-  autoload :Tenant,            'ekylibre/tenant'
-  autoload :VERSION,           'ekylibre/version'
-  autoload :View,              'ekylibre/view'
-
+  require_relative 'ekylibre/version'
   CSV = ::CSV.freeze
 
   class << self
+    # Configuration (string keys) of the primary database of the current environment
+    def primary_db_config
+      ActiveRecord::Base.configurations.configs_for(env_name: Rails.env.to_s, name: 'primary').configuration_hash.stringify_keys
+    end
+
+    # Deprecation warnings of the application (see config.active_support.deprecation)
+    def deprecator
+      @deprecator ||= ActiveSupport::Deprecation.new('next major release', 'Ekylibre')
+    end
+
     def http_languages
       ::I18n.available_locales.each_with_object({}) do |l, h|
         h['i18n.iso2'.t(locale: l)] = l

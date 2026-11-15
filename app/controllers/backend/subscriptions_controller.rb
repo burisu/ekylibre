@@ -22,37 +22,39 @@ module Backend
       # address_id: 'EntityAddress.find_by(entity_id: params[:subscriber_id]).id rescue nil'.c,
       # nature_id: 'SubscriptionNature.first.id rescue 0'.c,
       quantity: 1,
-      started_on: 'Time.zone.today'.c,
-      stopped_on: 'Time.zone.today + 1.year - 1.day'.c,
+      started_on: -> { Time.zone.today },
+      stopped_on: -> { Time.zone.today + 1.year - 1.day },
       t3e: {
-        nature: 'RECORD.nature_name'.c,
-        start: 'RECORD.started_on.l'.c,
-        finish: 'RECORD.stopped_on.l'.c
+        nature: ->(record) { record.nature_name },
+        start: ->(record) { record.started_on.l },
+        finish: ->(record) { record.stopped_on.l }
       }
     )
     unroll
 
     def self.subscriptions_conditions
-      code = search_conditions(subscriptions: %i[codes description number], entities: %i[number full_name]) + " ||= []\n"
-      code << "unless params[:nature_id].to_i.zero?\n"
-      code << "  c[0] += \" AND #{Subscription.table_name}.nature_id = ?\"\n"
-      code << "  c << params[:nature_id].to_i\n"
-      code << "end\n"
-      code << "if params[:state].is_a?(Array) && !params[:state].empty?\n"
-      code << "  c[0] << ' AND #{Subscription.table_name}.status IN (?)'\n"
-      code << "  c << params[:state]\n"
-      code << "end\n "
-      code << "if params[:subscribed_on].to_s =~ /\A\d\d\d\d\-\d\d\-\d\d\z/.nil?\n"
-      code << "  c[0] += \" AND ? BETWEEN #{Subscription.table_name}.started_on AND #{Subscription.table_name}.stopped_on\"\n"
-      code << "  c << params[:subscribed_on]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(subscriptions: %i[codes description number], entities: %i[number full_name])
+      lambda do
+        c = instance_exec(&search1)
+        unless params[:nature_id].to_i.zero?
+          c[0] += " AND #{Subscription.table_name}.nature_id = ?"
+          c << params[:nature_id].to_i
+        end
+        if params[:state].is_a?(Array) && !params[:state].empty?
+          c[0] << " AND #{Subscription.table_name}.status IN (?)"
+          c << params[:state]
+        end
+        if params[:subscribed_on].to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+          c[0] += " AND ? BETWEEN #{Subscription.table_name}.started_on AND #{Subscription.table_name}.stopped_on"
+          c << params[:subscribed_on]
+        end
+        c
+      end
     end
 
-    list(conditions: subscriptions_conditions, order: { started_on: :desc }, joins: :subscriber, line_class: "(RECORD.disabled? ? 'disabled' : RECORD.active? ? 'success' : '') + (RECORD.suspended ? 'squeezed' : '')".c) do |t|
+    list(conditions: subscriptions_conditions, order: { started_on: :desc }, joins: :subscriber, line_class: ->(record) { (record.disabled? ? 'disabled' : record.active? ? 'success' : '') + (record.suspended ? 'squeezed' : '') }) do |t|
       t.action :edit
-      t.action :renew, method: :post, if: 'current_user.can?(:write, :sales) && RECORD.renewable?'.c
+      t.action :renew, method: :post, if: ->(record) { current_user.can?(:write, :sales) && record.renewable? }
       t.action :suspend, method: :post, if: :suspendable?
       t.action :takeover, method: :post, if: :suspended
       t.action :destroy, if: :destroyable_by_user?

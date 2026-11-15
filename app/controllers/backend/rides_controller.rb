@@ -17,7 +17,7 @@ module Backend
       t.column :duration, label_method: :decorated_duration
       t.column :sleep_count, class: 'center'
       t.column :sleep_duration, label_method: :decorated_sleep_duration
-      t.column :equipment, url: { controller: 'backend/equipments', id: 'RECORD.product_id'.c }
+      t.column :equipment, url: { controller: 'backend/equipments', id: ->(record) { record.product_id } }
       t.column :provider_name
       t.column :state
     end

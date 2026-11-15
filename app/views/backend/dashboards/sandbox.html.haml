@@ -88,10 +88,8 @@
     %input#sliderval
   %div#slider
 
-:coffee
-  $ ->
-    $("#slider").slider
-      min: 0
-      max: 100
-      values: [25,75]
+:javascript
+  document.addEventListener('DOMContentLoaded', function() {
+    $("#slider").slider({ min: 0, max: 100, values: [25, 75] });
+  });
 

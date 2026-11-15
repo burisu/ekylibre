@@ -12,13 +12,13 @@ module Ekylibre
 
           value = if value.is_a?(Hash) || (value.is_a?(String) && value =~ /\A\{.*\}\z/)
                     begin
-                      Charta.from_geojson(value)
+                      Geo.from_geojson(value)
                     rescue => e
                       fixed_geojson = correct_geojson(value, options[:type])
                       value = fixed_geojson.get if fixed_geojson.is_some?
                     end
                   else
-                    Charta.new_geometry(value)
+                    Geo.new_geometry(value)
                   end
 
           fixed_value = correct_shape(value, options[:type])
@@ -38,7 +38,7 @@ module Ekylibre
         end
 
         def correct_geojson(value, type)
-          geojson = Charta::GeoJSON.new(value, "4326")
+          geojson = Geo::GeoJSON.new(value, "4326")
           correct_shape(geojson, type)
         end
 
@@ -64,10 +64,10 @@ module Ekylibre
           plucked_ids = pluck(:id).join(',')
 
           if plucked_ids.blank?
-            Charta.empty_geometry
+            Geo.empty_geometry
           else
             conn = connection
-            Charta.new_geometry(conn.select_value('SELECT ST_MakeValid(ST_AsEWKT(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')'))
+            Geo.new_geometry(conn.select_value('SELECT ST_MakeValid(ST_AsEWKT(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')'))
           end
         end
 
@@ -76,14 +76,14 @@ module Ekylibre
           plucked_ids = pluck(:id).join(',')
 
           if plucked_ids.blank?
-            Charta.empty_geometry
+            Geo.empty_geometry
           else
             conn = connection
-            Charta.new_geometry(conn.select_value('SELECT ST_AsEWKT(ST_Centroid(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')')).feature
+            Geo.new_geometry(conn.select_value('SELECT ST_AsEWKT(ST_Centroid(ST_Union(' + conn.quote_column_name(column_name) + '))) FROM ' + conn.quote_table_name(table_name) + ' WHERE id in (' + plucked_ids + ')')).feature
           end
         end
 
-        # More robust implementation of to_svg from Charta for multiple objects
+        # More robust implementation of to_svg from Geo for multiple objects
         def compute_svg(column_name, options = {})
           plucked_ids = pluck(:id).join(',')
 
@@ -135,7 +135,7 @@ module Ekylibre
             end
 
             define_method col do
-              self[col].blank? ? nil : Charta.new_geometry(self[col])
+              self[col].blank? ? nil : Geo.new_geometry(self[col])
             end
 
             unless %i[point multi_point line_string multi_line_string].include?(options[:type])
@@ -164,11 +164,11 @@ module Ekylibre
             end
 
             scope col + '_overlapping', lambda { |shape|
-              where('ST_Overlaps(' + col + ', ST_GeomFromEWKT(?))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_Overlaps(' + col + ', ST_GeomFromEWKT(?))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_covering', lambda { |shape, margin = 0|
-              ewkt = ::Charta.new_geometry(shape).to_ewkt
+              ewkt = ::Geo.new_geometry(shape).to_ewkt
               if margin > 0
                 common = 1 - margin
                 where('(ST_Overlaps(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))) / ST_Area(ST_GeomFromEWKT(ST_MakeValid(?))) >= ?)', ewkt, ewkt, ewkt, common)
@@ -178,39 +178,39 @@ module Ekylibre
             }
 
             scope col + '_intersecting', lambda { |shape|
-              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_surface_intersecting', lambda { |shape|
-              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(ST_MakeValid(' + col + '), ST_GeomFromEWKT(ST_MakeValid(?)))) > ?', ::Charta.new_geometry(shape).to_ewkt, ::Charta.new_geometry(shape).to_ewkt, 1E-10)
+              where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(ST_MakeValid(' + col + '), ST_GeomFromEWKT(ST_MakeValid(?)))) > ?', ::Geo.new_geometry(shape).to_ewkt, ::Geo.new_geometry(shape).to_ewkt, 1E-10)
             }
 
             scope col + '_covered_by', lambda { |shape|
-              where('ST_CoveredBy(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_CoveredBy(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_within', lambda { |shape|
-              where('ST_Within(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Charta.new_geometry(shape).to_ewkt)
+              where('ST_Within(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ::Geo.new_geometry(shape).to_ewkt)
             }
 
             scope col + '_matching', lambda { |shape, margin = 0.05|
-              ewkt = ::Charta.new_geometry(shape).to_ewkt
+              ewkt = ::Geo.new_geometry(shape).to_ewkt
               common = 1 - margin
               where('ST_Equals(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) OR (ST_Overlaps(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?))) AND ST_Area(ST_Intersection(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))) / ST_Area(' + col + ') >= ? AND ST_Area(ST_Intersection(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))) / ST_Area(ST_GeomFromEWKT(ST_MakeValid(?))) >= ?)', ewkt, ewkt, ewkt, common, ewkt, ewkt, common)
             }
 
             scope col + '_near', lambda { |shape, max_distance_in_meter = 5000|
-              c = ::Charta.new_geometry(shape).buffer(max_distance_in_meter)
-              ewkt = ::Charta.new_geometry(c).to_ewkt
+              c = ::Geo.new_geometry(shape).buffer(max_distance_in_meter)
+              ewkt = ::Geo.new_geometry(c).to_ewkt
               where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ewkt)
             }
 
             scope col + '_nearest_of_and_within', lambda { |shape, max_distance_in_meter = 5000|
-              c = ::Charta.new_geometry(shape).buffer(max_distance_in_meter)
-              ewkt = ::Charta.new_geometry(c).to_ewkt
+              c = ::Geo.new_geometry(shape).buffer(max_distance_in_meter)
+              ewkt = ::Geo.new_geometry(c).to_ewkt
               where( col + ' IN (?)', select(col)
                                       .where('ST_Intersects(' + col + ', ST_GeomFromEWKT(ST_MakeValid(?)))', ewkt)
-                                      .order('ST_Distance(' + col + ', ST_Centroid(\'' + ewkt + '\')) ASC')
+                                      .order(Arel.sql('ST_Distance(' + col + ', ST_Centroid(' + connection.quote(ewkt) + ')) ASC'))
                                       .limit(1))
             }
 
@@ -249,98 +249,83 @@ module Ekylibre
           id
         end
 
+        # Defines geometric methods on the shape indicators (stored in product readings)
         def has_shape(*indicators)
-          options = (indicators[-1].is_a?(Hash) ? indicators.delete_at(-1) : {})
-          code = ''
+          indicators.pop if indicators.last.is_a?(Hash)
           indicators = [:shape] if indicators.empty?
           column = :geometry_value
 
           indicators.each do |indicator|
-            # code << "after_create :create_#{indicator}_images\n"
+            define_singleton_method("#{indicator}_view_box") do |options = {}|
+              expr = options[:srid] ? "ST_Transform(#{column}, #{srid(options[:srid])})" : column.to_s
+              ids = ProductReading.of_products(self, indicator, options[:at]).pluck(:id)
+              return [] unless ids.any?
 
-            # code << "before_update :update_#{indicator}_images\n"
-
-            code << "def self.#{indicator}_view_box(options = {})\n"
-            code << "  expr = (options[:srid] ? \"ST_Transform(#{column}, \#{self.srid(options[:srid])})\" : '#{column}')\n"
-            code << "  ids = ProductReading.of_products(self, :#{indicator}, options[:at]).pluck(:id)\n"
-            code << "  return [] unless ids.any?\n"
-            code << "  values = self.connection.select_one(\"SELECT min(ST_XMin(\#{expr})) AS x_min, min(ST_YMin(\#{expr})) AS y_min, max(ST_XMax(\#{expr})) AS x_max, max(ST_YMax(\#{expr})) AS y_max FROM \#{ProductReading.indicator_table_name(:#{indicator})} WHERE id IN (\#{ids.join(',')})\").symbolize_keys\n"
-            code << "  return [values[:x_min].to_f, -values[:y_max].to_f, (values[:x_max].to_f - values[:x_min].to_f), (values[:y_max].to_f - values[:y_min].to_f)]\n"
-            code << "end\n"
-
-            # As SVG
-            code << "def self.#{indicator}_svg(options = {})\n"
-            # code << "  options[:srid] ||= 2154\n"
-            code << "  ids = ProductReading.of_products(self, :#{indicator}, options[:at]).pluck(:product_id)\n"
-            code << "  svg = '<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"'\n"
-            code << "  return (svg + '/>').html_safe unless ids.any?\n"
-            code << "  svg << ' class=\"#{indicator}\" preserveAspectRatio=\"xMidYMid meet\" width=\"100%\" height=\"100%\" viewBox=\"' + #{indicator}_view_box(options).join(' ') + '\"'\n"
-            code << "  svg << '>'\n"
-            code << "  for product in Product.where(id: ids)\n"
-            code << "    svg << '<path d=\"' + product.#{indicator}_to_svg_path(options) + '\"/>'\n"
-            code << "  end\n"
-            code << "  svg << '</svg>'\n"
-            code << "  return svg.html_safe\n"
-            code << "end\n"
-
-            # Return SVG as String
-            code << "def #{indicator}_svg(options = {})\n"
-            code << "  options[:srid] ||= 2154\n"
-            code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  geom = Charta.new_geometry(self.#{indicator})\n"
-            code << "  geom = geom.transform(options[:srid]) if options[:srid]\n"
-            code << "  return geom.to_svg(options)\n"
-            # code << "  options[:srid] ||= 2154\n"
-            # code << "  return ('<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\""
-            # for attr, value in {:class => indicator, :preserve_aspect_ratio => 'xMidYMid meet', :width => 180, :height => 180, :view_box => "self.#{indicator}_view_box(options).join(' ')".c}
-            #   code << " #{attr.to_s.camelcase(:lower)}=\"' + (options[:#{attr}] || #{value.inspect}).to_s + '\""
-            # end
-            # code << "><path d=\"' + self.#{indicator}_to_svg(options).to_s + '\"/></svg>').html_safe\n"
-            code << "end\n"
-
-            # Return ViewBox
-            code << "def #{indicator}_view_box(options = {})\n"
-            code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  return [self.#{indicator}_x_min(options), -self.#{indicator}_y_max(options), self.#{indicator}_width(options), self.#{indicator}_height(options)]\n"
-            code << "end\n"
-
-            %i[x_min x_max y_min y_max to_svg to_svg_path to_gml to_kml to_geojson to_text to_binary to_ewkt centroid point_on_surface].each do |attr|
-              code << "def #{indicator}_#{attr.to_s.downcase}(options = {})\n"
-              code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-              code << "  geometry = Charta.new_geometry(reading.#{column})\n"
-              code << "  geometry = geometry.transform(options[:srid]) if options[:srid]\n"
-              code << "  return geometry.#{attr}\n"
-              code << "end\n"
+              values = connection.select_one(
+                "SELECT min(ST_XMin(#{expr})) AS x_min, min(ST_YMin(#{expr})) AS y_min, max(ST_XMax(#{expr})) AS x_max, max(ST_YMax(#{expr})) AS y_max " \
+                "FROM #{ProductReading.indicator_table_name(indicator)} WHERE id IN (#{ids.map(&:to_i).join(',')})"
+              ).symbolize_keys
+              [values[:x_min].to_f, -values[:y_max].to_f, (values[:x_max].to_f - values[:x_min].to_f), (values[:y_max].to_f - values[:y_min].to_f)]
             end
 
-            code << "def #{indicator}_area(options = {})\n"
-            code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            code << "  geometry = Charta.new_geometry(reading.#{column})\n"
-            code << "  geometry = geometry.transform(options[:srid]) if options[:srid]\n"
-            code << "  return geometry.area.in_square_meter\n"
-            code << "end\n"
+            # As SVG
+            define_singleton_method("#{indicator}_svg") do |options = {}|
+              ids = ProductReading.of_products(self, indicator, options[:at]).pluck(:product_id)
+              svg = +'<svg xmlns="http://www.w3.org/2000/svg" version="1.1"'
+              return (svg + '/>').html_safe unless ids.any?
 
-            # # add a method to convert polygon to point
-            # # TODO : change geometry_value to a variable :column
-            # for attr in [:centroid, :point_on_surface]
-            #   code << "def #{indicator}_#{attr.to_s.downcase}(options = {})\n"
-            #   code << "  return nil unless reading = self.reading(:#{indicator}, at: options[:at])\n"
-            #   code << "  self.class.connection.select_value(\"SELECT ST_#{attr.to_s.camelcase}(geometry_value) FROM \#{ProductReading.indicator_table_name(:#{indicator})} WHERE id = \#{reading.id}\")\n"
-            #   code << "end\n"
-            # end
+              svg << %( class="#{indicator}" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" viewBox="#{public_send("#{indicator}_view_box", options).join(' ')}">)
+              Product.where(id: ids).each do |product|
+                svg << %(<path d="#{product.public_send("#{indicator}_to_svg_path", options)}"/>)
+              end
+              svg << '</svg>'
+              svg.html_safe
+            end
 
-            code << "def #{indicator}_width(options = {})\n"
-            code << "  return (self.#{indicator}_x_max(options) - self.#{indicator}_x_min(options))\n"
-            code << "end\n"
+            # Return SVG as String
+            define_method("#{indicator}_svg") do |options = {}|
+              options[:srid] ||= 2154
+              return nil unless reading(indicator, at: options[:at])
 
-            code << "def #{indicator}_height(options = {})\n"
-            code << "  return (self.#{indicator}_y_max(options) - self.#{indicator}_y_min(options))\n"
-            code << "end\n"
+              geom = Geo.new_geometry(public_send(indicator))
+              geom = geom.transform(options[:srid]) if options[:srid]
+              geom.to_svg(options)
+            end
+
+            # Return ViewBox
+            define_method("#{indicator}_view_box") do |options = {}|
+              return nil unless reading(indicator, at: options[:at])
+
+              [public_send("#{indicator}_x_min", options), -public_send("#{indicator}_y_max", options),
+               public_send("#{indicator}_width", options), public_send("#{indicator}_height", options)]
+            end
+
+            %i[x_min x_max y_min y_max to_svg to_svg_path to_gml to_kml to_geojson to_text to_binary to_ewkt centroid point_on_surface].each do |attr|
+              define_method("#{indicator}_#{attr.to_s.downcase}") do |options = {}|
+                return nil unless (reading = reading(indicator, at: options[:at]))
+
+                geometry = Geo.new_geometry(reading.public_send(column))
+                geometry = geometry.transform(options[:srid]) if options[:srid]
+                geometry.public_send(attr)
+              end
+            end
+
+            define_method("#{indicator}_area") do |options = {}|
+              return nil unless (reading = reading(indicator, at: options[:at]))
+
+              geometry = Geo.new_geometry(reading.public_send(column))
+              geometry = geometry.transform(options[:srid]) if options[:srid]
+              geometry.area.in_square_meter
+            end
+
+            define_method("#{indicator}_width") do |options = {}|
+              public_send("#{indicator}_x_max", options) - public_send("#{indicator}_x_min", options)
+            end
+
+            define_method("#{indicator}_height") do |options = {}|
+              public_send("#{indicator}_y_max", options) - public_send("#{indicator}_y_min", options)
+            end
           end
-
-          # code.split(/\n/).each_with_index{|l, i| puts (i+1).to_s.rjust(4) + ": " + l}
-
-          class_eval code
         end
       end
     end

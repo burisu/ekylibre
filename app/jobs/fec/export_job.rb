@@ -1,5 +1,5 @@
-module Fec
-  class ExportJob < ActiveJob::Base
+module FEC
+  class ExportJob < ApplicationJob
     queue_as :default
     include Rails.application.routes.url_helpers
 
@@ -11,7 +11,7 @@ module Fec
 
         fy = job.arguments.first
         user = job.arguments.fourth
-        Fec::StructureErrorJob.perform_later(@document, fy, user)
+        FEC::StructureErrorJob.perform_later(@document, fy, user)
       end
     end
 

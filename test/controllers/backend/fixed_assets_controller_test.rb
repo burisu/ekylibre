@@ -100,7 +100,7 @@ module Backend
         @storage = BuildingDivision.create!(
           variant: @building_division_variant,
           name: 'Tractor Stockage',
-          initial_shape: Charta.new_geometry('SRID=4326;MULTIPOLYGON(((-0.813218951225281 45.5985699786537,-0.813113003969193 45.5985455816635,-0.81300538033247 45.5987766488858,-0.813106298446655 45.5987876744046,-0.813218951225281 45.5985699786537)))')
+          initial_shape: Geo.new_geometry('SRID=4326;MULTIPOLYGON(((-0.813218951225281 45.5985699786537,-0.813113003969193 45.5985455816635,-0.81300538033247 45.5987766488858,-0.813106298446655 45.5987876744046,-0.813218951225281 45.5985699786537)))')
         )
 
         @product = create :asset_fixable_product, born_at: DateTime.new(2008, 1, 1),

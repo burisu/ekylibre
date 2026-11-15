@@ -13,7 +13,7 @@ module Procedo
           h[k.to_s.upcase] = v
           h
         end
-        # puts @env.map { |k, v| k.to_s.red + ': ' + v.class.name.yellow }.join(', ')
+        # puts @env.map { |k, v| k.to_s + ': ' + v.class.name }.join(', ')
       end
 
       def interpret(node)
@@ -95,7 +95,7 @@ module Procedo
           elsif node.is_a?(Procedo::Formula::Nodes::Numeric)
             node.text_value.to_d
           elsif node.is_a?(Procedo::Formula::Nodes::ActorPresenceTest)
-            # puts "PRESENCE: #{run(node.object)}".blue
+            # puts "PRESENCE: #{run(node.object)}"
             run(node.object).present?
           elsif node.is_a?(Procedo::Formula::Nodes::VariablePresenceTest)
             run(node.variable).any?

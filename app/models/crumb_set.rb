@@ -124,7 +124,7 @@ class CrumbSet
     unless @working_zone && @working_width == working_width
       @working_width = working_width
       if crumbs.size > 1
-        line = Charta.make_line(crumbs.order(:read_at).map(&:geolocation))
+        line = Geo.make_line(crumbs.order(:read_at).map(&:geolocation))
         @working_zone = line.buffer(@working_width)
       end
     end

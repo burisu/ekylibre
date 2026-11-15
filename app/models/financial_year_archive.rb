@@ -33,7 +33,7 @@
 #  timing             :string           not null
 #
 class FinancialYearArchive < ApplicationRecord
-  enumerize :timing, in: %i[prior_to_closure post_closure]
+  has_enum :timing, in: %i[prior_to_closure post_closure]
   belongs_to :financial_year
 
   PUBLIC_KEY_URL = ENV['PUBLIC_KEY_URL']

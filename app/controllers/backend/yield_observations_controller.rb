@@ -21,31 +21,30 @@ module Backend
     manage_restfully except: %i[update destroy]
 
     def self.list_conditions
-      code = search_conditions("yield_observations" => %i[number description]) + " ||= []\n"
-      code << "if params[:plant_id].present?\n"
-      code << "   c[0] << ' AND #{YieldObservation.table_name}.id IN (SELECT yield_observation_id FROM #{ProductsYieldObservation.table_name} WHERE product_id = ?)'\n"
-      code << "  c << params[:plant_id]\n"
-      code << "end\n"
-
-      code << "if params[:activity_id].present?\n"
-      code << "   c[0] << ' AND #{YieldObservation.table_name}.activity_id IN (?)'\n"
-      code << "  c << params[:activity_id]\n"
-      code << "end\n"
-
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{YieldObservation.table_name}.observed_at::DATE BETWEEN ? AND ?'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "end\n"
-
-      code << "c\n "
-      code.c
+      search1 = search_conditions("yield_observations" => %i[number description])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:plant_id].present?
+          c[0] << " AND #{YieldObservation.table_name}.id IN (SELECT yield_observation_id FROM #{ProductsYieldObservation.table_name} WHERE product_id = ?)"
+          c << params[:plant_id]
+        end
+        if params[:activity_id].present?
+          c[0] << " AND #{YieldObservation.table_name}.activity_id IN (?)"
+          c << params[:activity_id]
+        end
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND #{YieldObservation.table_name}.observed_at::DATE BETWEEN ? AND ?"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions) do |t|
@@ -53,14 +52,14 @@ module Backend
       t.action :destroy
       t.column :number, url: true
       t.column :observed_at
-      t.column :activity, url: { controller: '/backend/activities', id: 'RECORD.activity.id'.c }
+      t.column :activity, url: { controller: '/backend/activities', id: ->(record) { record.activity.id } }
       t.column :plants_name, label: :crops
       t.column :description
       t.column :vegetative_stage, hidden: true
       t.column :issues_name, label: :issues, hidden: true
     end
 
-    list(:plants, model: :products_yield_observations, joins: :plant, conditions: ['yield_observation_id = ?', 'params[:id]'.c]) do |t|
+    list(:plants, model: :products_yield_observations, joins: :plant, conditions: ['yield_observation_id = ?', -> { params[:id] }]) do |t|
       t.column :plant, url: true
       t.column :vegetative_stage
       t.column :working_zone_area, datatype: :measure

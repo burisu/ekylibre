@@ -22,7 +22,7 @@ module Backend
 
     include JournalEntriesCondition
 
-    manage_restfully nature: 'params[:nature]'.c, currency: 'Preference[:currency]'.c
+    manage_restfully nature: -> { params[:nature] }, currency: -> { Preference[:currency] }
 
     unroll
 
@@ -39,7 +39,7 @@ module Backend
       t.column :isacompta_label, condition: 'FinancialYearExchange.any_opened_with_isacompta_format?'
     end
 
-    list(:items, model: :journal_entry_items, conditions: journal_entries_conditions, joins: :entry, line_class: "(RECORD.position==1 ? 'first-item' : '') + (RECORD.entry_balanced? ? '' : ' error')".c, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
+    list(:items, model: :journal_entry_items, conditions: journal_entries_conditions, joins: :entry, line_class: ->(record) { (record.position==1 ? 'first-item' : '') + (record.entry_balanced? ? '' : ' error') }, order: "entry_id DESC, #{JournalEntryItem.table_name}.position", export_class: ListExportJob) do |t|
       t.icon :lock, if: :currently_exchanged?
       t.column :entry_number, url: true
       t.column :printed_on, through: :entry, datatype: :date
@@ -60,7 +60,7 @@ module Backend
       t.column :number, through: :bank_statement, label: :bank_statement_number, url: true, hidden: true
     end
 
-    list(:entries, model: :journal_entries, conditions: journal_entries_conditions, line_class: "(RECORD.balanced? ? '' : 'error')".c, order: { created_at: :desc }) do |t|
+    list(:entries, model: :journal_entries, conditions: journal_entries_conditions, line_class: ->(record) { (record.balanced? ? '' : 'error') }, order: { created_at: :desc }) do |t|
       t.action :edit, if: :updateable?
       t.action :destroy, if: :destroyable?
       t.column :number, url: true
@@ -74,7 +74,7 @@ module Backend
       t.column :absolute_credit, currency: :absolute_currency, hidden: true
     end
 
-    list(:mixed, model: :journal_entries, conditions: journal_entries_conditions, children: :items, line_class: "(RECORD.balanced? ? '' : 'error')".c, order: { created_at: :desc }, per_page: 10) do |t|
+    list(:mixed, model: :journal_entries, conditions: journal_entries_conditions, children: :items, line_class: ->(record) { (record.balanced? ? '' : 'error') }, order: { created_at: :desc }, per_page: 10) do |t|
       t.action :edit, if: :updateable?
       t.action :destroy, if: :destroyable?
       t.column :number, url: true, children: :name
@@ -218,7 +218,7 @@ module Backend
     protected
 
       def journal_views
-        ActiveSupport::Deprecation.warn "Journal::journal_views is deprecated, use the class constant JOURNAL_VIEWS"
+        Ekylibre.deprecator.warn "Journal::journal_views is deprecated, use the class constant JOURNAL_VIEWS"
         JOURNAL_VIEWS
       end
 

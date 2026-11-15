@@ -21,6 +21,7 @@ module Backend
     include Autocomplete
     prepend RespondWithTemplate
     include RestfullyManageable
+    include SimpleGrid
     include Unrollable
 
     layout :dialog_or_not
@@ -131,38 +132,40 @@ module Backend
 
       def save_and_redirect(record, options = {})
         record.attributes = options[:attributes] if options[:attributes]
-        ApplicationRecord.transaction do
-          can_be_saved =  record.new_record? ? record.createable? : record.updateable?
-          if can_be_saved && (options[:saved] || record.save(context: options[:context]))
-            response.headers['X-Return-Code'] = 'success'
-            response.headers['X-Saved-Record-Id'] = record.id.to_s
-            if params[:dialog]
-              head :ok
-              return true
-            end
-            if options[:notify]
-              model = record.class
-              notify_success(options[:notify],
-                             record: model.model_name.human,
-                             column: model.human_attribute_name(options[:identifier]),
-                             name: record.send(options[:identifier]))
-            end
-            url = options[:url]
+        saved = ApplicationRecord.transaction do
+          can_be_saved = record.new_record? ? record.createable? : record.updateable?
+          raise ActiveRecord::Rollback unless can_be_saved && (options[:saved] || record.save(context: options[:context]))
 
-            if record.class.column_names.include?('type')
-              record = record.becomes(record.type.constantize)
-            end
-            record.reload
-            if url.is_a? Hash
-              url.each do |k, v|
-                url[k] = (v.is_a?(CodeString) ? record.send(v) : v)
-              end
-            end
-            url == :back ? redirect_back(fallback_location: root_path) : redirect_to(url)
+          true
+        end
+
+        if saved
+          response.headers['X-Return-Code'] = 'success'
+          response.headers['X-Saved-Record-Id'] = record.id.to_s
+          if params[:dialog]
+            head :ok
             return true
-          else
-            raise ActiveRecord::Rollback
           end
+          if options[:notify]
+            model = record.class
+            notify_success(options[:notify],
+                           record: model.model_name.human,
+                           column: model.human_attribute_name(options[:identifier]),
+                           name: record.send(options[:identifier]))
+          end
+          url = options[:url]
+
+          if record.class.column_names.include?('type')
+            record = record.becomes(record.type.constantize)
+          end
+          record.reload
+          if url.is_a? Hash
+            url.each do |k, v|
+              url[k] = (v.is_a?(Proc) ? (v.arity.zero? ? record.instance_exec(&v) : v.call(record)) : v)
+            end
+          end
+          url == :back ? redirect_back(fallback_location: root_path) : redirect_to(url)
+          return true
         end
 
         notify_error_now :record_cannot_be_saved.tl
@@ -294,7 +297,7 @@ module Backend
       end
 
       def redirect_to_current(options = {})
-        ActiveSupport::Deprecation.warn('Use redirect_to_back instead of redirect_to_current')
+        Ekylibre.deprecator.warn('Use redirect_to_back instead of redirect_to_current')
         redirect_to_back(options.merge(direct: true))
       end
 
@@ -335,144 +338,81 @@ module Backend
       end
 
       class << self
-        # search is a hash like {table: [columns...]}
+        # Builds a list condition Proc doing a full-text search on given columns.
+        # search is a hash like { table: [columns...] }.
+        #
+        # Options:
+        # - variable: params key holding the search string (default: :q)
+        # - expressions: additional SQL expressions to search in
+        # - filters: { sql_fragment => ->() { bind values } } OR'ed with the columns
+        # - except: tables to ignore
+        #
+        # The returned Proc is evaluated in the rendering context and returns an
+        # Array condition (['1=1 AND ...', binds...]).
         def search_conditions(search = {}, options = {})
-          conditions = options[:conditions] || 'c'
-          options[:except] ||= []
-          options[:filters] ||= {}
-          variable ||= options[:variable] || 'params[:q]'
-          tables = search.keys.reject { |t| options[:except].include? t }
-          code = "\n#{conditions} = ['1=1']\n"
-          columns = search.collect do |table, filtered_columns|
-            filtered_columns.collect do |column|
-              (table.is_a?(Symbol) ? table.to_s.classify.constantize.table_name : table).to_s +
-                '.' +
-                column.to_s
+          except = options[:except] || []
+          filters_def = options[:filters] || {}
+          variable = options[:variable] || :q
+          columns = search.reject { |t, _| except.include?(t) }.flat_map do |table, filtered_columns|
+            table_name = table.is_a?(Symbol) ? table.to_s.classify.constantize.table_name : table.to_s
+            filtered_columns.map { |column| "#{table_name}.#{column}" }
+          end
+          filters = columns.map { |x| "unaccent(#{x}::VARCHAR) ILIKE unaccent(?)" }
+          expressions = options[:expressions] || []
+          filters += expressions.map { |x| "unaccent(#{x}) ILIKE unaccent(?)" }
+          exp_count = columns.size + expressions.size
+
+          lambda do
+            c = [+'1=1']
+            params[variable].to_s.downcase.split(/\s+/).each do |kw|
+              kw = "%#{kw}%"
+              sql = filters.dup
+              values = [kw] * exp_count
+              filters_def.each do |fragment, value|
+                sql << (fragment.is_a?(Proc) ? instance_exec(&fragment) : fragment)
+                values += Array.wrap(value.is_a?(Proc) ? instance_exec(&value) : value)
+              end
+              next if sql.empty?
+
+              c[0] += " AND (#{sql.join(' OR ')})"
+              c += values
             end
-          end.flatten
-          code << "#{variable}.to_s.lower.split(/\\s+/).each do |kw|\n"
-          code << "  kw = '%'+kw+'%'\n"
-          filters = columns.collect do |x|
-            'unaccent(' + x.to_s + '::VARCHAR) ILIKE unaccent(?)'
+            c
           end
-          exp_count = columns.size
-          if options[:expressions]
-            filters += options[:expressions].collect do |x|
-              'unaccent(' + x.to_s + ') ILIKE unaccent(?)'
-            end
-            exp_count += options[:expressions].count
-          end
-          values = '[' + (['kw'] * exp_count).join(', ') + ']'
-          options[:filters].each do |k, v|
-            filters << k
-            v = '[' + v.join(', ') + ']' if v.is_a? Array
-            values += '+' + v
-          end
-          if filters.any?
-            code << "  #{conditions}[0] += \" AND (#{filters.join(' OR ')})\"\n"
-            code << "  #{conditions} += #{values}\n"
-          end
-          code << "end\n"
-          code << conditions.to_s
-          code.c
         end
 
-        def account_lettering_states_crit(variable, _conditions = 'c', _table_name = nil)
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "unless #{variable}[:account_lettering_state].blank?\n"
-          code << "  conditions = ['1=1'] \n"
-          code << "  account_lettering_states = #{variable}[:account_lettering_state].map{ |s| s.split(',') }.flatten.compact \n"
-          code << "  account_lettering_states.each_with_index do |current_lettering_state, index|\n"
-          code << "    if index == 0\n"
-          code << "      conditions[0] << ' AND('\n"
-          code << "      if current_lettering_state == 'lettered'\n"
-          code << "        conditions[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "        conditions << '%*'\n"
-          code << "      end\n"
+        # Accounts (accounts.id) having items with given lettering states
+        def account_lettering_states_crit(_variable = 'params', _conditions = 'c', _table_name = nil)
+          period = journal_period_crit
+          lambda do |c|
+            next c if params[:account_lettering_state].blank?
 
-          code << "      if current_lettering_state == 'unlettered'\n"
-          code << "        conditions[0] << '#{JournalEntryItem.table_name}.letter IS NULL'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'partially_lettered'\n"
-          code << "        conditions[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter ILIKE ?)'\n"
-          code << "        conditions << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered_at'\n"
-          code << "        if #{variable}[:period] && #{variable}[:period] == 'interval' && #{variable}[:stopped_on].present?\n"
-          code << "          c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:stopped_on].to_s) + 1.day\n"
-          code << "        elsif #{variable}[:period] && #{variable}[:period] != 'all'\n"
-          code << "          c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:period].split('_').last) + 1.day\n"
-          code << "        else\n"
-          code << "          c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "          c << '%*'\n"
-          code << "        end\n"
-          code << "      end\n"
-
-          code << "    else\n"
-          code << "      if current_lettering_state == 'lettered'\n"
-          code << "        conditions[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "        conditions << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered'\n"
-          code << "        conditions[0] << ' OR #{JournalEntryItem.table_name}.letter IS NULL'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'partially_lettered'\n"
-          code << "        conditions[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter ILIKE ?)'\n"
-          code << "        conditions << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered_at'\n"
-          code << "        if #{variable}[:period] && #{variable}[:period] == 'interval' && #{variable}[:stopped_on].present?\n"
-          code << "          c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:stopped_on].to_s)  + 1.day\n"
-          code << "        elsif #{variable}[:period] && #{variable}[:period] != 'all'\n"
-          code << "          c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:period].split('_').last) + 1.day\n"
-          code << "        else\n"
-          code << "          c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "          c << '%*'\n"
-          code << "        end\n"
-          code << "      end\n"
-
-          code << "    end\n"
-          code << "  end\n"
-          code << "  conditions[0] << ')'\n"
-          code << journal_period_crit('params', 'conditions')
-          code << "  subquery = #{JournalEntryItem}.joins(:entry).select(:account_id).where(conditions).to_sql\n"
-          code << "  c[0] << ' AND accounts.id IN (' \n"
-          code << "  c[0] << subquery \n"
-          code << "  c[0] << ')' \n"
-          code << "end\n"
-          code.c
+            conditions = [+'1=1']
+            states = params[:account_lettering_state].map { |s| s.split(',') }.flatten.compact
+            instance_exec(conditions, states, &LETTERING_STATES_FILTER)
+            instance_exec(conditions, &period)
+            subquery = JournalEntryItem.joins(:entry).select(:account_id).where(conditions).to_sql
+            c[0] << " AND accounts.id IN (#{subquery})"
+            c
+          end
         end
 
         # accountancy -> accounts_range_crit
-        def accounts_range_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          # code << "ac, #{variable}[:accounts] = \n"
-          code << "#{conditions}[0] += ' AND '+Account.range_condition(#{variable}[:accounts])\n"
-          code.c
+        def accounts_range_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            c[0] += ' AND ' + Account.range_condition(params[:accounts])
+            c
+          end
         end
 
-        def account_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "if #{variable}[:account_number] \n"
-          code << %(#{conditions}[0] += " AND #{Account.table_name}.number = \#{Account.connection.quote(#{variable}[:account_number])}"\n)
-          code << "end \n"
-          code.c
+        def account_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            if params[:account_number]
+              c[0] += " AND #{Account.table_name}.number = ?"
+              c << params[:account_number]
+            end
+            c
+          end
         end
 
         # accountancy -> crit_params
@@ -487,159 +427,135 @@ module Backend
         end
 
         # accountancy -> journal_entries_states_crit
-        def journal_entries_states_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "#{conditions}[0] += ' AND '+JournalEntry.state_condition(#{variable}[:states])\n"
-          code.c
+        def journal_entries_states_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            c[0] += ' AND ' + JournalEntry.state_condition(params[:states])
+            c
+          end
         end
 
         # accountancy -> journal_period_crit
-        def journal_period_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "#{conditions}[0] += ' AND '+JournalEntry.period_condition(#{variable}[:period], #{variable}[:started_on], #{variable}[:stopped_on])\n"
-          code.c
+        def journal_period_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            c[0] += ' AND ' + JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on])
+            c
+          end
         end
 
-        def account_journal_period_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "subquery = JournalEntryItem.joins(:entry).where(JournalEntry.period_condition(#{variable}[:period], #{variable}[:started_on], #{variable}[:stopped_on])).select(:account_id).distinct(:account_id).to_sql \n"
-          code << "#{conditions}[0] += ' AND #{Account.table_name}.id IN ( '+ subquery +')'\n"
-          code.c
+        def account_journal_period_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            subquery = JournalEntryItem.joins(:entry).where(JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on])).select(:account_id).distinct.to_sql
+            c[0] += " AND #{Account.table_name}.id IN (#{subquery})"
+            c
+          end
         end
 
-        def centralizing_account_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "if #{variable}[:ledger] != 'general_ledger' && auxiliary_accounts = Account.get_auxiliary_accounts(#{variable}[:ledger])\n"
-          code << "  #{conditions}[0] += \" AND accounts.nature = 'auxiliary'\"\n"
-          code << "  #{conditions}[0] += \" AND accounts.id IN (\#{auxiliary_accounts.pluck(:id).join(', ')})\"\n"
-          code << "end\n"
-          code.c
+        def centralizing_account_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            if params[:ledger] != 'general_ledger' && (auxiliary_accounts = Account.get_auxiliary_accounts(params[:ledger]))
+              c[0] += " AND accounts.nature = 'auxiliary'"
+              c[0] += ' AND accounts.id IN (?)'
+              c << auxiliary_accounts.pluck(:id)
+            end
+            c
+          end
         end
 
-        def centralizing_account_journal_period_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "#{conditions}[0] += ' AND ' + JournalEntry.period_condition(#{variable}[:period], #{variable}[:started_on], #{variable}[:stopped_on])\n"
-          code.c
+        def centralizing_account_journal_period_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            c[0] += ' AND ' + JournalEntry.period_condition(params[:period], params[:started_on], params[:stopped_on])
+            c
+          end
         end
 
         # accountancy -> ledger_crit
-        def ledger_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "if #{variable}[:ledger] == 'general_ledger'\n"
-          code << "  #{conditions}[0] += ' AND #{JournalEntryItem.table_name}.account_id IN ('+Account.general.select(:id).to_sql+')'\n"
-          code << "elsif centralizing_account = Account.find_by(number: #{variable}[:ledger])\n"
-          code << "  #{conditions}[0] += ' AND #{JournalEntryItem.table_name}.account_id IN ('+Account.where(centralizing_account_id: centralizing_account).select(:id).to_sql+')'\n"
-          code << "end\n"
-          code.c
+        def ledger_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            if params[:ledger] == 'general_ledger'
+              c[0] += " AND #{JournalEntryItem.table_name}.account_id IN (#{Account.general.select(:id).to_sql})"
+            elsif (centralizing_account = Account.find_by(number: params[:ledger]))
+              c[0] += " AND #{JournalEntryItem.table_name}.account_id IN (#{Account.where(centralizing_account_id: centralizing_account).select(:id).to_sql})"
+            end
+            c
+          end
         end
 
         # accountancy -> journals_crit
-        def journals_crit(variable, conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "#{conditions}[0] += ' AND '+JournalEntry.journal_condition(#{variable}[:journals])\n"
-          code.c
+        def journals_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            c[0] += ' AND ' + JournalEntry.journal_condition(params[:journals])
+            c
+          end
         end
 
-        def journal_letter_crit(variable, _conditions = 'c', _table_name = nil)
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "unless #{variable}[:lettering_state].blank?\n"
-          code << "  #{variable}[:lettering_state].each_with_index do |current_lettering_state, index|\n"
-          code << "    if index == 0\n"
-          code << "      c[0] << ' AND('\n"
-          code << "      if current_lettering_state == 'lettered'\n"
-          code << "        c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "        c << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered'\n"
-          code << "        c[0] << '#{JournalEntryItem.table_name}.letter IS NULL'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'partially_lettered'\n"
-          code << "        c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter ILIKE ?)'\n"
-          code << "        c << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered_at'\n"
-          code << "        if #{variable}[:period] && #{variable}[:period] == 'interval' && #{variable}[:stopped_on].present?\n"
-          code << "          c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:stopped_on].to_s) + 1.day\n"
-          code << "        elsif #{variable}[:period] && #{variable}[:period] != 'all'\n"
-          code << "          c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:period].split('_').last) + 1.day\n"
-          code << "        else\n"
-          code << "          c[0] << '(#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "          c << '%*'\n"
-          code << "        end\n"
-          code << "      end\n"
-
-          code << "    else\n"
-          code << "      if current_lettering_state == 'lettered'\n"
-          code << "        c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "        c << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered'\n"
-          code << "        c[0] << ' OR #{JournalEntryItem.table_name}.letter IS NULL'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'partially_lettered'\n"
-          code << "        c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter ILIKE ?)'\n"
-          code << "        c << '%*'\n"
-          code << "      end\n"
-
-          code << "      if current_lettering_state == 'unlettered_at'\n"
-          code << "        if #{variable}[:period] && #{variable}[:period] == 'interval' && #{variable}[:stopped_on].present?\n"
-          code << "          c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:stopped_on].to_s) + 1.day\n"
-          code << "        elsif #{variable}[:period] && #{variable}[:period] != 'all'\n"
-          code << "          c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ? AND #{JournalEntryItem.table_name}.lettered_at > ?)'\n"
-          code << "          c << '%*'\n"
-          code << "          c << Time.zone.parse(#{variable}[:period].split('_').last) + 1.day\n"
-          code << "        else\n"
-          code << "          c[0] << ' OR (#{JournalEntryItem.table_name}.letter IS NOT NULL AND #{JournalEntryItem.table_name}.letter NOT ILIKE ?)'\n"
-          code << "          c << '%*'\n"
-          code << "        end\n"
-          code << "      end\n"
-
-          code << "    end\n"
-          code << "  end\n"
-          code << "  c[0] << ')'\n"
-          code << "end\n"
-          code.c
+        # Filters journal entry items by lettering states (params[:lettering_state])
+        def journal_letter_crit(_variable = 'params', _conditions = 'c', _table_name = nil)
+          lambda do |c|
+            instance_exec(c, params[:lettering_state], &LETTERING_STATES_FILTER) if params[:lettering_state].present?
+            c
+          end
         end
 
-        def amount_range_crit(variable, _conditions = 'c')
-          variable = "params[:#{variable}]" unless variable.is_a? String
-          code = ''
-          code << "unless #{variable}[:minimum_amount].blank? && #{variable}[:maximum_amount].blank?\n"
-          code << "  if #{variable}[:minimum_amount].blank?\n"
-          code << "    c[0] << ' AND (#{JournalEntryItem.table_name}.absolute_credit <= ' + params[:maximum_amount] + ' AND #{JournalEntryItem.table_name}.absolute_debit <= ' + params[:maximum_amount] + ')'\n"
-          code << "  end\n"
+        def amount_range_crit(_variable = 'params', _conditions = 'c')
+          lambda do |c|
+            minimum = params[:minimum_amount].presence
+            maximum = params[:maximum_amount].presence
+            next c unless minimum || maximum
 
-          code << "  if #{variable}[:maximum_amount].blank?\n"
-          code << "    c[0] << ' AND (#{JournalEntryItem.table_name}.absolute_credit >= ' + params[:minimum_amount] + ' OR #{JournalEntryItem.table_name}.absolute_debit >= ' + params[:minimum_amount] + ')'\n"
-          code << "  end\n"
-
-          code << "  if !#{variable}[:minimum_amount].blank? && !#{variable}[:maximum_amount].blank?\n"
-          code << "    c[0] << ' AND ((#{JournalEntryItem.table_name}.absolute_credit >= ' + params[:minimum_amount] + ' AND #{JournalEntryItem.table_name}.absolute_credit <= ' + params[:maximum_amount] + ') OR (#{JournalEntryItem.table_name}.absolute_debit >= ' + params[:minimum_amount] + ' AND #{JournalEntryItem.table_name}.absolute_debit <= ' + params[:maximum_amount] +'))'\n"
-          code << "  end\n"
-
-          code << "end\n"
-
-          code.c
+            table = JournalEntryItem.table_name
+            if minimum && maximum
+              c[0] << " AND ((#{table}.absolute_credit >= ? AND #{table}.absolute_credit <= ?) OR (#{table}.absolute_debit >= ? AND #{table}.absolute_debit <= ?))"
+              c.push(minimum.to_d, maximum.to_d, minimum.to_d, maximum.to_d)
+            elsif maximum
+              c[0] << " AND (#{table}.absolute_credit <= ? AND #{table}.absolute_debit <= ?)"
+              c.push(maximum.to_d, maximum.to_d)
+            else
+              c[0] << " AND (#{table}.absolute_credit >= ? OR #{table}.absolute_debit >= ?)"
+              c.push(minimum.to_d, minimum.to_d)
+            end
+            c
+          end
         end
+      end
+
+      # Appends to conditions +c+ a filter on JournalEntryItem lettering states.
+      # Evaluated in the rendering context (uses params).
+      LETTERING_STATES_FILTER = lambda do |c, states|
+        table = JournalEntryItem.table_name
+        lettered_after = lambda do
+          if params[:period] && params[:period] == 'interval' && params[:stopped_on].present?
+            Time.zone.parse(params[:stopped_on].to_s) + 1.day
+          elsif params[:period] && params[:period] != 'all'
+            Time.zone.parse(params[:period].split('_').last) + 1.day
+          end
+        end
+        clauses = []
+        binds = []
+        Array(states).each do |state|
+          case state
+          when 'lettered'
+            clauses << "(#{table}.letter IS NOT NULL AND #{table}.letter NOT ILIKE ?)"
+            binds << '%*'
+          when 'unlettered'
+            clauses << "#{table}.letter IS NULL"
+          when 'partially_lettered'
+            clauses << "(#{table}.letter IS NOT NULL AND #{table}.letter ILIKE ?)"
+            binds << '%*'
+          when 'unlettered_at'
+            if (date = instance_exec(&lettered_after))
+              clauses << "(#{table}.letter IS NOT NULL AND #{table}.letter NOT ILIKE ? AND #{table}.lettered_at > ?)"
+              binds.push('%*', date)
+            else
+              clauses << "(#{table}.letter IS NOT NULL AND #{table}.letter NOT ILIKE ?)"
+              binds << '%*'
+            end
+          end
+        end
+        if clauses.any?
+          c[0] << " AND (#{clauses.join(' OR ')})"
+          c.concat(binds)
+        end
+        c
       end
   end
 end

@@ -6,7 +6,6 @@
   = t.new params: { redirect: nil }
   = dropdown_menu_button(:reception_report.tl, icon: :print) do |d|
     - d.item :pdf_format.tl, { controller: :incoming_harvests, action: :index, key: Printers::HarvestReceptionPrinter.build_key(period: params[:period]), template: @harvest_reception_document.id, period: params[:period], driver_id: params[:driver_id], crop_id: params[:crop_id], storage_id: params[:storage_id], format: :pdf}, remote: false
-    - d.item :odt_format.tl, { controller: :incoming_harvests, action: :index, key: Printers::HarvestReceptionPrinter.build_key(period: params[:period]), template: @harvest_reception_document.id, period: params[:period], driver_id: params[:driver_id], crop_id: params[:crop_id], storage_id: params[:storage_id], format: :odt}, remote: false
   #autolink-incoming-harvest-to-intervention
     = link_to(:autolink_incoming_harvests_on_harvest_intervention.tl, autolink_incoming_harvests_backend_incoming_harvests_path(incoming_harvest_ids: 0), method: :put, class: "btn btn-primary disabled")
 

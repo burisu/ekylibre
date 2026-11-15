@@ -27,7 +27,7 @@ module Interventions
           target_attributes.each do |target_attrs|
             # We don't manually calculate shape of product as it is later calculated by Procedo
             # An empty shape is enought for Procedo to work correctly
-            target_attrs[:working_zone] = Charta.empty_geometry
+            target_attrs[:working_zone] = Geo.empty_geometry
           end
         end
     end

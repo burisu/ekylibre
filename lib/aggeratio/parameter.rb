@@ -1,7 +1,7 @@
 module Aggeratio
   class Parameter
     TYPES = %i[record_list record string decimal integer date datetime].freeze
-    attr_reader :name, :type, :options, :default, :foreign_class
+    attr_reader :name, :type, :options, :default
 
     def initialize(name, type, options = {})
       @name = name.to_s
@@ -12,7 +12,16 @@ module Aggeratio
       @default = @options[:default]
       raise ArgumentError.new("Default value must be given for #{@name}") unless @default
 
-      @foreign_class = @options[:of].to_s.camelcase.constantize if @options[:of]
+    end
+
+    # Resolved lazily: models can't be autoloaded while initializing and
+    # must not be kept across code reloads
+    def foreign_class
+      foreign_class_name&.constantize
+    end
+
+    def foreign_class_name
+      @options[:of].to_s.camelcase if @options[:of]
     end
 
     # Import parameter form an XML node
@@ -31,9 +40,7 @@ module Aggeratio
     end
 
     TYPES.each do |type|
-      class_eval "def #{type}?\n" \
-                 "  !!(self.type == :#{type})\n" \
-                 'end'
+      define_method("#{type}?") { self.type == type }
     end
   end
 end

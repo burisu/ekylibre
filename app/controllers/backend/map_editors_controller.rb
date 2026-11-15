@@ -33,15 +33,15 @@ module Backend
         feature = nil
         geojson_features = nil
         srid = nil
-        geojson_features_collection = ::Charta.empty_geometry.to_json_object
+        geojson_features_collection = ::Geo.empty_geometry.to_json_object
 
         begin
           case format.to_s
           when 'gml'
-            geojson_features_collection = ::Charta.from_gml(geometry, nil, false).to_json_object(true) if ::Charta::GML.valid?(geometry)
+            geojson_features_collection = ::Geo.from_gml(geometry, nil, false).to_json_object(true) if ::Geo::GML.valid?(geometry)
 
           # when 'kml'
-          #   geojson_features_collection = Charta.from_kml(geometry, false).to_json_object(true) if ::Charta::KML.valid?(geometry)
+          #   geojson_features_collection = Geo.from_kml(geometry, false).to_json_object(true) if ::Geo::KML.valid?(geometry)
 
           when 'geojson'
             geo = (begin
@@ -51,7 +51,7 @@ module Backend
                    end) || {}
             srid = geo.try(:[], 'crs').try(:[], 'properties').try(:[], 'name')
 
-            if ::Charta::GeoJSON.valid?(geometry, srid)
+            if ::Geo::GeoJSON.valid?(geometry, srid)
               geojson = (geometry.is_a?(Hash) ? geometry : JSON.parse(geometry)) || {}
 
               single_feature = [geojson] if geojson.key? 'feature'
@@ -68,7 +68,7 @@ module Backend
                     single_geometry ? gfeature['geometry'] = feature : gfeature = feature
 
                     if gfeature.key? 'geometry'
-                      if ::Charta::GeoJSON.valid?(gfeature['geometry'])
+                      if ::Geo::GeoJSON.valid?(gfeature['geometry'])
                         geofeature = {
                           type: 'Feature',
                           properties: {
@@ -77,7 +77,7 @@ module Backend
                             id: gfeature.try(:[], 'properties').try(:[], 'id'),
                             removable: true
                           }.reject { |_, v| v.nil? },
-                          geometry: Charta.from_geojson(gfeature['geometry'], srid).transform(:WGS84).to_json_object
+                          geometry: Geo.from_geojson(gfeature['geometry'], srid).transform(:WGS84).to_json_object
                         }.reject { |_, v| v.nil? }
                       end
                     end
@@ -102,7 +102,7 @@ module Backend
           return { error: 'invalid_file' }
         end
 
-        if geojson_features_collection == ::Charta.empty_geometry.to_json_object
+        if geojson_features_collection == ::Geo.empty_geometry.to_json_object
           return { error: 'invalid_file' }
         end
 

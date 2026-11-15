@@ -55,29 +55,29 @@ module ActiveExchanger
     end
 
     def debug(msg)
-      print("\n" + 'DEBUG'.white + ': ' + msg) if verbose?
+      print("\n" + 'DEBUG' + ': ' + msg) if verbose?
       Rails.logger.debug(msg)
     end
 
     def info(msg)
-      print("\n" + msg.gsub(/^/, 'INFO'.green + ': ')) if verbose?
+      print("\n" + msg.gsub(/^/, 'INFO' + ': ')) if verbose?
       Rails.logger.info(msg)
     end
 
     def warn(msg)
-      print("\n" + 'WARNING'.yellow + ': ' + msg) if verbose?
+      print("\n" + 'WARNING' + ': ' + msg) if verbose?
       Rails.logger.error(msg)
     end
 
     def error(msg)
       @errors << msg
 
-      print("\n" + 'ERROR'.red + ': ' + msg) if verbose?
+      print("\n" + 'ERROR' + ': ' + msg) if verbose?
       Rails.logger.error(msg)
     end
 
     def fatal(msg)
-      print("\n" + 'FATAL'.red + ': ' + msg) if verbose?
+      print("\n" + 'FATAL' + ': ' + msg) if verbose?
       Rails.logger.fatal(msg)
     end
 

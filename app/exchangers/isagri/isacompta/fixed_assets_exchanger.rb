@@ -33,7 +33,7 @@ module Isagri
 
         rows.each_with_index do |row, index|
           line_number = index + 2
-          prompt = "L#{line_number.to_s.yellow}"
+          prompt = "L#{line_number.to_s}"
 
           r = {
             asset_account: row[0].blank? ? nil : row[0].to_s,
@@ -111,7 +111,7 @@ module Isagri
 
         rows.each_with_index do |row, index|
           line_number = index + 2
-          prompt = "L#{line_number.to_s.yellow} | "
+          prompt = "L#{line_number.to_s} | "
 
           r = {
             asset_account: row[0].blank? ? nil : row[0].to_s,
@@ -144,7 +144,7 @@ module Isagri
             parent_usage = Account.find_parent_usage(r.asset_account)
             default_name = Account.find_by(name: parent_usage) || Onoma::Account.find(parent_usage).l
             exchange_asset_account = Account.find_or_create_by_number(r.asset_account, default_name: default_name)
-            w.info prompt + "exchange asset account : #{exchange_asset_account.label.inspect.red}"
+            w.info prompt + "exchange asset account : #{exchange_asset_account.label.inspect}"
           end
 
           computed_name = r.number + ' | ' + r.name
@@ -164,9 +164,9 @@ module Isagri
               asset.allocation_account = exchange_allocation_account
               asset.expenses_account = exchange_expenses_account
               asset.save!
-              w.info prompt + "Fixed asset updated : #{asset.name.inspect.yellow}"
+              w.info prompt + "Fixed asset updated : #{asset.name.inspect}"
             else
-              w.info prompt + "Fixed asset are not updateable : #{asset.name.inspect.red}"
+              w.info prompt + "Fixed asset are not updateable : #{asset.name.inspect}"
             end
           else
             asset_attributes = {
@@ -184,9 +184,9 @@ module Isagri
               allocation_account: exchange_allocation_account,
               expenses_account: exchange_expenses_account
             }
-            w.info prompt + "asset attributes : #{asset_attributes.inspect.green}"
+            w.info prompt + "asset attributes : #{asset_attributes.inspect}"
             asset = FixedAsset.create!(asset_attributes)
-            w.info prompt + "Fixed asset created : #{asset.name.inspect.green}"
+            w.info prompt + "Fixed asset created : #{asset.name.inspect}"
             # Update asset
           end
 

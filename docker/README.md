@@ -10,7 +10,7 @@ Ce répertoire contient les configurations Docker pour les trois environnements 
 
 Environnement local pour le développement. Le code source est monté en volume, les gems sont installées au démarrage.
 
-**Services :** Rails (3000), Sidekiq, PostgreSQL/PostGIS (5431), Redis
+**Services :** Rails (3000), jobs (Solid Queue), PostgreSQL/PostGIS (5431)
 
 ```bash
 docker compose -f docker/dev/docker-compose.yml up
@@ -24,7 +24,7 @@ docker compose -f docker/dev/docker-compose.yml up
 
 Image de build pour la CI/CD (GitLab CI). Utilise le même `Dockerfile` que la production (`docker/prod/Dockerfile`), publiée sur le registry GitLab sous le tag `test-ci`.
 
-**Services :** Rails, Sidekiq, PostgreSQL/PostGIS, Redis
+**Services :** Rails, jobs (Solid Queue), PostgreSQL/PostGIS
 
 ```bash
 docker compose -f docker/test/docker-compose.yml up
@@ -36,7 +36,7 @@ docker compose -f docker/test/docker-compose.yml up
 
 Environnement de production avec Caddy (reverse-proxy) et certificats Let's Encrypt provisionnés à la volée (`on_demand_tls`).
 
-**Services de base (toujours actifs) :** `app` (Rails Puma), `sidekiq`, `db` (PostgreSQL/PostGIS), `redis`, `caddy` (80/443).
+**Services de base (toujours actifs) :** `app` (Rails Puma), `jobs` (Solid Queue), `db` (PostgreSQL/PostGIS), `caddy` (80/443).
 
 **Services optionnels (activés via `--profile` Compose) :**
 
@@ -69,7 +69,7 @@ Variante Dokploy : `docker-compose.dokploy.yml` (sans Caddy exposé, routing via
 
 | | dev | test | prod |
 |---|---|---|---|
-| Image base | `ruby2.6` (GitLab) | `prod/Dockerfile` | `prod/Dockerfile` |
+| Image base | `ruby:4.0-trixie` | `ruby:4.0-trixie` | `ruby:4.0-trixie` |
 | Code source | Volume monté | Copié dans l'image | Copié dans l'image |
 | Reverse-proxy | Non | Non | Caddy (80/443, TLS auto) |
 | Port Rails | 3000 (host) | 3000 (host) | 3000 (interne, non exposé) |

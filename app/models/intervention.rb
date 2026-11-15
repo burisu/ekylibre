@@ -77,9 +77,9 @@ class Intervention < ApplicationRecord
   attr_readonly :procedure_name, :production_id, :currency
   refers_to :currency
   store_accessor :weather_conditions, :weather_condition_code, :temperature, :wind, :humidity
-  enumerize :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures'], predicates: true, scope: true
-  enumerize :nature, in: %i[request record], default: :record, predicates: true, scope: true
-  enumerize :state, in: %i[in_progress done validated rejected], default: :done, predicates: true
+  has_enum :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures'], predicates: true, scope: true
+  has_enum :nature, in: %i[request record], default: :record, predicates: true, scope: true
+  has_enum :state, in: %i[in_progress done validated rejected], default: :done, predicates: true
   belongs_to :event, dependent: :destroy, inverse_of: :intervention
   belongs_to :request_intervention, -> { where(nature: :request) }, class_name: 'Intervention'
   belongs_to :issue
@@ -137,7 +137,7 @@ class Intervention < ApplicationRecord
   validates :beneficiary_siret, format: { with: /\A\d{14}\z/ }, allow_blank: true
   # validates_associated :group_parameters, :doers, :inputs, :outputs, :targets, :tools, :working_periods
 
-  serialize :actions, SymbolArray
+  serialize :actions, coder: SymbolArray
 
   alias_attribute :duration, :working_duration
 
@@ -414,7 +414,7 @@ class Intervention < ApplicationRecord
         ip.update(estimated_date: date)
       end
     end
-    # puts self.inspect.green
+    # puts self.inspect
     targets.find_each do |target|
       if target.new_container_id
         ProductLocalization.find_or_create_by(product: target.product, container: Product.find(target.new_container_id), intervention_id: target.intervention_id, started_at: working_periods.maximum(:stopped_at))
@@ -674,7 +674,7 @@ class Intervention < ApplicationRecord
 
   # Deprecated method to return procedure
   def reference
-    ActiveSupport::Deprecation.warn 'Intervention#reference is deprecated.' \
+    Ekylibre.deprecator.warn 'Intervention#reference is deprecated.' \
                                     'Please use Intervention#procedure instead.'
     procedure
   end
@@ -915,7 +915,7 @@ class Intervention < ApplicationRecord
   end
 
   def working_area(unit = :hectare)
-    ActiveSupport::Deprecation.warn 'Intervention#working_area is deprecated. Please use Intervention#working_zone_area instead.'
+    Ekylibre.deprecator.warn 'Intervention#working_area is deprecated. Please use Intervention#working_zone_area instead.'
     working_zone_area(unit)
   end
 
@@ -1043,10 +1043,10 @@ class Intervention < ApplicationRecord
   # Returns intervention
   # DEPRECATED Will be removed in 3.0
   def run!
-    ActiveSupport::Deprecation.warn 'Intervention#run! is deprecated, because it never works. Use classical AR methods instead to create interventions'
+    Ekylibre.deprecator.warn 'Intervention#run! is deprecated, because it never works. Use classical AR methods instead to create interventions'
     raise 'Cannot run intervention without procedure' unless runnable?
 
-    update_attributes(state: :done)
+    update(state: :done)
     self
   end
 

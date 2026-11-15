@@ -354,11 +354,11 @@ module Ekylibre
             workers = Worker.can('administer_inseminate(animal)').all
             products = Product.where(variety: :vial).derivative_of(:bos).can('inseminate(animal)').all
             unless workers.any?
-              puts 'No workers'.red
+              puts 'No workers'
               break
             end
             unless products.any?
-              puts 'No vials'.red
+              puts 'No vials'
               break
             end
             Production.joins(:variant, :campaign).find_each do |production|

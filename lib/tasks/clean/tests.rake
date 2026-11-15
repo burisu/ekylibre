@@ -56,7 +56,7 @@ namespace :clean do
       file = Rails.root.join('test', 'fixtures', "#{table}.yml")
       if File.exist?(file)
         begin
-          yaml = YAML.load_file(file)
+          yaml = YAML.safe_load_file(file, permitted_classes: [Date, Time, Symbol], aliases: true)
         rescue Exception => e
           errors[:fixtures] += 1
           log.write(" - Error: Fixture file #{file} has a syntax error (#{e.message})\n")

@@ -42,7 +42,7 @@ module Map
         config_path = path || Rails.root.join('config', 'map_layers.yml.erb')
         raise 'No valid config file found for Map::Layer' unless Pathname(config_path).exist?
 
-        layers = YAML.load(ERB.new(File.read(config_path)).result).deep_symbolize_keys
+        layers = YAML.safe_load(ERB.new(File.read(config_path)).result, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
         layers.each do |provider, attributes|
           provider = ::Map::Provider.new(provider, attributes.try(:[], :url), attributes.try(:[], :enabled), attributes.try(:[], :by_default), attributes.try(:[], :type), attributes.try(:[], :options))
 

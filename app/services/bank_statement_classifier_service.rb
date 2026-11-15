@@ -3,12 +3,12 @@
 class BankStatementClassifierService
   attr_reader :log_result
 
-  def self.classify_from_data(*args)
-    new(*args).classify_from_data
+  def self.classify_from_data(...)
+    new(...).classify_from_data
   end
 
-  def self.call(*args)
-    new(*args).classify_from_ia
+  def self.call(...)
+    new(...).classify_from_ia
   end
 
   def initialize(bank_statement_ids: )
@@ -39,7 +39,7 @@ class BankStatementClassifierService
     # call Mistral Ner service (::Ner)
     c = Clients::Mistral::Ner.new
     result = c.extract_metadata(data, :bank_statement)
-    puts result.inspect.yellow
+    puts result.inspect
     return result[:error] if result[:error].present?
 
     @log_result[:items_classified] = 0

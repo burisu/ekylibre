@@ -25,8 +25,11 @@ module Backend
     respond_to :pdf, :odt, :docx, :xml, :json, :html, :csv
 
     def self.list_conditions
-      code = search_conditions(user_tickets: %i[name description agent_email]) + " ||= []\n"
-      code.c
+      search1 = search_conditions(user_tickets: %i[name description agent_email])
+      lambda do
+        c = instance_exec(&search1)
+        c
+      end
     end
 
     list(conditions: list_conditions) do |t|

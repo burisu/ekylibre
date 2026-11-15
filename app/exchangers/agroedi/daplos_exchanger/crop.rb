@@ -9,8 +9,8 @@ module Agroedi
 
       def initialize(*args)
         super
-        puts daplos.cap_islet_number.inspect.yellow
-        puts daplos.crop_name_details.inspect.yellow
+        puts daplos.cap_islet_number.inspect
+        puts daplos.crop_name_details.inspect
         daplos.interventions&.each do |i|
           DaplosExchanger::DaplosIntervention.new(self, i).register
         end
@@ -29,8 +29,8 @@ module Agroedi
 
         return unless daplos.interventions.any?
 
-        puts production_nature.inspect.red
-        puts activity_production.inspect.yellow
+        puts production_nature.inspect
+        puts activity_production.inspect
 
         children[:interventions].each { |i| i.import; parent.w.check_point }
       end
@@ -283,8 +283,8 @@ module Agroedi
           # A17 crop_area.area_nature_edicode - PS line = activity_production shape
           if daplos.crop_areas&.first
             c_area = daplos.crop_areas.first
-            # puts daplos.land_parcel_work_number.inspect.green
-            # puts daplos.cap_islet_number.inspect.green
+            # puts daplos.land_parcel_work_number.inspect
+            # puts daplos.cap_islet_number.inspect
             if c_area.crop_spatial_coordinates.any?
               srs = c_area.crop_spatial_coordinates.first.srs.strip
               if srs == '3'
@@ -295,7 +295,7 @@ module Agroedi
                 srid = 2154
               end
               # build factory from source srid
-              factory = ::Charta::Geometry.factory(srid)
+              factory = ::Geo.factory(srid)
               points = []
               # compute points from lat / lon
               c_area.crop_spatial_coordinates.each do |p|
@@ -304,13 +304,13 @@ module Agroedi
               # build linear_ring
               outerring = factory.linear_ring(points)
 
-              # puts outerring.invalid_reason.inspect.red unless outerring.valid?
+              # puts outerring.invalid_reason.inspect unless outerring.valid?
 
               # build polygon from linear_ring as outer ring (exterior ring)
               square = factory.polygon(outerring)
               # convert from source srid to 4326 and fix is simple if needed
               shape = transform_geometry(square, srid)
-              puts shape.inspect.green
+              puts shape.inspect
               shape
             else
               nil
@@ -325,14 +325,14 @@ module Agroedi
         end
 
         def transform_geometry(geometry, srid)
-          geom = ::Charta.new_geometry(geometry, srid).transform(:WGS84)
+          geom = ::Geo.new_geometry(geometry, srid).transform(:WGS84)
           if !geom.simple?
             # fix_geom = shape_corrector.extract_geometries(corrected_geom.or_raise.to_ewkt, 'polygon')
             fix_geom = shape_corrector.extract_polygon_and_one_ring(geom.to_ewkt)
-            # puts fix_geom.inspect.yellow
+            # puts fix_geom.inspect
             fix_geom.or_raise
           else
-            # puts geom.inspect.red
+            # puts geom.inspect
             geom
           end
         end

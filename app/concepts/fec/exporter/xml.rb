@@ -24,7 +24,7 @@ module FEC
                     xml.JournalLib journal[:name]
                     entries = journal[:entries]
                     entries.each do |entry|
-                      puts entry.inspect.yellow
+                      puts entry.inspect
                       xml.ecriture do
                         xml.EcritureNum entry[:continuous_number]
                         xml.EcritureDate entry[:printed_on].strftime('%Y-%m-%d')

@@ -1,11 +1,11 @@
 import L from 'leaflet';
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import iconUrl from 'leaflet/dist/images/marker-icon.png';
-import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+// Image paths given by the layout (window.EkylibreAssets, digested by Propshaft)
+const assets = window.EkylibreAssets || {};
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl,
-    iconUrl,
-    shadowUrl,
+    iconRetinaUrl: assets['leaflet/marker-icon-2x.png'],
+    iconUrl: assets['leaflet/marker-icon.png'],
+    shadowUrl: assets['leaflet/marker-shadow.png'],
 });

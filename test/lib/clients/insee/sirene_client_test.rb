@@ -10,7 +10,7 @@ module Clients
       test 'search_establishments builds a paginated /siret query with the api key header' do
         client = SireneClient.new(api_key: 'KEY123')
         captured = nil
-        RestClient.stub(:get, ->(*args) { captured = args; FakeResponse.new("{}") }) do
+        Clients::Http.stub(:get, ->(url, **opts) { captured = [url, opts[:headers]]; FakeResponse.new("{}") }) do
           client.search_establishments('raisonSociale:ACME', number: 5, start: 10, fields: %i[siret siren])
         end
 
@@ -26,7 +26,7 @@ module Clients
       test 'caps the page size to the API maximum' do
         client = SireneClient.new(api_key: 'K')
         captured = nil
-        RestClient.stub(:get, ->(*args) { captured = args.first; FakeResponse.new("{}") }) do
+        Clients::Http.stub(:get, ->(url, **_opts) { captured = url; FakeResponse.new("{}") }) do
           client.search_establishments('q', number: 10_000_000)
         end
 

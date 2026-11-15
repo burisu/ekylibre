@@ -1,0 +1,35 @@
+{% comment %}Outgoing delivery docket. Data: delivery serialized by DeliveriesController#show (s0){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }} .parcel { break-inside: avoid; margin-bottom: 0.5cm; }</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-header">
+  <div class="company">{% if s0.company.picture_path %}<img src="file://{{ s0.company.picture_path }}"><br>{% endif %}<strong>{{ s0.company.full_name | escape }}</strong>
+{{ s0.company.address | escape }}</div>
+</div>
+<div class="doc-title">Bon de livraison {{ s0.number | escape }}</div>
+<table class="doc-meta">
+  <tr><td class="label">N° Référence</td><td>{{ s0.reference_number | escape }}</td><td class="label">Mode</td><td>{{ s0.human_delivery_mode | escape }}</td></tr>
+  <tr><td class="label">Transporteur</td><td>{{ s0.transporter.full_name | escape }}</td><td class="label">Responsable</td><td>{{ s0.responsible.full_name | escape }}</td></tr>
+</table>
+{% for parcel in s0.parcels %}
+<div class="parcel">
+  <div class="doc-subtitle">Colis {{ parcel.number | escape }} — {{ parcel.human_delivery_nature | escape }}</div>
+  <table class="doc-meta">
+    <tr><td class="label">Expéditeur</td><td>{{ parcel.sender.full_name | escape }}</td><td class="label">Destinataire</td><td>{{ parcel.recipient.full_name | escape }}</td></tr>
+    <tr><td class="label">Adresse de livraison</td><td colspan="3">{{ parcel.address.coordinate | escape | newline_to_br }}</td></tr>
+  </table>
+  <table class="data">
+    <thead><tr><th>N° du produit</th><th>Désignation</th><th class="num">Quantité</th></tr></thead>
+    <tbody>
+    {% for item in parcel.items %}
+      <tr><td>{{ item.product.number | escape }}</td><td>{{ item.product.name | default: item.variant.name | escape }}</td><td class="num">{{ item.population }} {{ item.variant.unit_name | escape }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+<p style="margin-top: 1cm">{{ s0.parcels.size }} colis</p>
+</body>
+</html>

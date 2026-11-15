@@ -83,7 +83,7 @@ class CviLandParcel < CviShapedRecord
 
   delegate :name, to: :activity, prefix: true, allow_nil: true
 
-  enumerize :state, in: %i[planted removed_with_authorization], predicates: true
+  has_enum :state, in: %i[planted removed_with_authorization], predicates: true
 
   after_update :update_cvi_cultivable_zone!
 

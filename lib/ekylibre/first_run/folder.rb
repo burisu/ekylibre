@@ -8,7 +8,7 @@ module Ekylibre
       def initialize(path, options = {})
         @verbose = !options[:verbose].is_a?(FalseClass)
         @path = Pathname.new(path)
-        manifest = YAML.load_file(@path.join('manifest.yml')).deep_symbolize_keys
+        manifest = YAML.safe_load_file(@path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
         @version = manifest[:version]
         unless @version == VERSION
           raise "Incompatible first-run folder: #{@version.inspect}." \
@@ -153,7 +153,7 @@ module Ekylibre
       def load_imports
         @imports.each do |name, import|
           import[:nature] ||= name
-          puts "Import #{import[:nature].to_s.yellow} from #{import[:file].to_s.blue}"
+          puts "Import #{import[:nature].to_s} from #{import[:file].to_s}"
           Import.launch!(import[:nature], path.join('imports', import[:file]))
           @progress.increment!
         end

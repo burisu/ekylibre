@@ -46,8 +46,8 @@ class ProductLinkage < ApplicationRecord
   include Taskable
   belongs_to :carrier, class_name: 'Product'
   belongs_to :carried, class_name: 'Product'
-  enumerize :nature, in: %i[available unavailable occupied], default: :available, predicates: true
-  enumerize :point, in: %i[rear front]
+  has_enum :nature, in: %i[available unavailable occupied], default: :available, predicates: true
+  has_enum :point, in: %i[rear front]
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :carrier, :nature, :point, presence: true
   validates :originator_type, length: { maximum: 500 }, allow_blank: true
@@ -56,7 +56,7 @@ class ProductLinkage < ApplicationRecord
   # ]VALIDATORS]
   validates :carried, presence: { if: :occupied? }
 
-  scope :with, ->(point) { where(point: point) }
+  scope :at_point, ->(point) { where(point: point) }
 
   before_validation do
     self.started_at = Time.new(1, 1, 1).in_time_zone if started_at.present? && started_at < Time.new(1, 1, 1).in_time_zone
@@ -75,6 +75,6 @@ class ProductLinkage < ApplicationRecord
 
     # Returns all siblings in the chronological line
     def siblings
-      carrier&.linkages&.with(point) || ProductLinkage.none
+      carrier&.linkages&.at_point(point) || ProductLinkage.none
     end
 end

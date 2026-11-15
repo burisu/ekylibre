@@ -18,12 +18,12 @@
 
 module Backend
   class DeliveriesController < Backend::BaseController
-    manage_restfully parcel_ids: '(params[:parcel_ids] || [])'.c,
-                     reception_ids: '(params[:reception_ids] || [])'.c,
-                     shipment_ids: '(params[:shipment_ids] || [])'.c,
-                     responsible_id: 'current_user.person.id'.c,
-                     started_at: 'Time.zone.now'.c,
-                     driver_id: 'current_user.person.id'.c
+    manage_restfully parcel_ids: -> { (params[:parcel_ids] || []) },
+                     reception_ids: -> { (params[:reception_ids] || []) },
+                     shipment_ids: -> { (params[:shipment_ids] || []) },
+                     responsible_id: -> { current_user.person.id },
+                     started_at: -> { Time.zone.now },
+                     driver_id: -> { current_user.person.id }
 
     respond_to :csv, :ods, :xlsx, :pdf, :odt, :docx, :html, :xml, :json
 
@@ -43,7 +43,7 @@ module Backend
       # t.column :net_mass
     end
 
-    list(:parcels, conditions: { delivery_id: 'params[:id]'.c }, order: :position) do |t|
+    list(:parcels, conditions: { delivery_id: -> { params[:id] } }, order: :position) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -58,7 +58,7 @@ module Backend
       # t.column :net_mass
     end
 
-    list(:receptions, conditions: { delivery_id: 'params[:id]'.c }, order: :position) do |t|
+    list(:receptions, conditions: { delivery_id: -> { params[:id] } }, order: :position) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -70,7 +70,7 @@ module Backend
       # t.column :net_mass
     end
 
-    list(:shipments, conditions: { delivery_id: 'params[:id]'.c }, order: :position) do |t|
+    list(:shipments, conditions: { delivery_id: -> { params[:id] } }, order: :position) do |t|
       t.action :edit
       t.action :destroy
       t.column :number, url: true
@@ -90,7 +90,7 @@ module Backend
                ['SUM(parcel_items.conditioning_quantity)', 'parcels_conditioning_quantity'],
                ['u.name', 'parcels_conditioning_unit_name']],
       joins: ['INNER JOIN products p ON parcel_items.product_id = p.id', 'INNER JOIN units u ON parcel_items.conditioning_unit_id = u.id'],
-      conditions: { id: 'ParcelItem.joins(:parcel).where(parcels: { delivery_id: params[:id]}).pluck(:id)'.c },
+      conditions: { id: -> { ParcelItem.joins(:parcel).where(parcels: { delivery_id: params[:id]}).pluck(:id) } },
       count: 'DISTINCT product_id',
       group: 'p.name,
               product_id,

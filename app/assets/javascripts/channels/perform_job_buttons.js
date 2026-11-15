@@ -13,7 +13,7 @@
                     case 'over':
                         const buttonDisabled = document.querySelector(`[data-perform-job-button][data-job='${data.job}']`);
                         if (!!buttonDisabled) {
-                            Turbolinks.visit(window.location);
+                            Turbo.visit(window.location.href);
                             buttonDisabled.removeAttribute('disabled');
                             buttonDisabled.querySelector('span.spinner').classList.remove('active');
                         }

@@ -41,11 +41,11 @@
 #
 
 class MasterBudget < LexiconRecord
-  extend Enumerize
+  extend Ekylibre::Record::HasEnum
   include Lexiconable
-  enumerize :direction, in: %i[revenue expense], predicates: true
-  enumerize :frequency, in: %i[per_year per_month], predicates: true
-  enumerize :mode, in: %i[uo output global production], default: 'uo', predicates: true
+  has_enum :direction, in: %i[revenue expense], predicates: true
+  has_enum :frequency, in: %i[per_year per_month], predicates: true
+  has_enum :mode, in: %i[uo output global production], default: 'uo', predicates: true
   scope :of_family, ->(family) { where(activity_family: Onoma::ActivityFamily.all(family)) }
 
   def first_used_on(year)

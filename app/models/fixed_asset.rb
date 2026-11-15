@@ -85,9 +85,9 @@ class FixedAsset < ApplicationRecord
   bookkeep # This callback permits to add journal entry corresponding to the fixed asset when entering in use
   acts_as_numbered
 
-  enumerize :depreciation_method, in: %i[linear regressive none], predicates: { prefix: true } # graduated
-  enumerize :depreciation_period, in: %i[monthly quarterly yearly], default: -> { Preference.get(:default_depreciation_period).value || Preference.set!(:default_depreciation_period, :yearly, :string) }
-  enumerize :state, in: %i[draft waiting in_use sold scrapped], predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
+  has_enum :depreciation_method, in: %i[linear regressive none], predicates: { prefix: true } # graduated
+  has_enum :depreciation_period, in: %i[monthly quarterly yearly], default: -> { Preference.get(:default_depreciation_period).value || Preference.set!(:default_depreciation_period, :yearly, :string) }
+  has_enum :state, in: %i[draft waiting in_use sold scrapped], predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
   refers_to :currency
 
   belongs_to :journal, class_name: 'Journal'
@@ -186,7 +186,7 @@ class FixedAsset < ApplicationRecord
   # ]DEPRECATIONS]
 
   def self.state_machine(*args)
-    ActiveSupport::Deprecation.warn "Not used anymore on FixedAsset!"
+    Ekylibre.deprecator.warn "Not used anymore on FixedAsset!"
     nil
   end
 

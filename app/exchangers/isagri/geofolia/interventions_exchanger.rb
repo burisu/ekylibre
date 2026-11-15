@@ -21,13 +21,13 @@ module Isagri
         begin
           clusters = JSON.parse(data_file, quirks_mode: true)
           # import field
-          puts clusters.inspect.green
+          puts clusters.inspect
           clusters['Fields'].each do |field|
-            puts field['HarvestYear'].inspect.red
-            puts field['Id'].inspect.green
+            puts field['HarvestYear'].inspect
+            puts field['Id'].inspect
           end
         rescue JSON::JSONError, ArgumentError => e
-          puts e.to_s.inspect.red
+          puts e.to_s.inspect
         end
         true
       end

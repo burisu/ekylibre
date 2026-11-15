@@ -110,7 +110,7 @@ module Visualization
         next unless item[:shape]
 
         item
-          .merge(shape: Charta.new_geometry(item[:shape]).transform(:WGS84).to_json_object)
+          .merge(shape: Geo.new_geometry(item[:shape]).transform(:WGS84).to_json_object)
           .merge(item[:popup] ? { popup: compile_visualization_popup(item[:popup], item) } : {})
       end.compact
     end

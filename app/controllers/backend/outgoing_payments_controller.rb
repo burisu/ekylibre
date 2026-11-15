@@ -3,10 +3,10 @@ module Backend
   # CAUTION: No routes must use this controller.
   class OutgoingPaymentsController < Backend::BaseController
     manage_restfully(
-      to_bank_at: 'Time.zone.today'.c,
-      paid_at: 'Time.zone.today'.c,
-      responsible_id: 'current_user.id'.c,
-      amount: 'params[:amount].to_f'.c,
+      to_bank_at: -> { Time.zone.today },
+      paid_at: -> { Time.zone.today },
+      responsible_id: -> { current_user.id },
+      amount: -> { params[:amount].to_f },
       delivered: true,
       subclass_inheritance: true,
       t3e: {

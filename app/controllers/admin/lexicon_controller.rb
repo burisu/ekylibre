@@ -1,5 +1,5 @@
 class Admin::LexiconController < Admin::BaseController
-  REDIS_KEY = 'ekylibre:admin:lexicon'.freeze
+  STATUS_KEY = 'ekylibre:admin:lexicon'.freeze
   VERSION_FORMAT = /\A[a-zA-Z0-9._\-]+\z/.freeze
 
   def available
@@ -51,15 +51,13 @@ class Admin::LexiconController < Admin::BaseController
   private
 
     def current_status
-      Sidekiq.redis do |r|
-        result = r.hgetall(REDIS_KEY)
-        {
-          status:  result['status']  || 'idle',
-          message: result['message'] || '',
-          action:  result['action']  || '',
-          version: result['version'] || ''
-        }
-      end
+      result = Ekylibre::TaskStatus.read(STATUS_KEY)
+      {
+        status:  result['status']  || 'idle',
+        message: result['message'] || '',
+        action:  result['action']  || '',
+        version: result['version'] || ''
+      }
     end
 
     def running?
@@ -79,7 +77,7 @@ class Admin::LexiconController < Admin::BaseController
     end
 
     def reset!
-      Sidekiq.redis { |r| r.del(REDIS_KEY) }
+      Ekylibre::TaskStatus.delete(STATUS_KEY)
     end
 
     def minio_credentials_present?
@@ -87,13 +85,7 @@ class Admin::LexiconController < Admin::BaseController
     end
 
     def spawn_task(action, version, initial_message, keep: false)
-      Sidekiq.redis do |r|
-        r.hmset(REDIS_KEY,
-                'status', 'running',
-                'message', initial_message,
-                'action', action,
-                'version', version)
-      end
+      Ekylibre::TaskStatus.update(STATUS_KEY, status: 'running', message: initial_message, action: action, version: version)
 
       bundle_bin = Gem.bin_path('bundler', 'bundle')
       env = {

@@ -1,11 +1,11 @@
 .picture.picture-identity
-  - if resource.picture.file?
-    = image_tag(resource.picture.url(:identity))
+  - if resource.picture.attached?
+    = image_tag(resource.picture.variant(:identity))
   - else
     .picto{class: "picto-#{resource.organization? ? :building : :user}"}
 - main_links = EntityLink.of_entity(resource)
 - main_entities = [resource.id]
-- main_links.order("(entity_id = #{resource.id} and main) DESC, id ASC").each do |link|
+- main_links.order(Arel.sql("(entity_id = #{resource.id.to_i} and main) DESC, id ASC")).each do |link|
   - next unless link.entity && link.linked
   .info
     %span.title
@@ -34,7 +34,7 @@
       - elsif address.phone? || address.mobile?
         %a{:href => "tel:#{address.coordinate}"}= address.coordinate
       - elsif address.mail?
-        = link_to(address.coordinate, "https://maps.google.fr/?q=#{URI.encode(address.mail_lines(without: :line_1))}")
+        = link_to(address.coordinate, "https://maps.google.fr/?#{URI.encode_www_form(q: address.mail_lines(without: :line_1))}")
       - elsif address.website?
         = link_to(address.coordinate, address.coordinate)
       - else

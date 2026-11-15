@@ -6,7 +6,7 @@ module Importable
   SOURCES = %w[Lexicon Nomenclature].freeze
 
   included do
-    enumerize :imported_from, in: SOURCES
+    has_enum :imported_from, in: SOURCES
 
     SOURCES.each do |source|
       scope "from_#{source.downcase}".to_sym, -> { where(imported_from: source) }

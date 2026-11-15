@@ -1,0 +1,41 @@
+{% comment %}Animal sheet. Data: animal serialized by AnimalsController#show (s0){% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }}</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-header">
+  <div>
+    <div class="doc-title">{{ s0.name | escape }}</div>
+    <table class="doc-meta">
+      <tr><td class="label">N° d'identification</td><td>{{ s0.identification_number | escape }}</td><td class="label">N° de travail</td><td>{{ s0.work_number | escape }}</td></tr>
+      <tr><td class="label">Variété</td><td>{{ s0.variety_text | escape }}</td><td class="label">Sexe</td><td>{{ s0.sex_text | escape }}</td></tr>
+      <tr><td class="label">Né le</td><td>{{ s0.born_at }}</td><td class="label">Mort le</td><td>{{ s0.dead_at }}</td></tr>
+      <tr><td class="label">Père</td><td>{{ s0.father.name | escape }}</td><td class="label">Mère</td><td>{{ s0.mother.name | escape }}</td></tr>
+    </table>
+  </div>
+  {% if s0.picture_path %}<img src="file://{{ s0.picture_path }}" style="max-width: 5cm; max-height: 5cm">{% endif %}
+</div>
+{% if s0.description != blank %}<p>{{ s0.description | escape | newline_to_br }}</p>{% endif %}
+<div class="doc-subtitle">Localisations</div>
+<table class="data">
+  <thead><tr><th>Lieu</th><th>Début</th><th>Fin</th></tr></thead>
+  <tbody>{% for localization in s0.localizations %}<tr><td>{{ localization.container.name | escape }}</td><td>{{ localization.started_at }}</td><td>{{ localization.stopped_at }}</td></tr>{% endfor %}</tbody>
+</table>
+<div class="doc-subtitle">Groupes</div>
+<table class="data">
+  <thead><tr><th>Groupe</th><th>Début</th><th>Fin</th></tr></thead>
+  <tbody>{% for membership in s0.memberships %}<tr><td>{{ membership.group.name | escape }}</td><td>{{ membership.started_at }}</td><td>{{ membership.stopped_at }}</td></tr>{% endfor %}</tbody>
+</table>
+<div class="doc-subtitle">Interventions</div>
+<table class="data">
+  <thead><tr><th>Date</th><th>Intervention</th></tr></thead>
+  <tbody>{% for parameter in s0.intervention_product_parameters %}<tr><td>{{ parameter.intervention.started_at }}</td><td>{{ parameter.intervention.number | escape }} {{ parameter.intervention.procedure_name | escape }}</td></tr>{% endfor %}</tbody>
+</table>
+<div class="doc-subtitle">Relevés</div>
+<table class="data">
+  <thead><tr><th>Date</th><th>Indicateur</th><th class="num">Valeur</th></tr></thead>
+  <tbody>{% for reading in s0.readings %}<tr><td>{{ reading.read_at }}</td><td>{{ reading.indicator_name | escape }}</td><td class="num">{{ reading.measure_value_value | default: reading.decimal_value | default: reading.integer_value | default: reading.string_value | default: reading.choice_value }} {{ reading.measure_value_unit }}</td></tr>{% endfor %}</tbody>
+</table>
+</body>
+</html>

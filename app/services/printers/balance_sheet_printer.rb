@@ -197,7 +197,7 @@ module Printers
           end
         end
         g1[:items] << i
-        # puts g1.inspect.yellow
+        # puts g1.inspect
       end
       g1[:sum_name] = ""
       g1[:current_raw_total] = g1[:items].map { |h| h[:current_raw_value] }.sum

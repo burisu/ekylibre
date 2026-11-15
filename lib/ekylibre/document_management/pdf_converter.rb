@@ -1,37 +1,35 @@
 # frozen_string_literal: true
 
+require 'open3'
+
 module Ekylibre
   module DocumentManagement
+    # Converts HTML to PDF with WeasyPrint (https://weasyprint.org)
     class PdfConverter
+      class ConversionError < StandardError; end
+
       class << self
         def build
-          new
+          new(command: ENV.fetch('WEASYPRINT_COMMAND', 'weasyprint'))
         end
       end
 
-      # @param [Array<byte>] odt_data
-      # @return [Array<byte>]
-      def convert_data(odt_data)
-        Dir.mktmpdir do |dir|
-          path = Pathname.new(dir)
+      attr_reader :command
 
-          odt = path.join('source.odt')
-          odt.binwrite(odt_data)
-          convert_to_pdf(path, odt)
-
-          pdf = path.join('source.pdf')
-
-          pdf.binread
-        end
+      def initialize(command:)
+        @command = command
       end
 
-      private
+      # @param [String] html
+      # @param [String] base_url used to resolve relative URLs (images...)
+      # @return [String] PDF bytes
+      def convert_html(html, base_url: Rails.root.to_s)
+        output, error, status = Open3.capture3(command, '--base-url', base_url, '--encoding', 'utf-8', '-', '-',
+                                               stdin_data: html, binmode: true)
+        raise ConversionError.new("WeasyPrint failed (#{status.exitstatus}): #{error}") unless status.success?
 
-        def convert_to_pdf(directory, odf_path)
-          Dir.mktmpdir('libreoffice_home') do |lo_home|
-            system "soffice --headless --convert-to pdf -env:UserInstallation=file://#{lo_home} --outdir #{directory} #{odf_path}"
-          end
-        end
+        output
+      end
     end
   end
 end

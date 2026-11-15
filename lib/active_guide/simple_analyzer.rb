@@ -15,7 +15,7 @@ module ActiveGuide
       started_at = Time.zone.now
       env = Env.new
       env.verbose = !options[:verbose].is_a?(FalseClass)
-      puts 'Running...'.yellow if env.verbose
+      puts 'Running...' if env.verbose
       report = analyze_item(guide.root, env, -1)
       # Adds results if any
       unless env.results.empty?
@@ -29,10 +29,10 @@ module ActiveGuide
       report[:stopped_at] = Time.zone.now
       # Display report if wanted
       if env.verbose
-        puts "#{report[:failed].to_s.red} tests failed, #{report[:passed].to_s.green} tests passed"
+        puts "#{report[:failed].to_s} tests failed, #{report[:passed].to_s} tests passed"
         if report[:results]
           report[:results].each do |r|
-            puts " > #{r[:item].name.to_s.humanize}: #{r[:value].to_s.yellow}"
+            puts " > #{r[:item].name.to_s.humanize}: #{r[:value].to_s}"
           end
         end
       end
@@ -134,7 +134,7 @@ module ActiveGuide
 
         if depth >= 0
           prefix = '  ' * depth
-          puts "#{(prefix + ' - ' + message.to_s.humanize).ljust(70).white} [#{passed ? '  OK  '.green : 'FAILED'.red}]"
+          puts "#{(prefix + ' - ' + message.to_s.humanize).ljust(70)} [#{passed ? '  OK  ' : 'FAILED'}]"
         end
         passed
       end
@@ -144,7 +144,7 @@ module ActiveGuide
 
         if depth >= 0
           prefix = '  ' * depth
-          puts (prefix + message.to_s.humanize).yellow.to_s
+          puts (prefix + message.to_s.humanize).to_s
         end
       end
   end

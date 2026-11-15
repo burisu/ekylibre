@@ -55,7 +55,7 @@ module CharentesAlliance
           cultivable_zone_work_number: (row[14].blank? ? nil : row[14].to_s)
         )
 
-        # puts r.inspect.red
+        # puts r.inspect
 
         # find a product_nature_variant by mapping current name of matter in coop file in coop reference_name
         unless product_nature_variant = ProductNatureVariant.find_by(reference_name: r.product_variant)
@@ -73,9 +73,9 @@ module CharentesAlliance
         ps = ActivityProduction.where(cultivble_zone: cultivable_zone).of_campaign(campaign) if cultivable_zone
 
         # verify variables
-        # puts campaign.name.inspect.yellow if campaign
-        # puts cultivable_zone.name.inspect.yellow if cultivable_zone
-        # puts silo.name.yellow if silo
+        # puts campaign.name.inspect if campaign
+        # puts cultivable_zone.name.inspect if cultivable_zone
+        # puts silo.name if silo
 
         # create a grain_analysis if not exist
 

@@ -2,7 +2,7 @@ module GeoJSON
   class << self
     def parse(str)
       json = JSON.parse str
-      return json if ::Charta::GeoJSON.valid? json
+      return json if ::Geo::GeoJSON.valid? json
 
       nil
     end

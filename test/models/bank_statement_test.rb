@@ -217,9 +217,9 @@ class BankStatementTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     )
     cash.reload
     assert_equal 0, cash.main_account.totals[:balance]
-    assert_equal 1, cash.journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml.yellow
-    Rails.logger.info ('%' * 80).yellow + cash.account.inspect.red + BankStatement.pluck(:journal_entry_id).inspect.green
-    assert_equal 1, cash.unpointed_journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml.yellow
+    assert_equal 1, cash.journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml
+    Rails.logger.info ('%' * 80) + cash.account.inspect + BankStatement.pluck(:journal_entry_id).inspect
+    assert_equal 1, cash.unpointed_journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml
 
     journal_entry = payment.journal_entry
     assert journal_entry.present?, payment.inspect
@@ -250,8 +250,8 @@ class BankStatementTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
 
     cash.reload
 
-    Rails.logger.info ('#' * 80).red
-    assert_equal 1, cash.unpointed_journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml.yellow
+    Rails.logger.info ('#' * 80)
+    assert_equal 1, cash.unpointed_journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml
     assert_equal 1, bank_statement.eligible_journal_entry_items.count
     item = cash.unpointed_journal_entry_items.first
     assert_equal journal_entry, item.entry
@@ -312,9 +312,9 @@ class BankStatementTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     )
     cash.reload
     assert_equal 0, cash.main_account.totals[:balance]
-    assert_equal 1, cash.journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml.yellow
-    Rails.logger.info ('%' * 80).yellow + cash.account.inspect.red + BankStatement.pluck(:journal_entry_id).inspect.green
-    assert_equal 1, cash.unpointed_journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml.yellow
+    assert_equal 1, cash.journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml
+    Rails.logger.info ('%' * 80) + cash.account.inspect + BankStatement.pluck(:journal_entry_id).inspect
+    assert_equal 1, cash.unpointed_journal_entry_items.count, cash.journal_entry_items.map(&:attributes).to_yaml
 
     journal_entry = payment.journal_entry
     assert journal_entry.present?, payment.inspect

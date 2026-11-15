@@ -40,7 +40,7 @@ module Backend
               popup_lines << { label: :contained_products.tl }
               bottom_line += "<table><tr><th>Type</th><th>Qt</th></tr>"
               products.group_by { |p| p.variant.type }.each do |variant_type, products|
-                puts variant_type.inspect.red
+                puts variant_type.inspect
                 icon = transcode_icon[variant_type.to_sym]&.to_s
                 if icon
                   bottom_line += "<tr><td><i class='icon icon-#{icon}' style='color: green;'></i></td>"

@@ -76,7 +76,7 @@ module Backend
 
     def create
       @listing = Listing.new permitted_params
-      return if save_and_redirect(@listing, url: { action: :edit, id: 'id'.c })
+      return if save_and_redirect(@listing, url: { action: :edit, id: ->(record) { record.id } })
       # render_restfully_form
     end
 

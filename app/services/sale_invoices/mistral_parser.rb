@@ -17,7 +17,7 @@ module SaleInvoices
     def parse_and_create_invoice
       client = find_client || create_client
       unless client
-        puts "No client found and error on created".inspect.red
+        puts "No client found and error on created".inspect
         return nil
       end
       if @data.invoice[:invoiced_on].present? && @data.invoice[:invoiced_on].size < 10
@@ -29,7 +29,7 @@ module SaleInvoices
       end
 
       unless invoiced_at
-        puts "Purchase date not present".inspect.red
+        puts "Purchase date not present".inspect
         return nil
       end
       sale = Sale.new(
@@ -51,7 +51,7 @@ module SaleInvoices
         sale.attachments.create!(document: @document)
         sale.id
       else
-        puts sale.errors.full_messages.inspect.red
+        puts sale.errors.full_messages.inspect
         nil
       end
     end
@@ -61,7 +61,7 @@ module SaleInvoices
       items = []
       if @data.items.any?
         @data.items.each do |line|
-          puts line.inspect.yellow
+          puts line.inspect
           # :name=>nil,
           # :quantity=>nil,
           # :unit_amount=>19.99,
@@ -97,9 +97,9 @@ module SaleInvoices
     end
 
     def guess_line_info(product_code: nil, description:, vat_percentage:, supplier:, category:)
-      puts description.inspect.yellow
-      puts supplier.inspect.yellow
-      puts category.inspect.yellow
+      puts description.inspect
+      puts supplier.inspect
+      puts category.inspect
       variant = guess_variant(description, supplier, category)
       if variant.present?
         infos = {

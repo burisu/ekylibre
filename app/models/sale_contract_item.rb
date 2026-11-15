@@ -39,7 +39,7 @@
 #
 
 class SaleContractItem < ApplicationRecord
-  enumerize :quantity_unit, in: %i[hour day fixed], default: :hour, predicates: { prefix: true }
+  has_enum :quantity_unit, in: %i[hour day fixed], default: :hour, predicates: { prefix: true }
   belongs_to :sale_contract, inverse_of: :items
   belongs_to :variant, class_name: 'ProductNatureVariant', inverse_of: :contract_items
   has_one :product_nature_category, through: :variant, source: :category

@@ -1,26 +1,12 @@
 module Ekylibre
   module Record #:nodoc:
     module Dependents
-      # Look for all has_one, has_many and has_and_belongs_to_many reflections
+      # Returns true if the record has records in one of its has_one, has_many
+      # or has_and_belongs_to_many associations
       def has_dependents?
-        refs = self.class.reflect_on_all_associations.select { |r| r.macro.to_s.match(/^has_/) }
-        return false if refs.empty?
-
-        method_name = 'has_' + refs.collect { |r| r.name.to_s }.sort.join('_or_') + '?'
-        unless respond_to?(method_name)
-          code = ''
-          code << "def #{method_name}\n"
-          code << '  return (' + refs.collect do |r|
-            if r.macro.to_s == 'has_one'
-              "self.#{r.name}"
-            else
-              "self.#{r.name}.first"
-            end
-          end.join(' || ') + ")\n"
-          code << "end\n"
-          class_eval(code)
+        self.class.reflect_on_all_associations.select { |r| r.macro.to_s.start_with?('has_') }.any? do |reflection|
+          reflection.macro == :has_one ? public_send(reflection.name).present? : public_send(reflection.name).first.present?
         end
-        send(method_name)
       end
     end
   end

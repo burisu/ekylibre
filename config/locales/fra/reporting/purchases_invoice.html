@@ -1,0 +1,53 @@
+{% comment %}Purchase invoice. Data: purchase invoice serialized by PurchaseInvoicesController#show (s0), s0.company{% endcomment %}
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>{{ base_css }}</style></head>
+<body class="doc">
+<div class="doc-footer">{{ s0.company.full_name | escape }}{% if s0.company.siret_number %} - SIRET : {{ s0.company.siret_number | escape }}{% endif %}{% if s0.company.vat_number %} - N° TVA : {{ s0.company.vat_number | escape }}{% endif %} — imprimé le {{ s0.printed_at }}</div>
+<div class="doc-header">
+  <div class="company">{% if s0.company.picture_path %}<img src="file://{{ s0.company.picture_path }}"><br>{% endif %}<strong>{{ s0.company.full_name | escape }}</strong>
+{{ s0.company.address | escape }}</div>
+  <div class="doc-address" style="width: 8cm"><strong>{{ s0.supplier.full_name | escape }}</strong>
+{{ s0.supplier.default_mail_address.mail_coordinate | escape }}</div>
+</div>
+<div class="doc-title">Facture d'achat {{ s0.number | escape }}{% if s0.affair_closed == "true" %} <span class="state-stamp">ACQUITTÉE</span>{% endif %}</div>
+<table class="doc-meta">
+  <tr><td class="label">Référence fournisseur</td><td>{{ s0.reference_number | escape }}</td><td class="label">Date de facture</td><td>{{ s0.invoiced_at }}</td></tr>
+  <tr><td class="label">Date limite de paiement</td><td>{{ s0.payment_at }}</td><td class="label">Devise</td><td>{{ s0.currency }}</td></tr>
+</table>
+{% if s0.description != blank %}<p style="margin: 0.3cm 0">{{ s0.description | escape | newline_to_br }}</p>{% endif %}
+<table class="data">
+  <thead><tr><th>Code</th><th>Désignation</th><th class="num">Qté.</th><th class="num">PU HT</th><th class="num">Remise</th><th class="num">Montant HT</th><th>Taux TVA</th><th class="num">Montant TVA</th></tr></thead>
+  <tbody>
+  {% for item in s0.items %}
+    <tr>
+      <td>{{ item.variant.number | escape }}</td>
+      <td>{{ item.label | escape }}{% if item.annotation != blank %}<br><small>{{ item.annotation | escape | newline_to_br }}</small>{% endif %}</td>
+      <td class="num">{{ item.quantity }}</td>
+      <td class="num">{{ item.unit_pretax_amount }}</td>
+      <td class="num">{% if item.reduction_percentage != blank %}{{ item.reduction_percentage }} %{% endif %}</td>
+      <td class="num">{{ item.pretax_amount }}</td>
+      <td>{{ item.tax_short_label | default: item.tax_name | escape }}</td>
+      <td class="num">{{ item.taxes_amount }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><td colspan="5">Totaux</td><td class="num">{{ s0.pretax_amount }}</td><td></td><td class="num">{{ s0.taxes_amount }}</td></tr>
+    <tr><td colspan="7">Net à payer ({{ s0.currency }})</td><td class="num">{{ s0.amount }}</td></tr>
+  </tfoot>
+</table>
+{% if s0.affair.purchase_payments.size > 0 %}
+<div class="doc-subtitle">Règlements</div>
+<table class="data">
+  <thead><tr><th>Date</th><th>Mode</th><th>Numéro</th><th class="num">Montant</th></tr></thead>
+  <tbody>
+  {% for payment in s0.affair.purchase_payments %}
+    <tr><td>{{ payment.paid_at }}</td><td>{{ payment.mode.name | escape }}</td><td>{{ payment.number | escape }}</td><td class="num">{{ payment.amount }}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="3">Solde de l'affaire</td><td class="num">{{ s0.affair.balance }}</td></tr></tfoot>
+</table>
+{% endif %}
+</body>
+</html>

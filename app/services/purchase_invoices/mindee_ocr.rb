@@ -12,7 +12,7 @@ module PurchaseInvoices
     # return a fields based on a document from Ekylibre Document model
     def post_document_and_parse(document)
       # Load a file from disk
-      input_source = @client.source_from_path(document.file.path)
+      input_source = @client.source_from_path(document.file_path)
 
       # Parse the file
       response = @client.parse(

@@ -37,23 +37,23 @@ module Ekylibre
         def configure_locale
           # Allows to test locales
           reset_locale
-          puts "Locale set to #{::I18n.locale.to_s.green}".yellow
+          puts "Locale set to #{::I18n.locale.to_s}"
         end
 
         def setup_tenants
-          puts "Setup tenant: #{'sekindovall'.green}".yellow
+          puts "Setup tenant: #{'sekindovall'}"
           ::Ekylibre::Tenant.setup!('sekindovall')
 
-          puts "Setup tenant: #{'test_without_fixtures'.green}".yellow
+          puts "Setup tenant: #{'test_without_fixtures'}"
           ::Ekylibre::Tenant.setup!('test_without_fixtures')
 
-          puts "Setup tenant: #{'test'.green}".yellow
+          puts "Setup tenant: #{'test'}"
           ::Ekylibre::Tenant.setup!('test', keep_files: true)
         end
 
         def setup_database_cleaner
           # ::Ekylibre::Tenant.switch 'test_without_fixtures' do
-          #   puts "Cleaning tenant: #{'test_without_fixtures'.green}".yellow
+          #   puts "Cleaning tenant: #{'test_without_fixtures'}"
           #   ::DatabaseCleaner.clean_with(
           #     :truncation,
           #     {
@@ -77,7 +77,7 @@ module Ekylibre
         end
 
         def db_config
-          Rails.application.config.database_configuration[Rails.env.to_s]
+          Ekylibre.primary_db_config
         end
 
         def setup_factories

@@ -84,8 +84,8 @@ class ProductNature < ApplicationRecord
 
   refers_to :variety
   refers_to :derivative_of, class_name: 'Variety'
-  enumerize :population_counting, in: %i[unitary integer decimal], predicates: { prefix: true }
-  enumerize :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "VariantTypes::#{t}Type" }
+  has_enum :population_counting, in: %i[unitary integer decimal], predicates: { prefix: true }
+  has_enum :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "VariantTypes::#{t}Type" }
   belongs_to :subscription_nature
   has_many :subscriptions, through: :subscription_nature
   has_many :products, foreign_key: :nature_id, dependent: :restrict_with_exception
@@ -94,11 +94,11 @@ class ProductNature < ApplicationRecord
 
   has_picture
 
-  serialize :abilities_list, WorkingSet::AbilityArray
-  serialize :derivatives_list, SymbolArray
-  serialize :frozen_indicators_list, SymbolArray
-  serialize :variable_indicators_list, SymbolArray
-  serialize :linkage_points_list, SymbolArray
+  serialize :abilities_list, coder: WorkingSet::AbilityArray
+  serialize :derivatives_list, coder: SymbolArray
+  serialize :frozen_indicators_list, coder: SymbolArray
+  serialize :variable_indicators_list, coder: SymbolArray
+  serialize :linkage_points_list, coder: SymbolArray
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :abilities_list, :derivatives_list, :description, :frozen_indicators_list, :linkage_points_list, :variable_indicators_list, length: { maximum: 500_000 }, allow_blank: true
@@ -114,7 +114,6 @@ class ProductNature < ApplicationRecord
   validates :derivative_of, :reference_name, :variety, length: { allow_nil: true, maximum: 120 }
   validates :number, uniqueness: true
   validates :name, uniqueness: true
-  validates_attachment_content_type :picture, content_type: /image/
   validates :subscription_nature, presence: { if: :subscribing? }
 
   accepts_nested_attributes_for :variants, reject_if: :all_blank, allow_destroy: true
@@ -303,9 +302,6 @@ class ProductNature < ApplicationRecord
     linkage_points_list
   end
 
-  def picture_path(style = :original)
-    picture.path(style)
-  end
 
   # Return humanized duration
   def subscription_duration

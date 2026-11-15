@@ -7,7 +7,7 @@ namespace :clean do
     ref = Clean::Support.actions_hash
 
     # Reading of existing file
-    old_rights = YAML.load_file(Ekylibre::Access.config_file).deep_symbolize_keys
+    old_rights = YAML.safe_load_file(Ekylibre::Access.config_file, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
 
     read_exp = /\#(list(\_\w+)*|index|show|unroll|picture)$/
 

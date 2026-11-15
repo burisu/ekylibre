@@ -40,7 +40,7 @@
 #
 
 class Observation < ApplicationRecord
-  enumerize :importance, in: %i[important normal notice], default: :notice, predicates: true
+  has_enum :importance, in: %i[important normal notice], default: :notice, predicates: true
   belongs_to :subject, polymorphic: true
   belongs_to :author, class_name: 'User'
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.

@@ -2,12 +2,6 @@ require 'zip'
 
 module Ekylibre
   module FirstRun
-    autoload :Counter, 'ekylibre/first_run/counter'
-    autoload :Booker,  'ekylibre/first_run/booker'
-    autoload :Base,    'ekylibre/first_run/base'
-    autoload :Faker,   'ekylibre/first_run/faker'
-    autoload :Folder,  'ekylibre/first_run/folder'
-
     class << self
       # Launch a first-run with tenant creation
       # Name of tenant is found with option :name or with path or folder options if missing
@@ -44,7 +38,7 @@ module Ekylibre
         else
           raise ArgumentError.new('Need at least :path or :folder option')
         end
-        manifest = YAML.load_file(path.join('manifest.yml'))
+        manifest = YAML.safe_load_file(path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true)
         sentence = 'Launch first run'
         sentence << " in tenant #{name}" if name
         sentence << " from #{path.relative_path_from(Rails.root)}"
@@ -53,7 +47,7 @@ module Ekylibre
         sentence << (options[:hard] ? ' without global transaction' : ' inside global transaction')
         sentence << '.'
         Rails.logger.info sentence
-        puts sentence.yellow if options[:verbose]
+        puts sentence if options[:verbose]
         secure_tenant(name) do
           if manifest['version'] == 2
             Folder.new(path, options).run

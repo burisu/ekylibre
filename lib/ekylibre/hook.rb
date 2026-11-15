@@ -5,16 +5,16 @@ module Ekylibre
     class << self
       # Publish a given event/message
       def publish(message, data = {})
-        Rails.logger.info("Publish: #{message.to_s.yellow}")
+        Rails.logger.info("Publish: #{message.to_s}")
         if @subscriptions[message] && @subscriptions[message].any?
           @subscriptions[message].each_with_index do |block, index|
-            Rails.logger.info "Push to #{message}##{index}".yellow
+            Rails.logger.info "Push to #{message}##{index}"
             if block.arity >= 1
               block.call(data)
             else
               block.call
             end
-            Rails.logger.info "Push to #{message}##{index}: terminated".yellow
+            Rails.logger.info "Push to #{message}##{index}: terminated"
           end
         end
       end

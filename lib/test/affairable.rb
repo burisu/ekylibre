@@ -30,9 +30,9 @@ module Test
     end
 
     def deal_entries(affair)
-      content = "debit: #{affair.debit.to_s.rjust(10).yellow}, credit: #{affair.credit.to_s.rjust(10).yellow}\n"
+      content = "debit: #{affair.debit.to_s.rjust(10)}, credit: #{affair.credit.to_s.rjust(10)}\n"
       content << "deals:\n"
-      content << affair.deals.map { |d| e = d.journal_entry; " - #{d.number.ljust(20)} : #{e.debit.to_s.rjust(8)} | #{e.credit.to_s.rjust(8)} | #{d.deal_debit_amount.to_s.rjust(8)} | #{d.deal_credit_amount.to_s.rjust(8)} | #{d.direction if d.is_a?(Gap)}\n".red + e.items.map { |i| "   #{i.account_number.ljust(20).cyan} : #{i.debit.to_s.rjust(8)} | #{i.credit.to_s.rjust(8)} | #{i.letter}" }.join("\n") }.join("\n")
+      content << affair.deals.map { |d| e = d.journal_entry; " - #{d.number.ljust(20)} : #{e.debit.to_s.rjust(8)} | #{e.credit.to_s.rjust(8)} | #{d.deal_debit_amount.to_s.rjust(8)} | #{d.deal_credit_amount.to_s.rjust(8)} | #{d.direction if d.is_a?(Gap)}\n" + e.items.map { |i| "   #{i.account_number.ljust(20)} : #{i.debit.to_s.rjust(8)} | #{i.credit.to_s.rjust(8)} | #{i.letter}" }.join("\n") }.join("\n")
       content
     end
   end

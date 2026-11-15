@@ -24,11 +24,11 @@ module Ekylibre
         w.count = file.size
 
         file.each do |record|
-          # puts record.attributes['number'].inspect.red
+          # puts record.attributes['number'].inspect
           if record.geometry
             name = if record.attributes['name'].present?
                      # TODO: find how to fix non UTF-8 name
-                     # puts record.attributes['name'].inspect.red
+                     # puts record.attributes['name'].inspect
                      record.attributes['name'].mb_chars.downcase.capitalize
                    else
                      record.attributes['number'].to_s.upcase
@@ -42,7 +42,7 @@ module Ekylibre
             georeading = Georeading.create_with(attributes)
                                    .find_or_initialize_by(attributes.slice(:number))
 
-            georeading.content = Charta.new_geometry(record.geometry)
+            georeading.content = Geo.new_geometry(record.geometry)
             georeading.save!
           end
 

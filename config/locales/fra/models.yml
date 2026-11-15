@@ -1271,7 +1271,6 @@ fra:
       vegetal_activity: "Activité végétale" #?
       vegetative_stage: "Phase végétative"
       version: "Version"
-      wice_grid_serialized_query: "Requête de tableau en série"
       wine_incoming_harvest: "Réception de vendange"
       wine_incoming_harvest_input: "Réception de vendange - Quantité réceptionnée"
       wine_incoming_harvest_plant: "Réception de vendange - Cultures récoltées"

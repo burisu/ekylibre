@@ -235,9 +235,9 @@ class User < ApplicationRecord
   end
 
   # Notify all administrators
-  def self.notify_administrators(*args)
+  def self.notify_administrators(...)
     User.administrators.each do |user|
-      user.notify(*args)
+      user.notify(...)
     end
   end
 
@@ -292,7 +292,7 @@ class User < ApplicationRecord
     end
     list = Ekylibre::Access.rights_of(key)
     if list.empty?
-      logger.debug "Unable to check access for action: #{key}. #{url.inspect}".yellow
+      logger.debug "Unable to check access for action: #{key}. #{url.inspect}"
       return true
     end
     list &= resource_actions

@@ -358,7 +358,7 @@ Rails.application.routes.draw do
     resources :activity_seasons, concerns: [:unroll]
 
     # resources :affairs, concerns: [:affairs, :list], only: [:show, :index]
-    resources :affairs, only: [:unroll]
+    resources :affairs, only: [], concerns: [:unroll]
 
     resources :affair_natures, concerns: %i[list unroll]
 

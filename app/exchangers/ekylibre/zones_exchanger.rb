@@ -54,7 +54,7 @@ module Ekylibre
         end
         # Adds georeading
         georeading = Georeading.find_by(number: r.code)
-        shape = Charta.new_geometry(r.ewkt_shape) if r.ewkt_shape.present?
+        shape = Geo.new_geometry(r.ewkt_shape) if r.ewkt_shape.present?
         if georeading
           zone.initial_shape = georeading.content
           # zone.initial_shape_area = georeading.content_area

@@ -72,7 +72,7 @@ module Ekylibre
         if cz&.shape.present?
           lat = cz.shape_centroid[0]
           lon = cz.shape_centroid[1]
-          analysis.update(cultivable_zone: cz, geolocation: ::Charta.new_point(lat, lon))
+          analysis.update(cultivable_zone: cz, geolocation: ::Geo.new_point(lat, lon))
         end
 
         w.check_point

@@ -86,7 +86,7 @@
 #
 
 class InterventionTemplate < ApplicationRecord
-  enumerize :workflow_unit, in: %i[hectare_per_hour plant_per_hour head_per_hour], default: :hectare_per_hour, predicates: true
+  has_enum :workflow_unit, in: %i[hectare_per_hour plant_per_hour head_per_hour], default: :hectare_per_hour, predicates: true
   composed_of :workflow, class_name: 'Measure', mapping: [%w[workflow_value to_d], %w[workflow_unit unit]]
   # Relation
   has_many :product_parameters, class_name: 'InterventionTemplate::ProductParameter', foreign_key: :intervention_template_id, dependent: :destroy

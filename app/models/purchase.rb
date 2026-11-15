@@ -66,9 +66,9 @@ class Purchase < ApplicationRecord
   include Attachable
   include Customizable
   attr_readonly :currency, :nature_id
-  enumerize :tax_payability, in: %i[at_paying at_invoicing], default: :at_invoicing
-  enumerize :reconciliation_state, in: %i[to_reconcile accepted reconcile], default: :to_reconcile
-  enumerize :payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
+  has_enum :tax_payability, in: %i[at_paying at_invoicing], default: :at_invoicing
+  has_enum :reconciliation_state, in: %i[to_reconcile accepted reconcile], default: :to_reconcile
+  has_enum :payment_delay, in: ['1 week', '30 days', '30 days, end of month', '60 days', '60 days, end of month']
   refers_to :currency
   belongs_to :delivery_address, class_name: 'EntityAddress'
   belongs_to :nature, class_name: 'PurchaseNature'

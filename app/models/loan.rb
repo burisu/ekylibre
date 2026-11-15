@@ -70,11 +70,11 @@ class Loan < ApplicationRecord
   include Providable
   # take care to restart serveur when updating code because of Transitionable lib
   # locale in app/services/loan/transitions
-  enumerize :repayment_method, in: %i[constant_rate constant_amount], default: :constant_amount
-  enumerize :shift_method, in: %i[immediate_payment anatocism], default: :immediate_payment
-  enumerize :repayment_period, in: %i[month year trimester semester], default: :month, predicates: { prefix: true }
-  enumerize :insurance_repayment_method, in: %i[initial to_repay], default: :to_repay, predicates: true
-  enumerize :state, in: %i[draft ongoing repaid], default: :draft, predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
+  has_enum :repayment_method, in: %i[constant_rate constant_amount], default: :constant_amount
+  has_enum :shift_method, in: %i[immediate_payment anatocism], default: :immediate_payment
+  has_enum :repayment_period, in: %i[month year trimester semester], default: :month, predicates: { prefix: true }
+  has_enum :insurance_repayment_method, in: %i[initial to_repay], default: :to_repay, predicates: true
+  has_enum :state, in: %i[draft ongoing repaid], default: :draft, predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
   refers_to :currency
   belongs_to :activity
   belongs_to :cash
@@ -250,7 +250,7 @@ class Loan < ApplicationRecord
       .compute_repayments(repayment_method)
       .each do |repayment|
         if r = repayments.find_by(position: repayment[:position])
-          r.update_attributes!(repayment)
+          r.update!(repayment)
         else
           r = repayments.create!(repayment)
         end

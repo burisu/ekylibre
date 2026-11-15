@@ -20,30 +20,31 @@ module Backend
   class WorkersController < Backend::ProductsController
 
     def self.list_conditions
-      code = search_conditions(workers: %i[name number work_number description], products: %i[variety]) + " ||= []\n"
-
-      code << "if params[:variant_id].present?\n"
-      code << " c[0] << ' AND #{Worker.table_name}.variant_id = ?'\n"
-      code << " c << params[:variant_id]\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
+      search1 = search_conditions(workers: %i[name number work_number description], products: %i[variety])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:variant_id].present?
+          c[0] << " AND #{Worker.table_name}.variant_id = ?"
+          c << params[:variant_id]
+        end
+        c
+      end
     end
 
     def self.worker_time_logs_conditions
-      code = search_conditions(worker_time_logs: %i[worker description]) + " ||= []\n"
-      code << "if params[:id].present?\n"
-      code << " c[0] << ' AND #{WorkerTimeLog.table_name}.worker_id = ?'\n"
-      code << " c << params[:id]\n"
-      code << "end\n"
-
-      code << "if params[:current_period].present?\n"
-      code << " c[0] << ' AND EXTRACT(YEAR FROM #{WorkerTimeLog.table_name}.started_at) = ?'\n"
-      code << " c << params[:current_period].to_date.year\n"
-      code << "end\n"
-      code << "c\n "
-      code.c
-
+      search1 = search_conditions(worker_time_logs: %i[worker description])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:id].present?
+          c[0] << " AND #{WorkerTimeLog.table_name}.worker_id = ?"
+          c << params[:id]
+        end
+        if params[:current_period].present?
+          c[0] << " AND EXTRACT(YEAR FROM #{WorkerTimeLog.table_name}.started_at) = ?"
+          c << params[:current_period].to_date.year
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, selectable: true) do |t|
@@ -52,7 +53,7 @@ module Backend
       t.column :number, url: true
       t.column :work_number
       t.column :name, url: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
       t.column :variety
       t.column :container, url: true
       t.column :description
@@ -65,10 +66,10 @@ module Backend
       t.column :stopped_at, datatype: :datetime
       t.column :project_task
       t.column :description
-      t.column :human_duration, on_select: :sum, value_method: 'duration.in(:second).in(:hour)', datatype: :decimal, class: 'center-align'
+      t.column :human_duration, on_select: :sum, value_method: ->(record) { record.duration.in(:second).in(:hour) }, datatype: :decimal, class: 'center-align'
     end
 
-    list(:catalog_items, conditions: { product_id: 'params[:id]'.c }) do |t|
+    list(:catalog_items, conditions: { product_id: -> { params[:id] } }) do |t|
       t.action :edit, url: { controller: '/backend/catalog_items' }
       t.action :destroy, url: { controller: '/backend/catalog_items' }
       t.column :name, url: { controller: '/backend/catalog_items' }

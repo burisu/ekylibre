@@ -32,8 +32,8 @@ module Backend
       t.column :name, url: true
     end
 
-    list(:users, conditions: { role_id: 'params[:id]'.c }, line_class: "(RECORD.locked ? 'critic' : '')".c, order: :last_name) do |t|
-      t.action :locked, actions: { true => { controller: :users, action: :unlock }, false => { controller: :users, action: :lock } }, method: :post, if: 'RECORD.id != current_user.id'.c
+    list(:users, conditions: { role_id: -> { params[:id] } }, line_class: ->(record) { (record.locked ? 'critic' : '') }, order: :last_name) do |t|
+      t.action :locked, actions: { true => { controller: :users, action: :unlock }, false => { controller: :users, action: :lock } }, method: :post, if: ->(record) { record.id != current_user.id }
       t.action :edit
       t.action :destroy, if: :destroyable?
       t.column :first_name, url: true

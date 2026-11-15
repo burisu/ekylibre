@@ -53,10 +53,10 @@ class FinancialYear < ApplicationRecord
   attr_readonly :currency
   refers_to :currency
   refers_to :accounting_system, class_name: 'AccountingSystem'
-  enumerize :tax_declaration_frequency, in: %i[monthly quaterly yearly none],
+  has_enum :tax_declaration_frequency, in: %i[monthly quaterly yearly none],
             default: :monthly, predicates: { prefix: true }
-  enumerize :tax_declaration_mode, in: %i[debit payment none], default: :none, predicates: { prefix: true }
-  enumerize :state, in: %i[opened closure_in_preparation closing closed locked], default: :opened, predicates: true
+  has_enum :tax_declaration_mode, in: %i[debit payment none], default: :none, predicates: { prefix: true }
+  has_enum :state, in: %i[opened closure_in_preparation closing closed locked], default: :opened, predicates: true
   belongs_to :last_journal_entry, class_name: 'JournalEntry'
   belongs_to :accountant, class_name: 'Entity'
   belongs_to :closer, class_name: 'User'
@@ -103,7 +103,7 @@ class FinancialYear < ApplicationRecord
       sql_date = ApplicationRecord.connection.quote(searched_on)
       started_on_clause = "ABS(#{sql_date} - started_on)"
       stopped_on_clause = "ABS(#{sql_date} - stopped_on)"
-      order("LEAST(#{started_on_clause}, #{stopped_on_clause}) ASC").first
+      order(Arel.sql("LEAST(#{started_on_clause}, #{stopped_on_clause}) ASC")).first
     end
 
     def on(searched_on)
@@ -213,7 +213,7 @@ class FinancialYear < ApplicationRecord
   def journal_entries(conditions = nil)
     entries = JournalEntry.where(printed_on: started_on..stopped_on)
     if conditions.present?
-      ActiveSupport::Deprecation.warn('Use of conditions in FinancialYear#journal_entries is deprecated. Please use #where after instead.')
+      Ekylibre.deprecator.warn('Use of conditions in FinancialYear#journal_entries is deprecated. Please use #where after instead.')
       entries = entries.where(conditions)
     end
     entries
@@ -338,7 +338,7 @@ class FinancialYear < ApplicationRecord
 
   # When a financial year is closed,.all the matching journals are closed too.
   def close(closer, to_close_on = nil, options = {})
-    ActiveSupport::Deprecation.warn("FinancialYear#close is deprecated, use FinancialYearClose directly")
+    Ekylibre.deprecator.warn("FinancialYear#close is deprecated, use FinancialYearClose directly")
 
     FinancialYearClose.for_year(self, close_on: to_close_on, user: closer, **options).execute
   end
@@ -491,7 +491,7 @@ class FinancialYear < ApplicationRecord
         last_journal_entry.add_debit(name, depreciation.fixed_asset.expenses_account, depreciation.amount)
         # Allocation
         last_journal_entry.add_credit(name, depreciation.fixed_asset.allocation_account, depreciation.amount)
-        depreciation.update_attributes(journal_entry_id: last_journal_entry.id)
+        depreciation.update(journal_entry_id: last_journal_entry.id)
       end
     end
     self

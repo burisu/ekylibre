@@ -38,7 +38,7 @@ module Interventions
         end
 
         # @param [Array<Intervention>] interventions
-        # @param [Array<Charta::Geometry>] zones
+        # @param [Array<Geo::Geometry>] zones
         # @return [Array<Intervention>]
         def select_with_shape_intersecting(interventions, zones)
           interventions.select do |intervention|

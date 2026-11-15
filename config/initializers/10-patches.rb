@@ -1,4 +1,22 @@
-require 'tilt/coffee'
+# i18n-complements core extensions pass options positionally, which Ruby 3
+# no longer converts to keywords
+[::String, ::Symbol].each do |klass|
+  klass.class_eval do
+    def translate(options = {})
+      ::I18n.translate(self, **options)
+    end
+    alias_method :t, :translate
+  end
+end
+
+[::String, ::TrueClass, ::FalseClass, ::Numeric, ::Date, ::DateTime, ::Time].each do |klass|
+  klass.class_eval do
+    def localize(options = {})
+      ::I18n.localize(self, **options)
+    end
+    alias_method :l, :localize
+  end
+end
 
 if defined? Encoding
   Encoding.default_internal = Encoding::UTF_8
@@ -6,34 +24,34 @@ if defined? Encoding
 end
 
 class ::String
-  def tl(*args)
-    ::I18n.translate('labels.' + self, *args)
+  def tl(options = {}, **keywords)
+    ::I18n.translate('labels.' + self, **options, **keywords)
   end
 end
 
 class ::Symbol
-  def tl(*args)
-    ::I18n.translate('labels.' + to_s, *args)
+  def tl(options = {}, **keywords)
+    ::I18n.translate('labels.' + to_s, **options, **keywords)
   end
 
-  def ta(*args)
-    ::I18n.translate('rest.actions.' + to_s, *args)
+  def ta(options = {}, **keywords)
+    ::I18n.translate('rest.actions.' + to_s, **options, **keywords)
   end
 
-  def tn(*args)
-    ::I18n.translate('notifications.messages.' + to_s, *args)
+  def tn(options = {}, **keywords)
+    ::I18n.translate('notifications.messages.' + to_s, **options, **keywords)
   end
 
-  def th(*args)
-    args.each_with_index do |arg, _index|
-      next unless arg.is_a?(Hash)
-      for k, v in arg
-        unless %i[locale scope default].include?(k)
-          arg[k] = (v.html_safe? ? v : ('<em>' + CGI.escapeHTML(v) + '</em>').html_safe)
-        end
+  # Translates with interpolated values emphasized and escaped
+  def th(options = {}, **keywords)
+    options = options.merge(keywords).to_h do |k, v|
+      if %i[locale scope default].include?(k) || v.html_safe?
+        [k, v]
+      else
+        [k, ('<em>' + CGI.escapeHTML(v.to_s) + '</em>').html_safe]
       end
     end
-    tl(*args).html_safe
+    tl(**options).html_safe
   end
 end
 
@@ -120,23 +138,20 @@ end
 module Ekylibre
   module I18n
     module ContextualModelHelpers
-      def tc(*args)
-        args[0] = 'models.' + model_name.singular + '.' + args[0].to_s
-        ::I18n.translate(*args)
+      def tc(key, options = {}, **keywords)
+        ::I18n.translate("models.#{model_name.singular}.#{key}", **options, **keywords)
       end
     end
 
     module ContextualModelInstanceHelpers
-      def tc(*args)
-        args[0] = 'models.' + self.class.model_name.singular + '.' + args[0].to_s
-        ::I18n.translate(*args)
+      def tc(key, options = {}, **keywords)
+        ::I18n.translate("models.#{self.class.model_name.singular}.#{key}", **options, **keywords)
       end
     end
 
     module ContextualHelpers
-      def tl(*args)
-        args[0] = 'labels.' + args[0].to_s
-        ::I18n.translate(*args)
+      def tl(key, options = {}, **keywords)
+        ::I18n.translate("labels.#{key}", **options, **keywords)
       end
     end
   end
@@ -147,22 +162,6 @@ ActionController::Base.send :include, Ekylibre::I18n::ContextualHelpers
 ActiveRecord::Base.send :extend, Ekylibre::I18n::ContextualModelHelpers
 ActiveRecord::Base.send :include, Ekylibre::I18n::ContextualModelInstanceHelpers
 ActionView::Base.send :include, Ekylibre::I18n::ContextualHelpers
-
-require 'state_machine/version'
-
-unless StateMachine::VERSION == '1.2.0'
-  # If you see this message, please test removing this file
-  # If it's still required, please bump up the version above
-  Rails.logger.warn 'Please remove me, StateMachine version has changed'
-end
-
-module StateMachine::Integrations::ActiveModel
-  alias around_validation_protected around_validation
-
-  def around_validation(*args, &block)
-    around_validation_protected(*args, &block)
-  end
-end
 
 module ActiveModel
   module Validations
@@ -310,110 +309,27 @@ module ActiveSupport
   end
 end
 
-module Charta
-  class Polygon
-    def without_hole_outside_shell
-      sql = <<-SQL
-        SELECT ST_AsText(
-                 ST_MakePolygon(
-                   ST_ExteriorRing(:feature)
-                 )
-               ) AS simplfied_shape
-      SQL
-      query = ActiveRecord::Base.send(:sanitize_sql_array, [sql, feature: feature.as_text])
-      simplfied_shape_text = ActiveRecord::Base.connection.execute(query).first['simplfied_shape']
-      Charta.new_geometry(simplfied_shape_text)
+# Factories serialized by old RGeo versions use the `projector_class` key
+# (`projectorclass` since RGeo 2.x)
+module RGeo
+  module Geographic
+    module LegacyProjectorClassKey
+      def init_with(coder)
+        coder["projectorclass"] ||= coder["projector_class"] if coder.respond_to?(:[]=) && coder["projector_class"]
+        super
+      end
     end
-
-    def hole_outside_shell?
-      sql = <<-SQL
-        SELECT St_IsValidreason(:feature) AS reason
-      SQL
-      query = ActiveRecord::Base.send(:sanitize_sql_array, [sql, feature: feature.as_text])
-      result = ActiveRecord::Base.connection.execute(query).first['reason']
-      result.start_with?("Hole lies outside shell")
-    end
-
-  end
-
-  class Geometry
-    # Generates a simpler geometry.
-    # see ST_SimplifyPreserveTopology on http://revenant.ca/www/postgis/workshop/advanced.html#processing-functions
-
-    # @param [Float] tolerance
-    # @return [Charta::Geometry]
-    def simplify(tolerance)
-      sql = <<-SQL
-        SELECT ST_AsText(
-                 ST_SimplifyPreserveTopology(ST_GeomFromText(:feature), :tolerance )
-               ) AS simplfied_shape
-      SQL
-      query = ActiveRecord::Base.send(:sanitize_sql_array, [sql, feature: feature.as_text, tolerance: tolerance ])
-      simplfied_shape_text = ActiveRecord::Base.connection.execute(query).first['simplfied_shape']
-      Charta.new_geometry(simplfied_shape_text)
-    end
+    Factory.prepend(LegacyProjectorClassKey)
   end
 end
 
-# Because RGeo broke compatibility in their serialization model with `projector_class` becoming `projectorclass`
+# RGeo 3.0 projected geometries call unsafe_simplify(_preserve_topology) on
+# their projection, which GEOS CAPI geometries only expose without prefix
 module RGeo
-  module Geographic
-    class Factory
-      def init_with(coder)
-        # :nodoc:
-        if (proj4_data = coder["proj4"])
-          CoordSys.check!(:proj4)
-          if proj4_data.is_a?(Hash)
-            proj4 = CoordSys::Proj4.create(proj4_data["proj4"], radians: proj4_data["radians"])
-          else
-            proj4 = CoordSys::Proj4.create(proj4_data.to_s)
-          end
-        else
-          proj4 = nil
-        end
-        if (coord_sys_data = coder["cs"])
-          coord_sys = CoordSys::CS.create_from_wkt(coord_sys_data.to_s)
-        else
-          coord_sys = nil
-        end
-        initialize(coder["impl_prefix"],
-                   has_z_coordinate: coder["has_z_coordinate"],
-                   has_m_coordinate: coder["has_m_coordinate"],
-                   srid: coder["srid"],
-                   wkt_generator: symbolize_hash(coder["wkt_generator"]),
-                   wkb_generator: symbolize_hash(coder["wkb_generator"]),
-                   wkt_parser: symbolize_hash(coder["wkt_parser"]),
-                   wkb_parser: symbolize_hash(coder["wkb_parser"]),
-                   uses_lenient_assertions: coder["lenient_assertions"],
-                   buffer_resolution: coder["buffer_resolution"],
-                   proj4: proj4,
-                   coord_sys: coord_sys
-        )
-        if (proj_klass = coder["projectorclass"] || coder["projector_class"]) && (proj_factory = coder["projection_factory"])
-          klass_ = RGeo::Geographic.const_get(proj_klass)
-          if klass_
-            projector = klass_.allocate
-            projector.set_factories(self, proj_factory)
-            @projector = projector
-          end
-        end
-      end
-      
-      #patch waiting for rgeo 3.0 https://github.com/rgeo/rgeo/issues/277
-      def set_property(prop, value)
-        case prop
-        when :has_z_coordinate
-          @support_z = value
-        when :has_m_coordinate
-          @support_m = value
-        when :uses_lenient_assertions
-          @lenient_assertions = value
-        when :buffer_resolution
-          @buffer_resolution = value
-        when :is_geographic
-          value
-        end
-      end
+  module Geos
+    module CAPIGeometryMethods
+      alias_method :unsafe_simplify, :simplify unless method_defined?(:unsafe_simplify)
+      alias_method :unsafe_simplify_preserve_topology, :simplify_preserve_topology unless method_defined?(:unsafe_simplify_preserve_topology)
     end
   end
 end

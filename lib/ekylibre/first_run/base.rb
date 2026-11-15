@@ -1,7 +1,7 @@
 module Ekylibre
   module FirstRun
     class Base
-      LOADERS = YAML.load_file(Pathname.new(__FILE__).dirname.join('loaders.yml')).deep_symbolize_keys.freeze
+      LOADERS = YAML.safe_load_file(Pathname.new(__FILE__).dirname.join('loaders.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys.freeze
 
       attr_reader :max, :verbose, :mode, :force
 
@@ -44,7 +44,7 @@ module Ekylibre
         local = @path.join('loaders.yml')
         return LOADERS unless local.exist?
 
-        YAML.load_file(local).deep_symbolize_keys
+        YAML.safe_load_file(local, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
       end
 
       # Execute all loaders for a given base
@@ -82,7 +82,7 @@ module Ekylibre
             preference.value = true
             preference.save!
           else
-            puts 'Skip'.yellow + " #{loader} loader"
+            puts 'Skip' + " #{loader} loader"
           end
         end
       end
@@ -134,7 +134,7 @@ module Ekylibre
           if text.join.length < @term_width
             text << ' ' * (@term_width - text.join.length)
           end
-          text[0] = text[0].yellow
+          text[0] = text[0]
           puts text.join
         end
       end
@@ -159,8 +159,8 @@ module Ekylibre
         not_found = files.values.reject(&:exist?)
         if not_found.any?
           if not_found.size != files_count
-            puts " ☠ #{nature.to_s.humanize} (#{target})".red
-            puts ("   Missing files to build #{target} archive: " + not_found.map { |f| f.relative_path_from(@path) }.to_sentence).red
+            puts " ☠ #{nature.to_s.humanize} (#{target})"
+            puts ("   Missing files to build #{target} archive: " + not_found.map { |f| f.relative_path_from(@path) }.to_sentence)
             return false
           end
         else
@@ -177,8 +177,8 @@ module Ekylibre
             end
           # Zip Library can throw an us-ascii string error with utf-8 inside
           rescue Exception => e
-            puts "Cannot create #{target_path}".red
-            puts "Caused by: #{e.to_s.force_encoding('utf-8')}".blue
+            puts "Cannot create #{target_path}"
+            puts "Caused by: #{e.to_s.force_encoding('utf-8')}"
             ::Kernel.exit 1
           ensure
             FileUtils.rm_rf(mimefile) if options[:mimetype]
@@ -212,7 +212,7 @@ module Ekylibre
             line = status.join
             done = (progress * @term_width / 100.0).round.to_i
             done = @term_width if done > @term_width
-            print "\r" * last.size + line[0..done].blue + (done == @term_width ? '' : line[(done + 1)..-1])
+            print "\r" * last.size + line[0..done] + (done == @term_width ? '' : line[(done + 1)..-1])
             last = line
             total = count
           end
@@ -228,16 +228,16 @@ module Ekylibre
           n = 1
           if l > 0
             status.insert(1 + n, ' ' * l)
-            status[2 + n] = status[2 + n].green
-            status[4 + n] = status[4 + n].green
+            status[2 + n] = status[2 + n]
+            status[4 + n] = status[4 + n]
           elsif l < 0
             status[0] = status[0][0..(l - 4)] + '...'
-            status[1 + n] = status[1 + n].green
-            status[3 + n] = status[3 + n].green
+            status[1 + n] = status[1 + n]
+            status[3 + n] = status[3 + n]
           end
-          status[0] = status[0].green
-          # status[1] = status[1].green
-          # status[0 + n] = status[0 + n].green
+          status[0] = status[0]
+          # status[1] = status[1]
+          # status[0 + n] = status[0 + n]
           puts "\r" * last.size + status.join
         end
       end

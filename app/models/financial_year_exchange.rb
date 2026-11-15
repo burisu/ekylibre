@@ -53,7 +53,7 @@ class FinancialYearExchange < ApplicationRecord
   has_many :journals
 
   has_one :accountant, through: :financial_year
-  has_attached_file :import_file, path: ':tenant/:class/:id/:style.:extension'
+  has_file :import_file
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :closed_at, :import_file_updated_at, :public_token_expired_at, timeliness: { on_or_after: -> { Time.new(1, 1, 1).in_time_zone }, on_or_before: -> { Time.zone.now + 100.years } }, allow_blank: true
   validates :exported_journal_ids, :import_file_content_type, :import_file_file_name, length: { maximum: 500 }, allow_blank: true
@@ -67,13 +67,12 @@ class FinancialYearExchange < ApplicationRecord
   validates :stopped_on, presence: true, timeliness: { on_or_before: ->(exchange) { exchange.financial_year_stopped_on || (Time.zone.today + 100.years) }, type: :date }
   validates :started_on, presence: true, timeliness: { on_or_after: ->(exchange) { exchange.financial_year_started_on }, type: :date }
   validates :format, presence: true
-  do_not_validate_attachment_file_type :import_file
 
   scope :opened, -> { where(closed_at: nil) }
   scope :closed, -> { where.not(closed_at: nil) }
   scope :at, ->(date) { where('? BETWEEN started_on AND stopped_on', date) }
 
-  enumerize :format, in: %i[ekylibre isacompta], default: :ekylibre, predicates: true, scope: true
+  has_enum :format, in: %i[ekylibre isacompta], default: :ekylibre, predicates: true, scope: true
 
   class << self
     def for_public_token(public_token)

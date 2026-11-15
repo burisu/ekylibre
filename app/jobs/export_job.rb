@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ExportJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
@@ -11,7 +13,7 @@ class ExportJob < ApplicationJob
     name = params['template'].to_i
 
     unless template = DocumentTemplate.find_active_template(name)
-      raise StandardError.new("Can not find template for \#{name.inspect}")
+      raise StandardError.new("Can not find template for #{name.inspect}")
     end
 
     filename = "#{klass.human_name}.#{format}"
@@ -19,9 +21,12 @@ class ExportJob < ApplicationJob
     key = params['key'] || SecureRandom.hex(2)
     # Export and send file
     begin
-      # Export the file
-      path = template.export(aggregator.to_xml, key, format)
-      document_id = Document.find_by(key: key).id
+      # Print the aggregator with its template and archive the PDF
+      printer = Printers::AggregatorPrinter.new(template: template, aggregator: aggregator, key: key)
+      pdf = Ekylibre::DocumentManagement::DocumentGenerator.build.generate_pdf(template: template, printer: printer)
+      document = Ekylibre::DocumentManagement::DocumentArchiver.build.archive_document(pdf_content: pdf, template: template, key: key, name: printer.document_name)
+      path = document.file_path
+      document_id = document.id
       # Send a notification to user
       notification = user.notifications.build(valid_generation_notification_params(path, filename, document_id))
     rescue => error

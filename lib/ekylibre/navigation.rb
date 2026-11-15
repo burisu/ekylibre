@@ -1,10 +1,5 @@
 module Ekylibre
   module Navigation
-    autoload :DSL,  'ekylibre/navigation/dsl'
-    autoload :Node, 'ekylibre/navigation/node'
-    autoload :Page, 'ekylibre/navigation/page'
-    autoload :Tree, 'ekylibre/navigation/tree'
-
     class ReverseImpossible < StandardError
     end
 

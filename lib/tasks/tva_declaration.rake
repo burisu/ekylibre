@@ -3,7 +3,7 @@ namespace :tva_declaration do
   # use it with command : rake tva_declaration:tax_declaration
   task tax_declaration: :environment do |t, args|
     set_parameters(args, false)
-    puts 'start to generate tax_declaration it could take a while...'.green
+    puts 'start to generate tax_declaration it could take a while...'
     l = []
     fy = FinancialYear.on(@started_on)
     td = TaxDeclaration.create!(financial_year: fy, started_on: @started_on, stopped_on: @started_on.end_of_month)
@@ -12,7 +12,7 @@ namespace :tva_declaration do
       csv_generation(td, csv)
     end
     td.attachments.create!(document: Document.create!(file: File.open(path)))
-    puts 'Tax declaration is generated'.green
+    puts 'Tax declaration is generated'
   end
 
   desc "Generate tax declaration file"
@@ -34,7 +34,7 @@ namespace :tva_declaration do
     end
 
     def create_tax_declaration_file
-      puts 'Start to generate_file'.green
+      puts 'Start to generate_file'
       taxe_declarations = TaxDeclaration.where('started_on >= ? AND stopped_on <= ?', @started_on, @stopped_on)
       path = "private/integration/tmp/year-tax-declarations#{@started_on}.csv"
       CSV.open(path, 'w') do |csv|
@@ -42,26 +42,26 @@ namespace :tva_declaration do
           csv_generation(td, csv)
         end
       end
-      puts "File is generated => #{path}".green
+      puts "File is generated => #{path}"
     end
 
     def set_parameters(args, end_date = true)
       until @tenant.present?
-        puts 'Enter tenant name :'.blue
+        puts 'Enter tenant name :'
         @tenant = STDIN.gets.chomp
       end
-      puts Ekylibre::Tenant.switch!(@tenant).to_s.yellow
+      puts Ekylibre::Tenant.switch!(@tenant).to_s
 
       until @started_on.present?
-        puts 'Enter date of start (dd/mm/yyyy):'.blue
+        puts 'Enter date of start (dd/mm/yyyy):'
         @started_on = STDIN.gets.chomp.to_date
       end
-      puts @started_on.to_s.yellow
+      puts @started_on.to_s
 
       if end_date
-        puts 'Enter date of end (empty if end of month) (dd/mm/yyyy):'.blue
+        puts 'Enter date of end (empty if end of month) (dd/mm/yyyy):'
         @stopped_on = STDIN.gets.chomp&.to_date || @started_on.end_of_month
-        puts @stopped_on.to_s.yellow
+        puts @stopped_on.to_s
       end
     end
 end

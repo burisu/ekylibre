@@ -18,8 +18,8 @@
 
 module Backend
   class EntityAddressesController < Backend::BaseController
-    manage_restfully mail_country: 'Entity.find(params[:entity_id]).country rescue Preference[:country]'.c,
-                     t3e: { entity: '@entity_address.entity.full_name'.c },
+    manage_restfully mail_country: -> { Entity.find(params[:entity_id]).country rescue Preference[:country] },
+                     t3e: { entity: -> { @entity_address.entity.full_name } },
                      except: %i[index show]
     unroll :coordinate
 

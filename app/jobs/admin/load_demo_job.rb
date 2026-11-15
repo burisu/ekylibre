@@ -1,8 +1,8 @@
 module Admin
-  # Holds Redis key constants and status accessors used by both
+  # Holds status key constants and status accessors used by both
   # the controller (status polling) and the rake task (admin:demo:load).
   class LoadDemoJob < ApplicationJob
-    REDIS_KEY   = 'ekylibre:admin:demo'.freeze
+    STATUS_KEY   = 'ekylibre:admin:demo'.freeze
     DEMO_FOLDER = 'demo'.freeze
     TENANT_NAME = 'demo'.freeze
 
@@ -27,19 +27,17 @@ module Admin
     }.freeze
 
     def self.current_status
-      Sidekiq.redis do |r|
-        result = r.hgetall(REDIS_KEY)
-        {
-          status:      result['status']      || 'idle',
-          message:     result['message']     || '',
-          step:        result['step']&.to_i,
-          total_steps: result['total_steps']&.to_i
-        }
-      end
+      result = Ekylibre::TaskStatus.read(STATUS_KEY)
+      {
+        status:      result['status']      || 'idle',
+        message:     result['message']     || '',
+        step:        result['step']&.to_i,
+        total_steps: result['total_steps']&.to_i
+      }
     end
 
     def self.reset!
-      Sidekiq.redis { |r| r.del(REDIS_KEY) }
+      Ekylibre::TaskStatus.delete(STATUS_KEY)
     end
   end
 end

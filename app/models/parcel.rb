@@ -73,9 +73,9 @@ class Parcel < ApplicationRecord
   include Customizable
   attr_readonly :currency
   refers_to :currency
-  enumerize :nature, in: %i[incoming outgoing], predicates: true, scope: true, default: :incoming
-  enumerize :delivery_mode, in: %i[transporter us third], predicates: { prefix: true }, scope: true, default: :us
-  enumerize :reconciliation_state, in: %i[to_reconcile reconcile], default: :to_reconcile
+  has_enum :nature, in: %i[incoming outgoing], predicates: true, scope: true, default: :incoming
+  has_enum :delivery_mode, in: %i[transporter us third], predicates: { prefix: true }, scope: true, default: :us
+  has_enum :reconciliation_state, in: %i[to_reconcile reconcile], default: :to_reconcile
   belongs_to :address, class_name: 'EntityAddress'
   belongs_to :delivery
   belongs_to :journal_entry, dependent: :destroy
@@ -199,12 +199,12 @@ class Parcel < ApplicationRecord
   end
 
   def nature
-    # ActiveSupport::Deprecation.warn('Parcel#nature is deprecated, please use Parcel#type instead. This method will be removed in next major release 3.0')
+    # Ekylibre.deprecator.warn('Parcel#nature is deprecated, please use Parcel#type instead. This method will be removed in next major release 3.0')
     super
   end
 
   def nature=(value)
-    # ActiveSupport::Deprecation.warn('Parcel#nature= is deprecated, please use STI instead. This method will be removed in next major release 3.0')
+    # Ekylibre.deprecator.warn('Parcel#nature= is deprecated, please use STI instead. This method will be removed in next major release 3.0')
     super(value)
   end
 

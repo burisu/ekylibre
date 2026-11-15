@@ -45,9 +45,9 @@
 
 class Import < ApplicationRecord
   belongs_to :importer, class_name: 'User'
-  enumerize :nature, in: ActiveExchanger::Base.importers.keys, i18n_scope: ['exchangers']
-  enumerize :state, in: %i[undone in_progress errored aborted finished], predicates: true, default: :undone
-  has_attached_file :archive, path: ':tenant/:class/:id/:style.:extension'
+  has_enum :nature, in: ActiveExchanger::Base.importers.keys, i18n_scope: ['exchangers']
+  has_enum :state, in: %i[undone in_progress errored aborted finished], predicates: true, default: :undone
+  has_file :archive
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :archive_content_type, :archive_file_name, length: { maximum: 500 }, allow_blank: true
   validates :archive_file_size, numericality: { only_integer: true, greater_than: -2_147_483_649, less_than: 2_147_483_648 }, allow_blank: true
@@ -56,7 +56,6 @@ class Import < ApplicationRecord
   validates :progression_percentage, numericality: { greater_than: -1_000_000_000_000_000, less_than: 1_000_000_000_000_000 }, allow_blank: true
   # ]VALIDATORS]
   validates :progression_percentage, inclusion: { in: 0..100, allow_blank: true }
-  do_not_validate_attachment_file_type :archive
 
   scope :finished, -> { where(state: :finished) }
 
@@ -74,8 +73,9 @@ class Import < ApplicationRecord
 
     # Create an import and run it directly
     def launch_result!(nature, file, options = {}, &block)
-      f = File.open(file)
-      import = create!(nature: nature, archive: f, options: options)
+      # Uploaded right away: the import runs before the end of the transaction
+      archive = ActiveStorage::Blob.create_and_upload!(io: File.open(file), filename: File.basename(file))
+      import = create!(nature: nature, archive: archive, options: options)
       import.run_result(&block)
     end
 
@@ -93,7 +93,7 @@ class Import < ApplicationRecord
   end
 
   def run(&block)
-    run_result(&block).to_bool
+    run_result(&block).success?
   end
 
   def file_size
@@ -125,7 +125,7 @@ class Import < ApplicationRecord
     import_options = options || {}
     import_options = import_options.merge(import_id: id)
 
-    result = ActiveExchanger::Base.run(nature, archive.path, options: import_options) do |progression, count|
+    result = ActiveExchanger::Base.run(nature, archive_path, options: import_options) do |progression, count|
       update_columns(progression_percentage: progression)
       File.write(progress_file, progression.to_i.to_s)
       block.call(progression, count) if block.present?
@@ -162,7 +162,7 @@ class Import < ApplicationRecord
   end
 
   def runnable?
-    undone? && archive.file?
+    undone? && archive.attached?
   end
 
   # Removing progress file is the signal to interrupt the process

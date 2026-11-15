@@ -21,7 +21,7 @@ module Ekylibre
       clusters = JSON.parse(file.read)
       ensure_clusters_valid_geojson(clusters)
       clusters['features'].each do |feature|
-        shape = ::Charta.from_geojson(feature)
+        shape = ::Geo.from_geojson(feature)
         properties = feature['properties']
         next unless properties["activity_id"]
 

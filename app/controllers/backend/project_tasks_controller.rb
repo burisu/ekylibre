@@ -28,22 +28,23 @@ module Backend
     #   :period Two Dates with _ separator
     #   :variant_id
     def self.list_conditions
-      code = ''
-      code = search_conditions(project_tasks: %i[name comment]) + " ||= []\n"
-      code << "  if params[:project_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{Project.table_name}.id = ?\"\n"
-      code << "    c << params[:project_id].to_i\n"
-      code << "  end\n"
-      code << "  if params[:team_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{Team.table_name}.id = ?\"\n"
-      code << "    c << params[:team_id].to_i\n"
-      code << "  end\n"
-      code << "  if params[:responsible_id].to_i > 0\n"
-      code << "    c[0] << \" AND \#{User.table_name}.id = ?\"\n"
-      code << "    c << params[:responsible_id].to_i\n"
-      code << "  end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(project_tasks: %i[name comment])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:project_id].to_i > 0
+          c[0] << " AND #{Project.table_name}.id = ?"
+          c << params[:project_id].to_i
+        end
+        if params[:team_id].to_i > 0
+          c[0] << " AND #{Team.table_name}.id = ?"
+          c << params[:team_id].to_i
+        end
+        if params[:responsible_id].to_i > 0
+          c[0] << " AND #{User.table_name}.id = ?"
+          c << params[:responsible_id].to_i
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: %i[project team]) do |t|
@@ -62,12 +63,12 @@ module Backend
       # t.column :sale_contract_item, index: true, hidden: true
     end
 
-    list :task_logs, model: :worker_time_logs, conditions: { project_task_id: 'params[:id]'.c } do |t|
+    list :task_logs, model: :worker_time_logs, conditions: { project_task_id: -> { params[:id] } } do |t|
       t.column :worker, url: true
       t.column :started_at, datatype: :datetime
       t.column :stopped_at, datatype: :datetime
       t.column :description
-      t.column :human_duration, on_select: :sum, value_method: 'duration.in(:second).in(:hour)', datatype: :decimal, class: 'center-align'
+      t.column :human_duration, on_select: :sum, value_method: ->(record) { record.duration.in(:second).in(:hour) }, datatype: :decimal, class: 'center-align'
       t.column :travel_expense, hidden: true
       t.column :travel_expense_details, hidden: true
     end

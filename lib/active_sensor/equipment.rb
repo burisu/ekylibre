@@ -7,7 +7,7 @@ module ActiveSensor
     class << self
       # Register an equipment in global base
       def register(vendor, model, options = {})
-        # puts "Register #{vendor.to_s.yellow} #{model.to_s.green}"
+        # puts "Register #{vendor.to_s} #{model.to_s}"
         if ActiveSensor::Equipment.find(vendor, model)
           Rails.logger.warn "Equipment #{vendor}:#{model} already exists. Will be overriden"
           erase(vendor, model)
@@ -26,7 +26,7 @@ module ActiveSensor
       def register_many(path, _options = {})
         raise "Cannot find #{path}" unless Pathname(path).exist?
 
-        sensors = YAML.load_file(path).deep_symbolize_keys
+        sensors = YAML.safe_load_file(path, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
         sensors.each do |vendor, models|
           models.each do |model, options|
             register(vendor, model, options)

@@ -3,15 +3,12 @@ set -e
 
 if [ $RAILS_ENV == "development" ]; then
   cp -n docker/dev/.env.dist .env
-  bundle install --path vendor/bundle
-  yarn install --check-files
+  bundle config set --local path vendor/bundle
+  bundle install
 fi
 
-echo "==DB CREATE=="
-bundle exec rake db:create
-
-echo "==DB MIGRATE=="
-bundle exec rake db:migrate
+echo "==DB PREPARE=="
+bundle exec rake db:prepare
 
 # if args passed
 if [[ $# -ge 1 ]]; then
@@ -44,11 +41,15 @@ else
 fi
 
 if [ $RAILS_ENV == "production" ]; then
-   echo "==START UNICORN=="
-   bundle exec unicorn -c config/unicorn.rb
+   echo "==START PUMA=="
+   exec bundle exec puma -C config/puma.rb
 fi
 
 if [ $RAILS_ENV == "development" ]; then
+   echo "==BUILD THEMES=="
+   bundle exec rake dartsass:build
+   bundle exec rake dartsass:watch &
+
    echo "==START RAILS SERVER=="
    rm -f tmp/pids/server.pid
    ./bin/rails s -p 3000 -b '0.0.0.0';

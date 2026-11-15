@@ -39,7 +39,7 @@
 #  updater_id   :integer(4)
 #
 class IdeaDiagnostic < ApplicationRecord
-  enumerize :state, in: %i[idea_doing done], default: :idea_doing, predicates: true
+  has_enum :state, in: %i[idea_doing done], default: :idea_doing, predicates: true
   has_many :idea_diagnostic_items, dependent: :destroy
   has_one :idea_diagnostic_result, dependent: :destroy
   belongs_to :auditor, class_name: 'Entity'

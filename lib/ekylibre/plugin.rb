@@ -80,21 +80,20 @@ module Ekylibre
         end
       end
 
-      # Generate a javascript for all plugins which refes by theme to add addons import.
-      # This way permit to use natural sprocket cache approach without ERB filtering
+      # JavaScript files (asset logical paths) added by plugins and extensions,
+      # loaded after the application ones (see ApplicationHelper#legacy_javascript_tags)
+      def javascripts
+        @javascripts ||= []
+      end
+
       def generate_javascript_index
-        base_dir = Rails.root.join('tmp', 'plugins', 'javascript-addons')
-        Rails.application.config.assets.paths << base_dir.to_s
-        script = "# This files contains JS addons from plugins\n"
         each do |plugin|
           plugin.javascripts.each do |path|
-            script << "#= require #{path}\n"
+            path = path.to_s
+            path += '.js' unless path.end_with?('.js')
+            javascripts << path unless javascripts.include?(path)
           end
         end
-        # <base_dir>/plugins.js.coffee
-        file = base_dir.join('plugins.js.coffee')
-        FileUtils.mkdir_p file.dirname
-        File.write(file, script)
       end
 
       # Generate a stylesheet by theme to add addons import.
@@ -161,10 +160,7 @@ module Ekylibre
       @initializers = {}
 
       lib = @root.join('lib')
-      if File.directory?(lib)
-        $LOAD_PATH.unshift lib
-        ActiveSupport::Dependencies.autoload_paths += [lib]
-      end
+      $LOAD_PATH.unshift lib if File.directory?(lib)
 
       instance_eval(File.read(plugfile_path), plugfile_path, 1)
 
@@ -186,10 +182,9 @@ module Ekylibre
       @right_file = root.join('config', 'rights.yml')
       Ekylibre::Access.load_file(@right_file) if @right_file.exist?
 
-      # Adds aggregators
-      @aggregators_path = @root.join('config', 'aggregators')
-      if @aggregators_path.exist?
-        Aggeratio.load_path += Dir.glob(@aggregators_path.join('**', '*.xml'))
+      # Aggregators are Ruby classes registered by the plugin (Aggeratio.register)
+      if @root.join('config', 'aggregators').exist?
+        Rails.logger.warn "Plugin #{plugfile_path}: XML aggregators are not supported anymore, register Aggeratio::Aggregator classes"
       end
 
       # Adds initializers
@@ -214,21 +209,8 @@ module Ekylibre
         ActionMailer::Base.prepend_view_path(@view_path)
       end
 
-      # Adds the app/{controllers,helpers,models} directories of the plugin to the autoload path
-      Dir.glob File.expand_path(@root.join('app', '{controllers,exchangers,guides,helpers,inputs,integrations,jobs,mailers,models}')) do |dir|
-        ActiveSupport::Dependencies.autoload_paths += [dir]
-        $LOAD_PATH.unshift(dir) if Dir.exist?(dir)
-      end
-
-      # Load all exchanger
-      Dir.glob(@root.join('app', 'exchangers', '**', '*.rb')).each do |path|
-        require path
-      end
-
-      # Adds the app/{controllers,helpers,models} concerns directories of the plugin to the autoload path
-      Dir.glob File.expand_path(@root.join('app', '{controllers,models}/concerns')) do |dir|
-        ActiveSupport::Dependencies.autoload_paths += [dir]
-      end
+      # The app/ directories of the plugin are autoloaded (see config/application.rb)
+      # and its exchangers are registered lazily by ActiveExchanger::Base
 
       # Load helpers
       helpers_path = @root.join('app', 'helpers')

@@ -31,9 +31,9 @@ module Procedo
             val = attributes["#{datatype}_value".to_sym]
             @value = if %i[point geometry multi_polygon].include?(datatype)
                        if val.blank? || val == 'null'
-                         Charta.empty_geometry
+                         Geo.empty_geometry
                        else
-                         val = Charta.from_geojson(val)
+                         val = Geo.from_geojson(val)
                          val.srid = 4326 if val.srid.zero?
                          val.convert_to(datatype)
                        end

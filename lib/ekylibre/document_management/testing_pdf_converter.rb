@@ -14,8 +14,8 @@ module Ekylibre
         @file = file
       end
 
-      # @param [Array<byte>] _odt_data
-      def convert_data(_odt_data)
+      # @param [String] _html
+      def convert_html(_html, base_url: nil)
         file.binread
       end
 

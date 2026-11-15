@@ -15,7 +15,7 @@
     %td= f.input(:pretax_amount, wrapper: :nested, input_html: {class: "pta", size: 8, data: {trade_component: "pretax_amount"}})
     %td= f.input(:amount, wrapper: :nested, input_html: {class: "wta", size: 8, data: {trade_component: "amount"}})
     %td.currency= f.object.purchase_currency
-    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-no-turbolink' => true, class: 'remove-item')
+    %td.action= link_to_remove_association(content_tag(:i) + h(:destroy.ta), f, 'data-turbo' => false, class: 'remove-item')
 
   %tr.tr-add-on
     %td{ colspan: 10 }

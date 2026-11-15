@@ -126,16 +126,6 @@ rubocop:
   script:
     - rubocop --parallel
 
-eslint:
-  stage: lint
-  image: node:14-alpine
-  variables:
-    GIT_DEPTH: 1
-  script:
-    - apk add git
-    - yarn
-    - yarn eslint .
-
 # Unactivate until it s passed in local
 # 
 # hamllint:

@@ -8,7 +8,7 @@ module ActionIntegration
       end
 
       ::Call.include(protocol)
-      Rails.logger.info "#{protocol.name} included in Call.".yellow
+      Rails.logger.info "#{protocol.name} included in Call."
 
       # Delegating all the request methods from ActionIntegration to its Call object.
       protocol.instance_methods.each do |m|

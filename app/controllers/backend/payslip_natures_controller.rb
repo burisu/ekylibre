@@ -1,6 +1,6 @@
 module Backend
   class PayslipNaturesController < Backend::BaseController
-    manage_restfully currency: 'Preference[:currency]'.c
+    manage_restfully currency: -> { Preference[:currency] }
 
     unroll
 

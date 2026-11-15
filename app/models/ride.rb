@@ -89,7 +89,7 @@ class Ride < ApplicationRecord
   }
 
   acts_as_numbered :number
-  enumerize :nature, in: %i[road work], scope: true
+  has_enum :nature, in: %i[road work], scope: true
 
   def state
     return :affected if intervention_id.present?

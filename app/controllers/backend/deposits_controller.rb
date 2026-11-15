@@ -25,28 +25,30 @@ module Backend
     unroll
 
     def self.deposit_conditions(_options = {})
-      code = search_conditions(incoming_payments: %i[bank_check_number number]) + "||=[]\n"
-      code << "if params[:paid_at].present? && params[:paid_at].to_s != 'all'\n"
-      code << " c[0] << ' AND #{IncomingPayment.table_name}.paid_at::DATE BETWEEN ? AND ?'\n"
-      code << " if params[:paid_at].to_s == 'interval'\n"
-      code << "   c << params[:paid_at_started_on]\n"
-      code << "   c << params[:paid_at_stopped_on]\n"
-      code << " else\n"
-      code << "   interval = params[:paid_at].to_s.split('_')\n"
-      code << "   c << interval.first\n"
-      code << "   c << interval.second\n"
-      code << " end\n"
-      code << "end\n"
-      code << "if params[:id].present?\n"
-      code << "  c[0] += \" AND \#{IncomingPayment.table_name}.deposit_id = ?\"\n"
-      code << "  c << params[:id]\n"
-      code << "else\n"
-      code << "  c[0] += \" AND \#{IncomingPayment.table_name}.mode_id = ?\"\n"
-      code << "  c << params[:mode_id]\n"
-      code << "  c[0] += \" AND \#{IncomingPayment.table_name}.deposit_id IS NULL\"\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(incoming_payments: %i[bank_check_number number])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:paid_at].present? && params[:paid_at].to_s != 'all'
+          c[0] << " AND #{IncomingPayment.table_name}.paid_at::DATE BETWEEN ? AND ?"
+          if params[:paid_at].to_s == 'interval'
+            c << params[:paid_at_started_on]
+            c << params[:paid_at_stopped_on]
+          else
+            interval = params[:paid_at].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        if params[:id].present?
+          c[0] += " AND #{IncomingPayment.table_name}.deposit_id = ?"
+          c << params[:id]
+        else
+          c[0] += " AND #{IncomingPayment.table_name}.mode_id = ?"
+          c << params[:mode_id]
+          c[0] += " AND #{IncomingPayment.table_name}.deposit_id IS NULL"
+        end
+        c
+      end
     end
 
     list(order: { created_at: :desc }) do |t|
@@ -70,7 +72,7 @@ module Backend
       end
     end
 
-    list(:payments, model: :incoming_payments, conditions: { deposit_id: 'params[:id]'.c }, pagination: :none, order: :number) do |t|
+    list(:payments, model: :incoming_payments, conditions: { deposit_id: -> { params[:id] } }, pagination: :none, order: :number) do |t|
       t.column :number, url: true
       t.column :payer, url: true
       t.column :bank_name
@@ -89,7 +91,7 @@ module Backend
                                        { payments: { include: :payer } }])
     end
 
-    list(:depositable_payments, model: :incoming_payments, conditions: deposit_conditions, paginate: true, order: %i[to_bank_at created_at], line_class: "((resource.payments.exists?(RECORD.id) rescue false) ? 'success' : (RECORD.to_bank_at.to_date || Date.yesterday) > Time.zone.today ? 'critic' : '')".c) do |t|
+    list(:depositable_payments, model: :incoming_payments, conditions: deposit_conditions, paginate: true, order: %i[to_bank_at created_at], line_class: ->(record) { ((resource.payments.exists?(record.id) rescue false) ? 'success' : (record.to_bank_at.to_date || Date.yesterday) > Time.zone.today ? 'critic' : '') }) do |t|
       t.column :number, url: true
       t.column :payer, url: true
       t.column :bank_name
@@ -98,7 +100,7 @@ module Backend
       t.column :paid_at
       t.column :responsible
       t.column :amount, currency: true
-      t.check_box :to_deposit, value: '(resource.payments.exists?(RECORD.id) rescue false) || (RECORD.to_bank_at.to_date <= Time.zone.today && (params[:id].blank? ? (RECORD.responsible.nil? or RECORD.responsible_id == current_user.person_id) : (RECORD.deposit_id == params[:id])))'.c, label: :to_deposit.tl, form_name: 'deposit[payment_ids][]', form_value: 'RECORD.id'.c
+      t.check_box :to_deposit, value: ->(record) { (resource.payments.exists?(record.id) rescue false) || (record.to_bank_at.to_date <= Time.zone.today && (params[:id].blank? ? (record.responsible.nil? or record.responsible_id == current_user.person_id) : (record.deposit_id == params[:id]))) }, label: :to_deposit.tl, form_name: 'deposit[payment_ids][]', form_value: ->(record) { record.id }
     end
 
     def new
@@ -153,7 +155,7 @@ module Backend
       t.column :amount
       t.column :payments_count
       t.column :cash, url: true
-      t.check_box :validated, value: 'RECORD.created_at <= Time.zone.today-(15)'.c
+      t.check_box :validated, value: ->(record) { record.created_at <= Time.zone.today-(15) }
     end
 
     def unvalidateds
@@ -163,7 +165,7 @@ module Backend
         for id, values in params[:unvalidateds] || {}
           return unless deposit = find_and_check(id: id)
 
-          deposit.update_attributes!(locked: true) if deposit && values[:validated].to_i == 1
+          deposit.update!(locked: true) if deposit && values[:validated].to_i == 1
         end
         # rubocop:enable Style/For
         redirect_to action: :unvalidateds

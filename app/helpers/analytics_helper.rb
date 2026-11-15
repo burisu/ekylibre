@@ -2,20 +2,20 @@ module AnalyticsHelper
   def matomo_tag
     return '' unless Preference.get(:allow_analytics, false, :boolean).value
 
-    piwik_tracking_tag + turbolinks_compatibility_tag
+    piwik_tracking_tag + turbo_compatibility_tag
   end
 
   private
-    def turbolinks_compatibility_tag
+    def turbo_compatibility_tag
       tag = <<-HTML
         <script type="text/javascript">
           // [Matomo tracking code goes here]
 
-          // Send Matomo a new event when navigating to a new page using Turbolinks
+          // Send Matomo a new event when navigating to a new page using Turbo
           // (see https://developer.matomo.org/guides/spa-tracking)
           (function() {
             var previousPageUrl = null;
-            document.addEventListener('turbolinks:load', function(event) {
+            document.addEventListener('turbo:load', function(event) {
               if (previousPageUrl) {
                 _paq.push(['setReferrerUrl', previousPageUrl]);
                 _paq.push(['setCustomUrl', window.location.href]);

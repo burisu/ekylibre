@@ -16,13 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-require_dependency 'procedo'
 
 using Ekylibre::Utils::DateSoftParse
 
 module Backend
   class InterventionsController < Backend::BaseController
-    manage_restfully t3e: { procedure_name: '(RECORD.procedure ? RECORD.procedure.human_name : nil)'.c, name: 'RECORD.name'.c },
+    manage_restfully t3e: { procedure_name: ->(record) { (record.procedure ? record.procedure.human_name : nil) }, name: ->(record) { record.name } },
                      continue: %i[nature procedure_name crop_group_ids]
 
     respond_to :pdf, :odt, :docx, :xml, :json, :html, :csv
@@ -41,87 +40,86 @@ module Backend
       expressions = []
       expressions << 'CASE ' + Procedo.selection.map { |l, n| "WHEN #{Intervention.table_name}.procedure_name = #{conn.quote(n)} THEN #{conn.quote(l)}" }.join(' ') + " ELSE '' END"
 
-      code = <<~RUBY
-        #{search_conditions({ interventions: %i[state procedure_name number] }, expressions: expressions)} ||= []
+      search = search_conditions({ interventions: %i[state procedure_name number] }, expressions: expressions)
+      lambda do
+        c = instance_exec(&search)
 
         if params[:state].present?
-          c[0] << ' AND #{Intervention.table_name}.state IN (?)'
+          c[0] << " AND #{Intervention.table_name}.state IN (?)"
           c << params[:state]
         end
 
         if params[:nature].present?
-          c[0] << ' AND #{Intervention.table_name}.nature IN (?)'
+          c[0] << " AND #{Intervention.table_name}.nature IN (?)"
           c << params[:nature]
         end
 
-        c[0] << ' AND #{Intervention.table_name}.state != ?'
-        c[0] << ' AND ((#{Intervention.table_name}.nature = ? AND I.request_intervention_id IS NULL) OR #{Intervention.table_name}.nature = ?)'
-        c << '#{Intervention.state.rejected}'
+        c[0] << " AND #{Intervention.table_name}.state != ?"
+        c[0] << " AND ((#{Intervention.table_name}.nature = ? AND I.request_intervention_id IS NULL) OR #{Intervention.table_name}.nature = ?)"
+        c << Intervention.state.rejected.to_s
         c << 'request'
         c << 'record'
 
         if params[:cultivable_zone_id].present?
-          c[0] << ' AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM activity_productions_interventions INNER JOIN #{ActivityProduction.table_name} ON #{ActivityProduction.table_name}.id = activity_production_id INNER JOIN #{CultivableZone.table_name} ON #{CultivableZone.table_name}.id = #{ActivityProduction.table_name}.cultivable_zone_id WHERE #{CultivableZone.table_name}.id = ' + params[:cultivable_zone_id] + ')'
-          c
+          c[0] << " AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM activity_productions_interventions INNER JOIN #{ActivityProduction.table_name} ON #{ActivityProduction.table_name}.id = activity_production_id INNER JOIN #{CultivableZone.table_name} ON #{CultivableZone.table_name}.id = #{ActivityProduction.table_name}.cultivable_zone_id WHERE #{CultivableZone.table_name}.id = ?)"
+          c << params[:cultivable_zone_id].to_i
         end
 
         if params[:procedure_name_id].present?
-          c[0] << ' AND #{Intervention.table_name}.procedure_name IN (?)'
+          c[0] << " AND #{Intervention.table_name}.procedure_name IN (?)"
           c << params[:procedure_name_id]
         end
 
         if params[:activity_id].present?
-          c[0] << 'AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM interventions INNER JOIN activities_interventions ON activities_interventions.intervention_id = interventions.id INNER JOIN activities ON activities.id = activities_interventions.activity_id WHERE activities.id = ?)'
+          c[0] << "AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM interventions INNER JOIN activities_interventions ON activities_interventions.intervention_id = interventions.id INNER JOIN activities ON activities.id = activities_interventions.activity_id WHERE activities.id = ?)"
           c << params[:activity_id].to_i
         end
 
         if params[:target_id].present?
-          c[0] << ' AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM intervention_parameters WHERE product_id IN (?))'
+          c[0] << " AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM intervention_parameters WHERE product_id IN (?))"
           c << params[:target_id].to_i
         end
 
         if params[:label_id].present?
-          c[0] << ' AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM intervention_labellings WHERE label_id IN (?))'
+          c[0] << " AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM intervention_labellings WHERE label_id IN (?))"
           c << params[:label_id].to_i
         end
 
         if params[:worker_id].present?
-           c[0] << ' AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM interventions INNER JOIN #{InterventionDoer.table_name} ON #{InterventionDoer.table_name}.intervention_id = #{Intervention.table_name}.id WHERE #{InterventionDoer.table_name}.product_id = ?)'
+           c[0] << " AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM interventions INNER JOIN #{InterventionDoer.table_name} ON #{InterventionDoer.table_name}.intervention_id = #{Intervention.table_name}.id WHERE #{InterventionDoer.table_name}.product_id = ?)"
            c << params[:worker_id].to_i
         end
 
         if params[:equipment_id].present?
-           c[0] << ' AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM interventions INNER JOIN #{InterventionParameter.table_name} ON #{InterventionParameter.table_name}.intervention_id = #{Intervention.table_name}.id WHERE #{InterventionParameter.table_name}.product_id = ?)'
+           c[0] << " AND #{Intervention.table_name}.id IN (SELECT intervention_id FROM interventions INNER JOIN #{InterventionParameter.table_name} ON #{InterventionParameter.table_name}.intervention_id = #{Intervention.table_name}.id WHERE #{InterventionParameter.table_name}.product_id = ?)"
            c << params[:equipment_id].to_i
         end
 
         if current_period_interval.present? && current_period.present?
           if current_period_interval.to_sym == :day
-            c[0] << ' AND EXTRACT(DAY FROM #{Intervention.table_name}.started_at) = ? AND EXTRACT(MONTH FROM #{Intervention.table_name}.started_at) = ? AND EXTRACT(YEAR FROM #{Intervention.table_name}.started_at) = ?'
+            c[0] << " AND EXTRACT(DAY FROM #{Intervention.table_name}.started_at) = ? AND EXTRACT(MONTH FROM #{Intervention.table_name}.started_at) = ? AND EXTRACT(YEAR FROM #{Intervention.table_name}.started_at) = ?"
             c << current_period.to_date.day
             c << current_period.to_date.month
             c << current_period.to_date.year
 
           elsif current_period_interval.to_sym == :week
-            c[0] << ' AND #{Intervention.table_name}.started_at >= ? AND #{Intervention.table_name}.stopped_at <= ?'
+            c[0] << " AND #{Intervention.table_name}.started_at >= ? AND #{Intervention.table_name}.stopped_at <= ?"
             c << current_period.to_date.at_beginning_of_week.to_time.beginning_of_day
             c << current_period.to_date.at_end_of_week.to_time.end_of_day
 
           elsif current_period_interval.to_sym == :month
-            c[0] << ' AND EXTRACT(MONTH FROM #{Intervention.table_name}.started_at) = ? AND EXTRACT(YEAR FROM #{Intervention.table_name}.started_at) = ?'
+            c[0] << " AND EXTRACT(MONTH FROM #{Intervention.table_name}.started_at) = ? AND EXTRACT(YEAR FROM #{Intervention.table_name}.started_at) = ?"
             c << current_period.to_date.month
             c << current_period.to_date.year
 
           elsif current_period_interval.to_sym == :year
-            c[0] << ' AND EXTRACT(YEAR FROM #{Intervention.table_name}.started_at) = ?'
+            c[0] << " AND EXTRACT(YEAR FROM #{Intervention.table_name}.started_at) = ?"
             c << current_period.to_date.year
           end
         end
 
         c
-      RUBY
-
-      code.c
+      end
     end
 
     # INDEX
@@ -138,13 +136,13 @@ module Backend
       t.column :human_activities_names
       t.column :started_at
       t.column :stopped_at, hidden: true
-      t.column :human_working_duration, on_select: :sum, value_method: 'working_duration.in(:second).in(:hour)', datatype: :decimal
+      t.column :human_working_duration, on_select: :sum, value_method: ->(record) { record.working_duration.in(:second).in(:hour) }, datatype: :decimal
       t.status
       t.column :pfi_intervention, hidden: true, class: 'center'
       t.column :state_label, hidden: true
       t.column :human_target_names
       t.column :human_working_zone_area, on_select: :sum, datatype: :decimal
-      t.column :total_cost, label_method: 'costing&.decorate&.human_total_cost', currency: true, datatype: :decimal
+      t.column :total_cost, label_method: ->(record) { record.costing&.decorate&.human_total_cost }, currency: true, datatype: :decimal
       t.column :nature
       t.column :issue, url: true
       t.column :trouble_encountered, hidden: true
@@ -154,17 +152,17 @@ module Backend
 
     # SHOW
 
-    list(:product_parameters, model: :intervention_product_parameters, conditions: { intervention_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:product_parameters, model: :intervention_product_parameters, conditions: { intervention_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :name, sort: :reference_name
       t.column :product, url: true
       # t.column :human_roles, sort: :roles, label: :roles
       t.column :quantity_population
       t.column :unit_name, through: :variant
       # t.column :working_zone, hidden: true
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }
     end
 
-    list(:incoming_harvests, conditions: { intervention_id: 'params[:id]'.c }, order: { received_at: :desc }) do |t|
+    list(:incoming_harvests, conditions: { intervention_id: -> { params[:id] } }, order: { received_at: :desc }) do |t|
       t.column :number, url: true
       t.column :received_at
       t.column :tractor, url: true
@@ -177,18 +175,18 @@ module Backend
     list(
       :service_deliveries,
       model: :reception_items,
-      conditions: { id: 'ReceptionItem.joins(:reception).where(parcels: { intervention_id: params[:id]}).pluck(:id)'.c }
+      conditions: { id: -> { ReceptionItem.joins(:reception).where(parcels: { intervention_id: params[:id]}).pluck(:id) } }
     ) do |t|
-      t.column :variant, url: { controller: 'RECORD.variant.class.name.tableize'.c, namespace: :backend }, label: :service
+      t.column :variant, url: { controller: ->(record) { record.variant.class.name.tableize }, namespace: :backend }, label: :service
       t.column :quantity
-      t.column :sender_full_name, label: :provider, through: :reception, url: { controller: 'backend/entities', id: 'RECORD.reception.sender.id'.c }
-      t.column :purchase_order_number, label: :purchase_order, through: :reception, url: { controller: 'backend/purchase_orders', id: 'RECORD.reception.purchase_order.id'.c }
+      t.column :sender_full_name, label: :provider, through: :reception, url: { controller: 'backend/entities', id: ->(record) { record.reception.sender.id } }
+      t.column :purchase_order_number, label: :purchase_order, through: :reception, url: { controller: 'backend/purchase_orders', id: ->(record) { record.reception.purchase_order.id } }
       t.column :reception, url: true
       t.column :unit_pretax_amount, currency: true
       t.column :pretax_amount, currency: true
     end
 
-    list(:record_interventions, model: :interventions, conditions: { request_intervention_id: 'params[:id]'.c }, order: 'interventions.started_at DESC') do |t|
+    list(:record_interventions, model: :interventions, conditions: { request_intervention_id: -> { params[:id] } }, order: 'interventions.started_at DESC') do |t|
       # t.column :roles, hidden: true
       t.column :name, sort: :reference_name
       t.column :started_at, datatype: :datetime
@@ -216,13 +214,6 @@ module Backend
           notify_success(:document_in_preparation)
           redirect_to backend_interventions_path
         }
-        format.odt do
-          return unless template = DocumentTemplate.find_by_nature(params[:document_nature_name])
-
-          printer = Printers::PhytosanitaryApplicatorSheetPrinter.new(template: template, **dataset_params)
-          g = Ekylibre::DocumentManagement::DocumentGenerator.build
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
-        end
       end
     end
 
@@ -243,8 +234,8 @@ module Backend
       g = Ekylibre::DocumentManagement::DocumentGenerator.build
 
       respond_to do |format|
-        format.odt do
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
+        format.pdf do
+          send_data g.generate_pdf(template: template, printer: printer), filename: "#{printer.document_name}.pdf", type: 'application/pdf'
         end
       end
 
@@ -385,7 +376,7 @@ module Backend
             elsif URI(request.referer).path == '/backend/schedulings/new_detailed_intervention'
               backend_schedulings_path
             else
-              params[:redirect] || { action: :show, id: 'id'.c }
+              params[:redirect] || { action: :show, id: ->(record) { record.id } }
             end
 
       notify = params[:intervention_proposal] ? :record_x_planned : :record_x_created

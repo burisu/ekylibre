@@ -50,17 +50,15 @@ class Admin::TenantsController < Admin::BaseController
     end
 
     # Pre-ecriture du statut 'running' AVANT le spawn : evite la race ou le navigateur
-    # arrive sur /admin et poll Redis avant que la rake task ait fini de booter Rails
+    # arrive sur /admin et interroge le statut avant que la rake task ait fini de booter Rails
     # (~5-10s) et d'ecrire son propre statut. Sans ca, le banner ne s'affiche pas tant
     # qu'on ne refresh pas manuellement.
-    Sidekiq.redis do |r|
-      r.hmset(
-        Admin::CreateTenantJob::REDIS_KEY,
-        'status',  'running',
-        'message', "Demarrage de la creation du tenant '#{name}'...",
-        'tenant',  name
-      )
-    end
+    Ekylibre::TaskStatus.update(
+      Admin::CreateTenantJob::STATUS_KEY,
+      status: 'running',
+      message: "Demarrage de la creation du tenant '#{name}'...",
+      tenant: name
+    )
 
     env = {
       'RAILS_ENV'        => Rails.env,
@@ -108,15 +106,15 @@ class Admin::TenantsController < Admin::BaseController
 
   def dump
     name = params[:id]
-    redis_key = dump_redis_key(name)
+    status_key = dump_status_key(name)
 
-    current = Sidekiq.redis { |r| r.hgetall(redis_key) }
+    current = Ekylibre::TaskStatus.read(status_key)
     if current['status'] == 'running'
       render json: { error: 'Une archive est déjà en cours de création.' }, status: :conflict
       return
     end
 
-    Sidekiq.redis { |r| r.del(redis_key) }
+    Ekylibre::TaskStatus.delete(status_key)
 
     bundle_bin = Gem.bin_path('bundler', 'bundle')
     pid = Process.spawn(
@@ -133,7 +131,7 @@ class Admin::TenantsController < Admin::BaseController
 
   def dump_status
     name = params[:id]
-    result = Sidekiq.redis { |r| r.hgetall(dump_redis_key(name)) }
+    result = Ekylibre::TaskStatus.read(dump_status_key(name))
     archive_path = Rails.root.join('tmp', 'archives', "#{name}.zip")
     archive_exists = result['status'] == 'done' && archive_path.exist?
     render json: {
@@ -159,7 +157,7 @@ class Admin::TenantsController < Admin::BaseController
 
   private
 
-    def dump_redis_key(name)
+    def dump_status_key(name)
       "ekylibre:admin:dump:#{name}"
     end
 

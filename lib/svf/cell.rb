@@ -49,46 +49,37 @@ module SVF
       "#{name}(#{type}/#{length})"
     end
 
-    def parse_value(line = 'line', start = nil)
-      start ||= @start
-      value = "#{line}[#{start}..#{start + length - 1}]"
-      if type == :boolean
-        value = "(#{value} == '1' ? true : false)"
-      elsif type == :date
-        value = "(#{value}.blank? ? nil : Date.civil(#{line}[#{start + 4}..#{start + 7}].to_i, #{line}[#{start + 2}..#{start + 3}].to_i, #{line}[#{start + 0}..#{start + 1}].to_i))"
-      elsif type == :integer
-        value = "#{value}.to_s.strip.to_i"
-      elsif type == :float
-        # size = self.format.split(".")[0].to_i
-        # value = "(#{line}[#{start}..#{start+size-1}]+'.'+#{line}[#{start+size+1}..#{start+self.length-1}]).to_d"
-        value = "(#{value}.blank? ? 0.0 : #{value}.to_s.tr(',', '.').to_d)"
-      elsif type == :decimal
+    # Value of the cell in the given line
+    def parse(line)
+      raw = line[start..(start + length - 1)]
+      case type
+      when :boolean then raw == '1'
+      when :date then raw.blank? ? nil : Date.civil(line[(start + 4)..(start + 7)].to_i, line[(start + 2)..(start + 3)].to_i, line[start..(start + 1)].to_i)
+      when :integer then raw.to_s.strip.to_i
+      when :float then raw.blank? ? 0.0 : raw.to_s.tr(',', '.').to_d
+      when :decimal
         decimal_size = format.split('.').last.to_i
-        value = "(#{line}[#{start}...#{start + length - decimal_size}]+'.'+#{line}[#{start + length - decimal_size}...#{start + length}]).to_d"
-      elsif type == :string
-        value = "#{value}.to_s.strip.encode('UTF-8')"
+        (line[start...(start + length - decimal_size)] + '.' + line[(start + length - decimal_size)...(start + length)]).to_d
+      when :string then raw.to_s.strip.encode('UTF-8')
+      else raw
       end
-      value
     end
 
     def stop
       @start + length - 1
     end
 
-    def format_value(variable)
-      if type == :boolean
-        value = "(#{variable} ? '1' : '0')"
-      elsif type == :date
-        value = "(#{variable}.nil? ? '#{' ' * 8}' : #{variable}.strftime('%d%m%Y'))"
-      elsif type == :integer
-        value = "#{variable}.to_i.to_s.rjust(#{length})[0..#{length - 1}]"
-      elsif type == :float
-        size = format.split('.')
-        value = "(#{variable}.to_i.to_s + ',' + ((#{variable} - #{variable}.to_i)*#{10**size[1].to_i}).to_i.abs.to_s.rjust(#{size[1].to_i}, '0')).rjust(#{length})[0..#{length - 1}]"
-      elsif type == :string
-        value = "#{variable}.to_s.rjust(#{length})[0..#{length - 1}]"
+    # Value formatted for the cell
+    def format_value(value)
+      case type
+      when :boolean then value ? '1' : '0'
+      when :date then value.nil? ? ' ' * 8 : value.strftime('%d%m%Y')
+      when :integer then value.to_i.to_s.rjust(length)[0..(length - 1)]
+      when :float
+        decimals = @format.split('.')[1].to_i
+        (value.to_i.to_s + ',' + ((value - value.to_i) * 10**decimals).to_i.abs.to_s.rjust(decimals, '0')).rjust(length)[0..(length - 1)]
+      when :string then value.to_s.rjust(length)[0..(length - 1)]
       end
-      value
     end
   end
 end

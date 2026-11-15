@@ -14,13 +14,13 @@ module Clients
       PFI_REPORT_PDF_URL = "/api/ift/bilan/pdf".freeze
 
       def down?
-        response = RestClient.get(BASE_URL + DEMO_URL)
-        response.code != 200
+        response = Clients::Http.get(BASE_URL + DEMO_URL)
+        response.status != 200
       end
 
       def get_campaign(harvest_year)
         campaign_url = BASE_URL + PFI_CAMPAIGN_URL + "/" + harvest_year
-        RestClient.get(campaign_url)
+        Clients::Http.get(campaign_url)
       end
 
       def compute(params, with_signature: true)
@@ -30,14 +30,14 @@ module Clients
                 BASE_URL + PFI_COMPUTE_URL
               end
 
-        call = RestClient::Request.execute(method: :get, url: url, headers: { params: params })
+        call = Clients::Http.get(url, params: params)
         JSON.parse(call.body).deep_symbolize_keys
       end
 
       def compute_report(harvest_year, title, body)
         params = "?campagneIdMetier=#{harvest_year}&titre=#{title}"
         url = BASE_URL + PFI_REPORT_PDF_URL + params
-        RestClient.post url, body.to_json, { content_type: 'application/json', accept: 'application/pdf' }
+        Clients::Http.post(url, body.to_json, headers: { 'Content-Type' => 'application/json', 'Accept' => 'application/pdf' })
       end
 
     end

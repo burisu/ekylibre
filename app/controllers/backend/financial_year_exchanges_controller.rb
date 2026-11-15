@@ -20,7 +20,7 @@ module Backend
   class FinancialYearExchangesController < Backend::BaseController
     manage_restfully only: %i[new show]
 
-    list(:journal_entries, conditions: { financial_year_exchange_id: 'params[:id]'.c }, order: { created_at: :desc }) do |t|
+    list(:journal_entries, conditions: { financial_year_exchange_id: -> { params[:id] } }, order: { created_at: :desc }) do |t|
       t.column :number, url: true
       t.column :continuous_number
       t.column :printed_on, datatype: :date
@@ -43,14 +43,14 @@ module Backend
           notify_success(:record_x_created, record: 'activerecord.models.financial_year_exchange'.t, name: @financial_year_exchange.id)
 
           if @financial_year_exchange.isacompta?
-            puts @financial_year_exchange.exported_journal_ids.inspect.yellow
+            puts @financial_year_exchange.exported_journal_ids.inspect
             journal_ids = @financial_year_exchange.exported_journal_ids
             if journal_ids.any?
               missing_code_exchanged_journals = Journal.where(id: journal_ids).where(isacompta_code: [nil, ""])
             else
               missing_code_exchanged_journals = Journal.where(isacompta_code: [nil, ""])
             end
-            puts missing_code_exchanged_journals.inspect.yellow
+            puts missing_code_exchanged_journals.inspect
             if missing_code_exchanged_journals.count > 0
               journals_link = missing_code_exchanged_journals.map do |journal|
                 view_context.link_to(journal.name, edit_backend_journal_url(journal))

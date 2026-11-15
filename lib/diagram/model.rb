@@ -3,7 +3,7 @@ module Diagram
     class << self
       # Build an inheritance graph with given root model
       def inheritance(model, options = {})
-        YAML.load_file(Rails.root.join('db', 'models.yml')).map(&:classify).map(&:constantize)
+        YAML.safe_load_file(Rails.root.join('db', 'models.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).map(&:classify).map(&:constantize)
         models = model.descendants
         options[:name] ||= "#{model.name.underscore}-inheritance"
         graph = Diagram::Graph.new(options.delete(:name), :digraph, rank_dir: 'BT', edge: { color: '#999999' })
@@ -48,7 +48,7 @@ module Diagram
         graph = Diagram::Graph.new(options.delete(:name), :digraph, rank_dir: 'LR', node: { font_color: '#999999', color: '#999999' }, edge: { color: '#999999' })
         polymorphism = false
         table_names = models.map(&:table_name).uniq.map(&:to_s)
-        tables = YAML.load_file(Rails.root.join('db', 'tables.yml')).delete_if { |t, _| !table_names.include?(t) }
+        tables = YAML.safe_load_file(Rails.root.join('db', 'tables.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).delete_if { |t, _| !table_names.include?(t) }
         tables.each do |table_name, columns|
           columns = columns.delete_if { |k, _v| %w[creator_id created_at updater_id updated_at lock_version id].include?(k) }
           label = '<f999> ' + table_name

@@ -157,6 +157,7 @@ class FinancialYearExchangeImport
     end
 
     def save_file
+      file.rewind if file.respond_to?(:rewind)
       exchange.import_file = file
       @error = ActiveRecord::RecordInvalid.new(exchange) unless exchange.save
     end

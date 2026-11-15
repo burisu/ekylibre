@@ -62,14 +62,14 @@ module Unrollable
       order_request = "(#{request.gsub('[!BEGIN!]', '')}) DESC"
 
       exact_match_request = exact_conditions_for(query, searchables)
-      self.class.new(@items.where(where_request).reorder([exact_match_request, order_request].join(',')))
+      self.class.new(@items.where(where_request).reorder(Arel.sql([exact_match_request, order_request].join(','))))
     end
 
     # Forwarding the unknown to the AR::Relation
-    def method_missing(method, *args, &block)
+    def method_missing(method, ...)
       return super unless @items.respond_to?(method)
 
-      result = @items.send(method, *args, &block)
+      result = @items.send(method, ...)
       result.respond_to?(:to_sql) ? self.class.new(result) : result
     end
 

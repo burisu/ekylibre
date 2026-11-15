@@ -23,7 +23,7 @@ module Ekylibre
 
       rows.each_with_index do |row, index|
         line_number = index + 2
-        prompt = "L#{line_number.to_s.yellow}"
+        prompt = "L#{line_number.to_s}"
 
         r = {
           started_on:        (row[0].blank? ? nil : Date.parse(row[0].to_s)),

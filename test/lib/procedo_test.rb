@@ -45,7 +45,7 @@ class ProcedoTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     details = invalids.map do |invalid|
       parameter = invalid[:parameter]
       exception = invalid[:exception]
-      "#{parameter.name.to_s.yellow} in #{parameter.procedure.name.to_s.red}:\n" \
+      "#{parameter.name.to_s} in #{parameter.procedure.name.to_s}:\n" \
       "  expression: #{parameter.filter.inspect}\n" \
       "  exception: #{exception.message}"
     end.join("\n")

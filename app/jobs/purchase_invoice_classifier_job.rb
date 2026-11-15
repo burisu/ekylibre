@@ -1,4 +1,4 @@
-class PurchaseInvoiceClassifierJob < ActiveJob::Base
+class PurchaseInvoiceClassifierJob < ApplicationJob
   queue_as :default
   include Rails.application.routes.url_helpers
 

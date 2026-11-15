@@ -66,7 +66,7 @@
 class SaleItem < ApplicationRecord
   include PeriodicCalculable
   attr_readonly :sale_id
-  enumerize :compute_from, in: %i[unit_pretax_amount pretax_amount amount],
+  has_enum :compute_from, in: %i[unit_pretax_amount pretax_amount amount],
                            default: :unit_pretax_amount, predicates: { prefix: true }
   refers_to :currency
   belongs_to :account
@@ -105,7 +105,14 @@ class SaleItem < ApplicationRecord
   delegate :dimension, :of_dimension?, to: :unit
 
   # alias product_nature variant_nature
-  alias_attribute :unit, :conditioning_unit
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def unit
+    conditioning_unit
+  end
+
+  def unit=(value)
+    self.conditioning_unit = value
+  end
 
   acts_as_list scope: :sale
   accepts_nested_attributes_for :subscriptions

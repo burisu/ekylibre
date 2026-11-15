@@ -18,26 +18,29 @@
 
 module Backend
   class WorkerTimeLogsController < Backend::BaseController
-    manage_restfully except: :index, stopped_at: 'Time.zone.now'.c, started_at: 'Time.zone.now - 4.hours'.c, t3e: { name: 'RECORD.start_name'.c }
+    manage_restfully except: :index, stopped_at: -> { Time.zone.now }, started_at: -> { Time.zone.now - 4.hours }, t3e: { name: ->(record) { record.start_name } }
 
     def self.list_conditions
-      code = search_conditions(worker_time_logs: %i[description started_at], workers: %i[name]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{WorkerTimeLog.table_name}.started_at BETWEEN ? AND ?'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on].to_time\n"
-      code << "    c << params[:stopped_on].to_time\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << Date.parse(interval.first).to_time\n"
-      code << "    c << Date.parse(interval.second).to_time\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if params[:worker_id].to_i > 0\n"
-      code << "  c[0] += ' AND #{WorkerTimeLog.table_name}.worker_id = ?'\n"
-      code << "  c << params[:worker_id]\n"
-      code << "end\n"
-      code.c
+      search1 = search_conditions(worker_time_logs: %i[description started_at], workers: %i[name])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND #{WorkerTimeLog.table_name}.started_at BETWEEN ? AND ?"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on].to_time
+            c << params[:stopped_on].to_time
+          else
+            interval = params[:period].to_s.split('_')
+            c << Date.parse(interval.first).to_time
+            c << Date.parse(interval.second).to_time
+          end
+        end
+        if params[:worker_id].to_i > 0
+          c[0] += " AND #{WorkerTimeLog.table_name}.worker_id = ?"
+          c << params[:worker_id]
+        end
+        c
+      end
     end
 
     list(conditions: list_conditions, joins: %i[worker], order: { started_at: :desc }) do |t|
@@ -47,7 +50,7 @@ module Backend
       t.column :started_at, datatype: :datetime
       t.column :stopped_at, datatype: :datetime
       t.column :description
-      t.column :human_duration, on_select: :sum, value_method: 'duration.in(:second).in(:hour)', datatype: :decimal, class: 'center-align'
+      t.column :human_duration, on_select: :sum, value_method: ->(record) { record.duration.in(:second).in(:hour) }, datatype: :decimal, class: 'center-align'
     end
 
     def index

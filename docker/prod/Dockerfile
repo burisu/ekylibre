@@ -1,4 +1,13 @@
-FROM ghcr.io/ekylibre/docker-base-images/ruby2.6:latest
+# Ruby 4 on Debian trixie: no Java nor LibreOffice (PDF printing by WeasyPrint)
+FROM ruby:4.0-trixie
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libgeos-dev libproj-dev proj-data \
+      libpq-dev postgresql-client \
+      imagemagick ghostscript poppler-utils tesseract-ocr tesseract-ocr-fra \
+      gnupg libgpgme-dev libxml2-dev libxslt1-dev libyaml-dev \
+      weasyprint python3-pymupdf \
+    && rm -rf /var/lib/apt/lists/*
 
 ARG UID=1000
 ARG GID=1000
@@ -29,16 +38,14 @@ RUN mkdir -p /app/vendor/bundle /app/.bundle /app/private /app/tmp && \
 
 USER ekylibre
 
-# Lecture locale des justificatifs (plugin Qonto) : PyMuPDF ; tesseract et python3 sont dans l'image de base.
-RUN pip3 install --user --no-cache-dir pymupdf==1.26.5
+# Impression PDF : templates HTML (Liquid) convertis par WeasyPrint ;
+# lecture locale des justificatifs (plugin Qonto) : PyMuPDF (paquets Debian).
 
 RUN bundle config set --local without 'development test' && \
     bundle install -j $(nproc) && \
     bundle clean --force
 
-RUN yarn install --frozen-lockfile
+# Builds the themes (Dart Sass) and digests the assets (Propshaft)
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
 
-RUN NODE_OPTIONS=--openssl-legacy-provider \
-    SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
-
-RUN chmod +x docker/prod/startup.sh docker/prod/sidekiq_startup.sh
+RUN chmod +x docker/prod/startup.sh docker/prod/jobs_startup.sh

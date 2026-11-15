@@ -26,7 +26,7 @@ class OnomaTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     details = invalids.map do |invalid|
       item = invalid[:item]
       exception = invalid[:exception]
-      "#{item.name.to_s.yellow}:\n" \
+      "#{item.name.to_s}:\n" \
       "  expression: #{item.expression.inspect}\n" \
       "  exception: #{exception.message}"
     end.join("\n")
@@ -46,7 +46,7 @@ class OnomaTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     details = invalids.map do |invalid|
       item = invalid[:item]
       exception = invalid[:exception]
-      "#{item.name.to_s.yellow}:\n" \
+      "#{item.name.to_s}:\n" \
       "  expression: #{item.abilities.inspect}\n" \
       "  exception: #{exception.message}"
     end.join("\n")
@@ -71,7 +71,7 @@ class OnomaTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
     details = invalids.map do |invalid|
       item = invalid[:item]
       exception = invalid[:exception]
-      "#{item.name.to_s.yellow}:\n" \
+      "#{item.name.to_s}:\n" \
       "  expression: #{item.abilities.inspect}\n" \
       "  exception: #{exception.message}"
     end.join("\n")

@@ -70,7 +70,7 @@
 class Reception < Parcel
   include Transitionable
 
-  enumerize :state, in: %i[draft given], predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
+  has_enum :state, in: %i[draft given], predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
 
   belongs_to :purchase_order, foreign_key: :purchase_id, class_name: 'PurchaseOrder', inverse_of: :parcels
   belongs_to :intervention, class_name: 'Intervention'
@@ -82,7 +82,7 @@ class Reception < Parcel
   accepts_nested_attributes_for :items, allow_destroy: true
 
   def self.state_machine(*)
-    ActiveSupport::Deprecation.warn "Not used anymore on Reception!"
+    Ekylibre.deprecator.warn "Not used anymore on Reception!"
     nil
   end
 
@@ -128,7 +128,7 @@ class Reception < Parcel
   bookkeep
 
   def remain_owner?
-    ActiveSupport::Deprecation.warn "remain_owner? is deprecated for Receptions and should always return false"
+    Ekylibre.deprecator.warn "remain_owner? is deprecated for Receptions and should always return false"
     super
   end
 

@@ -38,7 +38,7 @@
 #  updater_id   :integer(4)
 #
 class Georeading < ApplicationRecord
-  enumerize :nature, in: %i[point linestring polygon], predicates: true
+  has_enum :nature, in: %i[point linestring polygon], predicates: true
   has_geometry :content, type: :any
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :content, :nature, presence: true

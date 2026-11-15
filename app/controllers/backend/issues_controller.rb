@@ -18,7 +18,7 @@
 
 module Backend
   class IssuesController < Backend::BaseController
-    manage_restfully t3e: { name: :name, nature: 'RECORD.nature.text'.c }, observed_at: 'Time.zone.now'.c
+    manage_restfully t3e: { name: :name, nature: ->(record) { record.nature.text } }, observed_at: -> { Time.zone.now }
     manage_restfully_picture
 
     respond_to :pdf, :odt, :docx, :xml, :json, :html, :csv
@@ -27,7 +27,7 @@ module Backend
 
     list do |t|
       t.action :edit
-      t.action :new, url: { controller: :interventions, issue_id: 'RECORD.id'.c, id: nil }
+      t.action :new, url: { controller: :interventions, issue_id: ->(record) { record.id }, id: nil }
       t.action :destroy, if: :destroyable?
       t.column :name, url: true
       t.column :nature
@@ -37,7 +37,7 @@ module Backend
       t.column :priority, hidden: true
     end
 
-    list(:interventions, conditions: { nature: :record, issue_id: 'params[:id]'.c }, order: { started_at: :desc }) do |t|
+    list(:interventions, conditions: { nature: :record, issue_id: -> { params[:id] } }, order: { started_at: :desc }) do |t|
       t.column :reference_name, label_method: :name, url: true
       t.column :human_target_names, hidden: true
       t.column :started_at
@@ -68,7 +68,7 @@ module Backend
       }
 
       if params[:lat].present? && params[:lon].present?
-        geolocation = ::Charta.new_point(params[:lat], params[:lon])
+        geolocation = ::Geo.new_point(params[:lat], params[:lon])
         options[:geolocation] = geolocation
       end
 

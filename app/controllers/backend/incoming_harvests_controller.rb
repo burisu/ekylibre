@@ -5,39 +5,34 @@ module Backend
     before_action :save_search_preference, only: %i[index show]
 
     def self.incoming_harvests_conditions
-      code = search_conditions(incoming_harvests: %i[number ticket_number description]) + " ||= []\n"
-      code << "if params[:period].present? && params[:period].to_s != 'all'\n"
-      code << "  c[0] << ' AND #{IncomingHarvest.table_name}.received_at BETWEEN ? AND ?'\n"
-      code << "  if params[:period].to_s == 'interval'\n"
-      code << "    c << params[:started_on]\n"
-      code << "    c << params[:stopped_on]\n"
-      code << "  else\n"
-      code << "    interval = params[:period].to_s.split('_')\n"
-      code << "    c << interval.first\n"
-      code << "    c << interval.second\n"
-      code << "  end\n"
-      code << "end\n"
-
-      # # storage_name SILO
-      code << "unless params[:storage_id].blank? \n"
-      code << "  c[0] << ' AND #{IncomingHarvest.table_name}.id IN (SELECT incoming_harvest_id FROM #{IncomingHarvestStorage.table_name} WHERE storage_id = ?)'\n"
-      code << "  c << params[:storage_id]\n"
-      code << "end\n"
-
-      # # driver_id DRIVER
-      code << "unless params[:driver_id].blank? \n"
-      code << "  c[0] << ' AND #{IncomingHarvest.table_name}.driver_id = ?'\n"
-      code << "  c << params[:driver_id]\n"
-      code << "end\n"
-
-      # crop_name CULTURE / PARCELLE
-      code << "unless params[:crop_id].blank? \n"
-      code << "  c[0] << ' AND #{IncomingHarvest.table_name}.id IN (SELECT incoming_harvest_id FROM #{IncomingHarvestCrop.table_name} WHERE crop_id = ?)'\n"
-      code << "  c << params[:crop_id]\n"
-      code << "end\n"
-
-      code << "c\n"
-      code.c
+      search1 = search_conditions(incoming_harvests: %i[number ticket_number description])
+      lambda do
+        c = instance_exec(&search1)
+        if params[:period].present? && params[:period].to_s != 'all'
+          c[0] << " AND #{IncomingHarvest.table_name}.received_at BETWEEN ? AND ?"
+          if params[:period].to_s == 'interval'
+            c << params[:started_on]
+            c << params[:stopped_on]
+          else
+            interval = params[:period].to_s.split('_')
+            c << interval.first
+            c << interval.second
+          end
+        end
+        unless params[:storage_id].blank?
+          c[0] << " AND #{IncomingHarvest.table_name}.id IN (SELECT incoming_harvest_id FROM #{IncomingHarvestStorage.table_name} WHERE storage_id = ?)"
+          c << params[:storage_id]
+        end
+        unless params[:driver_id].blank?
+          c[0] << " AND #{IncomingHarvest.table_name}.driver_id = ?"
+          c << params[:driver_id]
+        end
+        unless params[:crop_id].blank?
+          c[0] << " AND #{IncomingHarvest.table_name}.id IN (SELECT incoming_harvest_id FROM #{IncomingHarvestCrop.table_name} WHERE crop_id = ?)"
+          c << params[:crop_id]
+        end
+        c
+      end
     end
 
     list(:incoming_harvests, selectable: true, conditions: incoming_harvests_conditions, includes: %i[storages crops]) do |t|
@@ -56,7 +51,7 @@ module Backend
       t.column :human_storages_names, hidden: true
     end
 
-    list(:crops, model: :incoming_harvest_crops, includes: :crop, conditions: { incoming_harvest_id: 'params[:id]'.c }) do |t|
+    list(:crops, model: :incoming_harvest_crops, includes: :crop, conditions: { incoming_harvest_id: -> { params[:id] } }) do |t|
       t.column :crop, url: true
       t.column :net_surface_area_crop, label: :total_area_in_hectare, datatype: :measure, class: 'center'
       t.column :harvest_percentage_repartition, label_method: :displayed_harvest_percentage, class: 'center'
@@ -64,7 +59,7 @@ module Backend
       t.column :harvest_intervention, url: true
     end
 
-    list(:storages, model: :incoming_harvest_storages, includes: :storage, conditions: { incoming_harvest_id: 'params[:id]'.c }) do |t|
+    list(:storages, model: :incoming_harvest_storages, includes: :storage, conditions: { incoming_harvest_id: -> { params[:id] } }) do |t|
       t.column :storage, url: true
       t.column :quantity, datatype: :measure, class: 'center'
     end
@@ -96,18 +91,6 @@ module Backend
           PrinterJob.perform_later('Printers::HarvestReceptionPrinter', template: template, perform_as: current_user, **dataset_params)
           notify_success(:document_in_preparation)
           redirect_to backend_incoming_harvests_path
-        }
-        format.odt {
-          return unless (template = find_and_check :document_template, params[:template])
-
-          if params[:period] == 'interval' && (params[:started_on].blank? || params[:stopped_on].blank?)
-            notify_error(:missing_dates_for_interval_period)
-            redirect_to(backend_incoming_harvests_path) and return
-          end
-
-          printer = Printers::HarvestReceptionPrinter.new(template: template, **dataset_params)
-          g = Ekylibre::DocumentManagement::DocumentGenerator.build
-          send_data g.generate_odt(template: template, printer: printer), filename: "#{printer.document_name}.odt"
         }
       end
     end

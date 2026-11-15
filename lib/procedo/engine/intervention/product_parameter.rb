@@ -16,7 +16,7 @@ module Procedo
           end
 
           if attributes[:working_zone]
-            @working_zone = Charta.new_geometry(attributes[:working_zone])
+            @working_zone = Geo.new_geometry(attributes[:working_zone])
             @working_zone = @working_zone.convert_to(:multi_polygon)
           end
           if attributes[:working_zone_area_value]
@@ -71,7 +71,7 @@ module Procedo
         end
 
         def working_zone=(value)
-          @working_zone = Charta.new_geometry(value)
+          @working_zone = Geo.new_geometry(value)
           impact_dependencies!(:working_zone)
         end
 
@@ -209,7 +209,7 @@ module Procedo
               value = compute_attribute(attribute)
               next if value.blank? || value == send(attribute.name)
 
-              value = Charta.new_geometry(value) if value && attribute.name == :working_zone
+              value = Geo.new_geometry(value) if value && attribute.name == :working_zone
 
               assign(attribute.name, value)
             end

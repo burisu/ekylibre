@@ -57,7 +57,7 @@ module Backend
       raise "Association #{association.inspect} not found" unless reflection
 
       if block_given?
-        ActiveSupport::Deprecation.warn "Nested association don't take code block anymore. Use partial '#{association.to_s.singularize}_fields' instead."
+        Ekylibre.deprecator.warn "Nested association don't take code block anymore. Use partial '#{association.to_s.singularize}_fields' instead."
       end
       # raise ArgumentError.new("Reflection #{reflection.name} must be a has_many") if reflection.macro != :has_many
       item = association.to_s.singularize
@@ -70,7 +70,7 @@ module Backend
       if reflection.macro == :has_many
         unless options[:new].is_a?(FalseClass)
           html << @template.content_tag(:div, class: 'links') do
-            @template.link_to_add_association(options[:button_label] || "labels.add_#{item}".t, self, association, 'data-no-turbolink' => true, partial: partial, render_options: { locals: options[:locals] }, class: "nested-add add-#{item}")
+            @template.link_to_add_association(options[:button_label] || "labels.add_#{item}".t, self, association, 'data-turbo' => false, partial: partial, render_options: { locals: options[:locals] }, class: "nested-add add-#{item}")
           end
         end
         if options[:minimum]
@@ -111,7 +111,7 @@ module Backend
     end
 
     def get_custom_fields_errors(errors)
-      errors.to_h
+      errors.to_hash.transform_values(&:first)
             .select { |error| error.to_s.start_with?('custom_fields__')}
             .transform_keys { |key| key.to_s.gsub('custom_fields__', '').to_sym }
     end
@@ -227,8 +227,8 @@ module Backend
       format = options.delete(:format) || :thumb
       input(attribute_name, options) do
         html = file_field(attribute_name)
-        if @object.send(attribute_name).file?
-          html << @template.content_tag(:div, @template.image_tag(@object.send(attribute_name).url(format)), class: 'preview picture')
+        if @object.send(attribute_name).attached?
+          html << @template.content_tag(:div, @template.image_tag(@object.send(attribute_name).variant(format)), class: 'preview picture')
         end
         html
       end
@@ -344,12 +344,12 @@ module Backend
 
       geom = @object.send(attribute_name)
       if geom.present?
-        geometry = Charta.new_geometry(geom)
+        geometry = Geo.new_geometry(geom)
         editor[:edit] = geometry.to_json_object
         editor[:view] = { center: geometry.centroid, zoom: 16 }
       else
         if sibling = @object.class.where("#{attribute_name} IS NOT NULL").first
-          editor[:view] = { center: Charta.new_geometry(sibling.send(attribute_name)).centroid }
+          editor[:view] = { center: Geo.new_geometry(sibling.send(attribute_name)).centroid }
         elsif zone = CultivableZone.first
           editor[:view] = { center: zone.shape_centroid }
         end
@@ -372,7 +372,7 @@ module Backend
 
     def shape_field(attribute_name = :shape, options = {})
       raise @object.send(attribute_name)
-      geometry = Charta.new_geometry(@object.send(attribute_name) || Charta.empty_geometry)
+      geometry = Geo.new_geometry(@object.send(attribute_name) || Geo.empty_geometry)
       options[:input_html] ||= {}
       options[:input_html][:data] ||= {}
       options[:input_html][:data][:map_editor] ||= {}
@@ -395,7 +395,7 @@ module Backend
     def point(attribute_name, options = {})
       marker = {}
       if geom = @object.send(attribute_name)
-        marker[:marker] = Charta.new_geometry(geom).to_json_object['coordinates'].reverse
+        marker[:marker] = Geo.new_geometry(geom).to_json_object['coordinates'].reverse
         marker[:view] = { center: marker[:marker] }
       else
         siblings = @object.class.where("#{attribute_name} IS NOT NULL").order(id: :desc)
@@ -414,12 +414,12 @@ module Backend
     def point_field(attribute_name, options = {})
       marker = {}
       if geom = @object.send(attribute_name)
-        coordinates = Charta.new_geometry(geom).to_json_object['coordinates']
+        coordinates = Geo.new_geometry(geom).to_json_object['coordinates']
         marker[:marker] = coordinates.reverse if coordinates
         marker[:view] = { center: marker[:marker] }
       else
         if sibling = @object.class.where("#{attribute_name} IS NOT NULL").first
-          marker[:view] = { center: Charta.new_geometry(sibling.send(attribute_name)).centroid }
+          marker[:view] = { center: Geo.new_geometry(sibling.send(attribute_name)).centroid }
         elsif zone = CultivableZone.first
           marker[:view] = { center: zone.shape_centroid }
         end

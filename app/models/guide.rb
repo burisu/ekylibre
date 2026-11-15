@@ -47,10 +47,10 @@ class Guide < ApplicationRecord
   has_many :analyses, class_name: 'GuideAnalysis', dependent: :destroy
   has_one :last_analysis, -> { where(latest: true) }, class_name: 'GuideAnalysis'
   refers_to :nature, class_name: 'GuideNature'
-  enumerize :frequency, in: %i[hourly daily weekly monthly yearly decadely none], default: :none
-  enumerize :reference_name, in: []
+  has_enum :frequency, in: %i[hourly daily weekly monthly yearly decadely none], default: :none
+  has_enum :reference_name, in: []
 
-  has_attached_file :reference_source, path: ':tenant/:class/:id/source.xml'
+  has_file :reference_source, content_type: /xml/
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :active, :external, inclusion: { in: [true, false] }
@@ -62,7 +62,6 @@ class Guide < ApplicationRecord
   # ]VALIDATORS]
   validates :nature, inclusion: { in: nature.values }
   validates :frequency, inclusion: { in: frequency.values }
-  validates_attachment_content_type :reference_source, content_type: /xml/
 
   delegate :status, to: :last_analysis, prefix: true
 

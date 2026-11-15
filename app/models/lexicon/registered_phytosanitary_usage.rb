@@ -64,7 +64,7 @@
 #
 class RegisteredPhytosanitaryUsage < LexiconRecord
   include Lexiconable
-  extend Enumerize
+  extend Ekylibre::Record::HasEnum
   include HasInterval
   include Dimensionable
   include ScopeIntrospection
@@ -73,7 +73,7 @@ class RegisteredPhytosanitaryUsage < LexiconRecord
 
   belongs_to :product, class_name: 'RegisteredPhytosanitaryProduct'
 
-  enumerize :state, in: %w[authorized provisional withdrawn provisional], predicates: true
+  has_enum :state, in: %w[authorized provisional withdrawn provisional], predicates: true
   has_interval :pre_harvest_delay, :applications_frequency
 
   scope :of_product, ->(*ids) { where(product_id: ids) }

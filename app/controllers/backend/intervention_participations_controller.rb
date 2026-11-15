@@ -60,7 +60,7 @@ module Backend
                participation: @participation,
                intervention_started_at: intervention_started_at,
                tool: intervention_tool,
-               auto_calcul_mode: auto_calcul_mode.to_b.to_s,
+               auto_calcul_mode: ActiveModel::Type::Boolean.new.cast(auto_calcul_mode).to_s,
                calculate_working_periods: calculate_working_periods(@intervention, @participation)
              }
     end

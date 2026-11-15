@@ -25,23 +25,23 @@ module Quadra
 
         fy_start = FinancialYear.at(r.printed_on)
         unless fy_start
-          w.error "FinancialYear does not exist for #{r.printed_on} in line : #{line_number} - #{valid}".red
+          w.error "FinancialYear does not exist for #{r.printed_on} in line : #{line_number} - #{valid}"
           valid = false
         end
 
         if (r.debit_amount - r.credit_amount) == 0.0
-          w.error "Errors on amount in line : #{line_number} - #{valid}".red
+          w.error "Errors on amount in line : #{line_number} - #{valid}"
           valid = false
         end
 
         if r.account_number.blank? || r.printed_on.blank? || r.item_name.blank?
-          w.error "Errors on account (#{r.account_number}) or printed_on (#{r.printed_on.to_s}) or item_name (#{r.item_name}) in line : #{line_number} - #{valid}".red
+          w.error "Errors on account (#{r.account_number}) or printed_on (#{r.printed_on.to_s}) or item_name (#{r.item_name}) in line : #{line_number} - #{valid}"
           valid = false
         end
 
-        w.info "#{line_number} - #{valid}".green
+        w.info "#{line_number} - #{valid}"
       end
-      w.info "End validation : #{valid}".yellow
+      w.info "End validation : #{valid}"
       valid
     end
 
@@ -107,10 +107,10 @@ module Quadra
             account = find_or_create_account(r.account_number, r.account_name)
             find_or_create_entity(r.printed_on, account, r.account_number)
           end
-          w.info "third account & entity created: #{account.label.inspect.green}"
+          w.info "third account & entity created: #{account.label.inspect}"
         else
           account = find_or_create_account(r.account_number, r.account_name)
-          w.info "account created: #{account.label.inspect.green}"
+          w.info "account created: #{account.label.inspect}"
         end
 
         # create entry item attributes
@@ -127,9 +127,9 @@ module Quadra
       w.reset!(entries.keys.size)
       # create entry
       entries.values.each do |entry|
-        w.info "JE : #{entry[:number]}".inspect.yellow
+        w.info "JE : #{entry[:number]}".inspect
         j = JournalEntry.create!(entry)
-        w.info "JE created: #{j.number} | #{j.printed_on}".inspect.yellow
+        w.info "JE created: #{j.number} | #{j.printed_on}".inspect
         w.check_point
       end
     end

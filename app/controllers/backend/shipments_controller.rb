@@ -22,52 +22,53 @@ module Backend
     #   :delivery_mode Choice
     #   :nature Choice
     def self.shipments_conditions
-      code = search_conditions(shipments: %i[number reference_number], entities: %i[full_name number]) + " ||= []\n"
-      code << "unless params[:period].blank? || params[:period].is_a?(Symbol)\n"
-
-      code << "  if params[:period] != 'all'\n"
-      code << "    if params[:period] == 'interval' \n"
-      code << "      started_on = params[:started_on] \n"
-      code << "      stopped_on = params[:stopped_on] \n"
-      code << "    else \n"
-      code << "      interval = params[:period].split('_')\n"
-      code << "      started_on = interval.first\n"
-      code << "      stopped_on = interval.last\n"
-      code << "    end \n"
-      code << "    c[0] << \" AND #{Shipment.table_name}.planned_at::DATE BETWEEN ? AND ?\"\n"
-      code << "    c << started_on\n"
-      code << "    c << stopped_on\n"
-      code << "  end\n "
-      code << "end\n "
-      code << "if params[:recipient_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Shipment.table_name}.recipient_id = ?\"\n"
-      code << "  c << params[:recipient_id].to_i\n"
-      code << "end\n"
-      code << "if params[:sender_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Shipment.table_name}.sender_id = ?\"\n"
-      code << "  c << params[:sender_id].to_i\n"
-      code << "end\n"
-      code << "if params[:transporter_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Shipment.table_name}.transporter_id = ?\"\n"
-      code << "  c << params[:transporter_id].to_i\n"
-      code << "end\n"
-      code << "if params[:responsible_id].to_i > 0\n"
-      code << "  c[0] << \" AND \#{Shipment.table_name}.responsible_id = ?\"\n"
-      code << "  c << params[:responsible_id]\n"
-      code << "end\n"
-      code << "if params[:delivery_mode].present? && params[:delivery_mode] != 'all'\n"
-      code << "  if Shipment.delivery_mode.values.include?(params[:delivery_mode].to_sym)\n"
-      code << "    c[0] << ' AND #{Shipment.table_name}.delivery_mode = ?'\n"
-      code << "    c << params[:delivery_mode]\n"
-      code << "  end\n"
-      code << "end\n"
-      code << "if params[:invoice_status] && params[:invoice_status] == 'invoiced'\n"
-      code << "  c[0] << ' AND (#{Shipment.table_name}.purchase_id IS NOT NULL OR #{Shipment.table_name}.sale_id IS NOT NULL) '\n"
-      code << "elsif params[:invoice_status] && params[:invoice_status] == 'uninvoiced'\n"
-      code << "  c[0] << ' AND (#{Shipment.table_name}.purchase_id IS NULL AND #{Shipment.table_name}.sale_id IS NULL) '\n"
-      code << "end\n"
-      code << "c\n"
-      code.c
+      search1 = search_conditions(shipments: %i[number reference_number], entities: %i[full_name number])
+      lambda do
+        c = instance_exec(&search1)
+        unless params[:period].blank? || params[:period].is_a?(Symbol)
+          if params[:period] != 'all'
+            if params[:period] == 'interval'
+              started_on = params[:started_on]
+              stopped_on = params[:stopped_on]
+            else
+              interval = params[:period].split('_')
+              started_on = interval.first
+              stopped_on = interval.last
+            end
+            c[0] << " AND #{Shipment.table_name}.planned_at::DATE BETWEEN ? AND ?"
+            c << started_on
+            c << stopped_on
+          end
+        end
+        if params[:recipient_id].to_i > 0
+          c[0] << " AND #{Shipment.table_name}.recipient_id = ?"
+          c << params[:recipient_id].to_i
+        end
+        if params[:sender_id].to_i > 0
+          c[0] << " AND #{Shipment.table_name}.sender_id = ?"
+          c << params[:sender_id].to_i
+        end
+        if params[:transporter_id].to_i > 0
+          c[0] << " AND #{Shipment.table_name}.transporter_id = ?"
+          c << params[:transporter_id].to_i
+        end
+        if params[:responsible_id].to_i > 0
+          c[0] << " AND #{Shipment.table_name}.responsible_id = ?"
+          c << params[:responsible_id]
+        end
+        if params[:delivery_mode].present? && params[:delivery_mode] != 'all'
+          if Shipment.delivery_mode.values.include?(params[:delivery_mode].to_sym)
+            c[0] << " AND #{Shipment.table_name}.delivery_mode = ?"
+            c << params[:delivery_mode]
+          end
+        end
+        if params[:invoice_status] && params[:invoice_status] == 'invoiced'
+          c[0] << " AND (#{Shipment.table_name}.purchase_id IS NOT NULL OR #{Shipment.table_name}.sale_id IS NOT NULL) "
+        elsif params[:invoice_status] && params[:invoice_status] == 'uninvoiced'
+          c[0] << " AND (#{Shipment.table_name}.purchase_id IS NULL AND #{Shipment.table_name}.sale_id IS NULL) "
+        end
+        c
+      end
     end
 
     list(conditions: shipments_conditions, selectable: true, order: { planned_at: :desc }) do |t|
@@ -91,10 +92,10 @@ module Backend
       t.column :sale, url: true
     end
 
-    list(:items, model: :parcel_items, conditions: { parcel_id: 'params[:id]'.c }) do |t|
+    list(:items, model: :parcel_items, conditions: { parcel_id: -> { params[:id] } }) do |t|
       t.column :source_product, url: true
       t.column :product, url: true, hidden: true
-      t.column :container, through: :product, label_method: 'container&.name'
+      t.column :container, through: :product, label_method: ->(record) { record.container&.name }
       t.column :product_work_number, through: :product, label_method: :work_number, hidden: true
       t.column :product_identification_number, hidden: true
       t.column :conditioning_quantity, class: 'left-align'
@@ -103,7 +104,7 @@ module Backend
       t.column :analysis, url: true
     end
 
-    list(:sale_items, conditions: ["#{SaleItem.table_name}.sale_id = (SELECT sale_id FROM #{Shipment.table_name} WHERE #{Shipment.table_name}.id = ?)", 'params[:id]'.c]) do |t|
+    list(:sale_items, conditions: ["#{SaleItem.table_name}.sale_id = (SELECT sale_id FROM #{Shipment.table_name} WHERE #{Shipment.table_name}.id = ?)", -> { params[:id] }]) do |t|
       t.column :label
       t.column :annotation, hidden: true
       t.column :conditioning_unit

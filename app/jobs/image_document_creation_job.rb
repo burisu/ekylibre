@@ -1,4 +1,4 @@
-class ImageDocumentCreationJob < ActiveJob::Base
+class ImageDocumentCreationJob < ApplicationJob
   queue_as :default
 
   # rubocop:disable Lint/RescueException

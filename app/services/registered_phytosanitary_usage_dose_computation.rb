@@ -17,7 +17,7 @@ class RegisteredPhytosanitaryUsageDoseComputation
   # @param [RegisteredPhytosanitaryUsage] usage
   # @param [RegisteredPhytosanitaryProduct] product
   # @param [Measure] measure
-  # @param [Hash<Charta::GeometryCollection>] targets_data
+  # @param [Hash<Geo::GeometryCollection>] targets_data
   # @param [BigDecimal, nil] spray_volume
   def validate_dose(usage, product, measure, targets_data, spray_volume = nil)
     if measure.dimension == 'none' && !check_indicators(product, usage)
@@ -102,7 +102,7 @@ class RegisteredPhytosanitaryUsageDoseComputation
         if target_info[:working_zone_area_value]
           target_info[:working_zone_area_value].to_f.in(:hectare)
         else
-          Charta.new_geometry(target_info[:shape]).area.to_f.in(:square_meter)
+          Geo.new_geometry(target_info[:shape]).area.to_f.in(:square_meter)
         end
       end.in(:square_meter)
     end

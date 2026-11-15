@@ -1,4 +1,8 @@
 Rails.application.configure do
+  # The test database is prepared with `rake db:test:load_postgis_structure` (structure.sql
+  # needs the PostGIS extensions to exist first), not reloaded automatically.
+  config.active_record.maintain_test_schema = false
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # The test environment is used exclusively to run your application's
@@ -47,4 +51,7 @@ Rails.application.configure do
 
   # Raises error for missing translations
   # config.action_view.raise_on_missing_translations = true
+
+  # Jobs are only enqueued in tests (see ActiveJob::TestHelper)
+  config.active_job.queue_adapter = :test
 end

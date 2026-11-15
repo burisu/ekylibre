@@ -29,8 +29,9 @@ module Ekylibre
           nature: template.nature,
           key: key,
           name: name,
-          file: StringIO.new(pdf_content),
-          file_file_name: "#{name}.pdf",
+          # Uploaded right away: the document can be read (signed, copied)
+          # before the end of the current transaction
+          file: ActiveStorage::Blob.create_and_upload!(io: StringIO.new(pdf_content), filename: "#{name}.pdf", content_type: 'application/pdf'),
           template: template
         )
 

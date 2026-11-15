@@ -64,7 +64,7 @@ module Backend
           end
         end
         unless params[:mail_line_6].blank?
-          c[0] << " AND #{Entity.table_name}.id IN (SELECT entity_id FROM entity_addresses WHERE mail_line_6 ILIKE E? AND by_default AND deleted_at IS NULL)"
+          c[0] << " AND #{Entity.table_name}.id IN (SELECT entity_id FROM entity_addresses WHERE mail_line_6 ILIKE ? AND by_default AND deleted_at IS NULL)"
           c << '%' + params[:mail_line_6].to_s.strip.gsub(/[, -]+/, '%') + '%'
         end
         unless params[:subscription_nature_id].blank? || params[:subscription_test].blank?

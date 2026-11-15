@@ -186,7 +186,7 @@ class FixedAsset < ApplicationRecord
   # ]DEPRECATIONS]
 
   def self.state_machine(*args)
-    ActiveSupport::Deprecation.warn "Not used anymore on FixedAsset!"
+    Ekylibre.deprecator.warn "Not used anymore on FixedAsset!"
     nil
   end
 

@@ -311,65 +311,27 @@ module ActiveSupport
   end
 end
 
-# Because RGeo broke compatibility in their serialization model with `projector_class` becoming `projectorclass`
+# Factories serialized by old RGeo versions use the `projector_class` key
+# (`projectorclass` since RGeo 2.x)
 module RGeo
   module Geographic
-    class Factory
+    module LegacyProjectorClassKey
       def init_with(coder)
-        # :nodoc:
-        if (proj4_data = coder["proj4"])
-          CoordSys.check!(:proj4)
-          if proj4_data.is_a?(Hash)
-            proj4 = CoordSys::Proj4.create(proj4_data["proj4"], radians: proj4_data["radians"])
-          else
-            proj4 = CoordSys::Proj4.create(proj4_data.to_s)
-          end
-        else
-          proj4 = nil
-        end
-        if (coord_sys_data = coder["cs"])
-          coord_sys = CoordSys::CS.create_from_wkt(coord_sys_data.to_s)
-        else
-          coord_sys = nil
-        end
-        initialize(coder["impl_prefix"],
-                   has_z_coordinate: coder["has_z_coordinate"],
-                   has_m_coordinate: coder["has_m_coordinate"],
-                   srid: coder["srid"],
-                   wkt_generator: symbolize_hash(coder["wkt_generator"]),
-                   wkb_generator: symbolize_hash(coder["wkb_generator"]),
-                   wkt_parser: symbolize_hash(coder["wkt_parser"]),
-                   wkb_parser: symbolize_hash(coder["wkb_parser"]),
-                   uses_lenient_assertions: coder["lenient_assertions"],
-                   buffer_resolution: coder["buffer_resolution"],
-                   proj4: proj4,
-                   coord_sys: coord_sys
-        )
-        if (proj_klass = coder["projectorclass"] || coder["projector_class"]) && (proj_factory = coder["projection_factory"])
-          klass_ = RGeo::Geographic.const_get(proj_klass)
-          if klass_
-            projector = klass_.allocate
-            projector.set_factories(self, proj_factory)
-            @projector = projector
-          end
-        end
+        coder["projectorclass"] ||= coder["projector_class"] if coder.respond_to?(:[]=) && coder["projector_class"]
+        super
       end
-      
-      #patch waiting for rgeo 3.0 https://github.com/rgeo/rgeo/issues/277
-      def set_property(prop, value)
-        case prop
-        when :has_z_coordinate
-          @support_z = value
-        when :has_m_coordinate
-          @support_m = value
-        when :uses_lenient_assertions
-          @lenient_assertions = value
-        when :buffer_resolution
-          @buffer_resolution = value
-        when :is_geographic
-          value
-        end
-      end
+    end
+    Factory.prepend(LegacyProjectorClassKey)
+  end
+end
+
+# RGeo 3.0 projected geometries call unsafe_simplify(_preserve_topology) on
+# their projection, which GEOS CAPI geometries only expose without prefix
+module RGeo
+  module Geos
+    module CAPIGeometryMethods
+      alias_method :unsafe_simplify, :simplify unless method_defined?(:unsafe_simplify)
+      alias_method :unsafe_simplify_preserve_topology, :simplify_preserve_topology unless method_defined?(:unsafe_simplify_preserve_topology)
     end
   end
 end

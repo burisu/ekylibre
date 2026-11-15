@@ -82,7 +82,7 @@ class Reception < Parcel
   accepts_nested_attributes_for :items, allow_destroy: true
 
   def self.state_machine(*)
-    ActiveSupport::Deprecation.warn "Not used anymore on Reception!"
+    Ekylibre.deprecator.warn "Not used anymore on Reception!"
     nil
   end
 
@@ -128,7 +128,7 @@ class Reception < Parcel
   bookkeep
 
   def remain_owner?
-    ActiveSupport::Deprecation.warn "remain_owner? is deprecated for Receptions and should always return false"
+    Ekylibre.deprecator.warn "remain_owner? is deprecated for Receptions and should always return false"
     super
   end
 

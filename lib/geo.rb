@@ -221,14 +221,12 @@ module Geo
       end
 
       def projected_factory(srid)
-        factory = RGeo::Geographic.projected_factory(
+        RGeo::Geographic.projected_factory(
           srid: srid,
           projection_srid: 6933,
-          projection_proj4: 'EPSG:6933',
+          projection_coord_sys: 'EPSG:6933',
           **factory_options
         )
-        factory.set_property(:uses_lenient_assertions, true) if factory.respond_to?(:set_property)
-        factory
       end
   end
 end

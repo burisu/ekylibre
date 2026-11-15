@@ -3,6 +3,11 @@ module Ekylibre
   CSV = ::CSV.freeze
 
   class << self
+    # Deprecation warnings of the application (see config.active_support.deprecation)
+    def deprecator
+      @deprecator ||= ActiveSupport::Deprecation.new('next major release', 'Ekylibre')
+    end
+
     def http_languages
       ::I18n.available_locales.each_with_object({}) do |l, h|
         h['i18n.iso2'.t(locale: l)] = l

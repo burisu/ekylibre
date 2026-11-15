@@ -16,7 +16,7 @@ ruby '>= 3.3', '< 3.4'
 
 gem 'actionpack-xml_parser', '~> 2.0'
 gem 'rack-cors' # CORS policy
-gem 'rails', '~> 7.0.8'
+gem 'rails', '~> 7.2.2'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
@@ -31,7 +31,7 @@ gem 'ffaker', '~> 2.0' # Should not be present in production. Is used to generat
 
 # Database
 gem 'activemodel-serializers-xml', '~> 1.0'
-gem 'activerecord-postgis-adapter', '~> 8.0'
+gem 'activerecord-postgis-adapter', '~> 10.0'
 gem 'pg', '~> 1.0'
 gem 'scenic'
 
@@ -77,9 +77,9 @@ gem 'redis-namespace', '~> 1.8'
 
 # Manipulate map data
 gem 'geocoder', '~> 1.6'
-gem 'rgeo', '~> 2.2'
+gem 'rgeo', '~> 3.0'
 gem 'rgeo-geojson', '~> 2.1'
-gem 'rgeo-proj4', '~> 3.1'
+gem 'rgeo-proj4', '~> 4.0'
 gem 'rgeo-shapefile', '~> 3.0'
 
 # Background jobs
@@ -99,7 +99,7 @@ gem 'awesome_nested_set', '~> 3.5'
 gem 'deep_cloneable', '~> 3.2'
 gem 'draper', '~> 4.0'
 gem 'enumerize', '~> 2.4'
-gem 'paranoia', '~> 2.6' # Hide and restore records without actually deleting them
+gem 'paranoia', '~> 3.0' # Hide and restore records without actually deleting them
 gem 'state_machines-activerecord', '~> 0.9'
 # 0.100+ runs transitions in fibers, which deadlocks with ActiveRecord's connection lock
 gem 'state_machines', '< 0.100'
@@ -169,8 +169,7 @@ gem 'lexicon-common', '~> 0.2.0'
 # Gems removed from the Ruby standard library
 gem 'rss'
 
-# ActiveSupport 7.0 passes quirks_mode, rejected by json 3 (TODO: remove with Rails 7.1)
-gem 'json', '~> 2.7'
+
 
 # Application server
 gem 'puma', '~> 6.4'

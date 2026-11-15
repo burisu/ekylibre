@@ -41,7 +41,8 @@ module Versionable
   def version_object
     hash = attributes.with_indifferent_access
     hash.delete_if { |k, _v| self.class.versioning_excluded_attributes.include?(k.to_sym) }
-    hash
+    # String subclasses (enumerize values...) are stored as plain strings in YAML
+    hash.transform_values { |v| v.is_a?(String) && !v.instance_of?(String) ? String.new(v) : v }
   end
 
   module ClassMethods

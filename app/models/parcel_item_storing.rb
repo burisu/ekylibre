@@ -56,7 +56,14 @@ class ParcelItemStoring < ApplicationRecord
   delegate :variant, :annotation, to: :parcel_item
   delegate :dimension, :of_dimension?, to: :unit
 
-  alias_attribute :unit, :conditioning_unit
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def unit
+    conditioning_unit
+  end
+
+  def unit=(value)
+    self.conditioning_unit = value
+  end
 
   before_validation do
     self.quantity ||= UnitComputation.convert_into_variant_population(parcel_item.variant, conditioning_quantity, conditioning_unit)

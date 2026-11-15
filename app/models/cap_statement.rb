@@ -51,7 +51,14 @@ class CapStatement < ApplicationRecord
   # ]VALIDATORS]
   validates :farm_name, :pacage_number, :siret_number, presence: true
 
-  alias_attribute :entity, :declarant
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def entity
+    declarant
+  end
+
+  def entity=(value)
+    self.declarant = value
+  end
 
   delegate :harvest_year, to: :campaign, prefix: false
 

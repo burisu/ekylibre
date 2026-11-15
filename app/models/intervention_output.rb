@@ -76,7 +76,14 @@ class InterventionOutput < InterventionProductParameter
   belongs_to :product, dependent: :destroy
   has_one :product_movement, as: :originator, dependent: :destroy
 
-  alias_attribute :variety, :specie_variety_name
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def variety
+    specie_variety_name
+  end
+
+  def variety=(value)
+    self.specie_variety_name = value
+  end
 
   validates :variant, :quantity_population, presence: true
   validates :identification_number, presence: true, if: ->(output) { output.reference.present? && output.reference.attribute(:identification_number).present? }

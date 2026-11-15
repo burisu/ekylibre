@@ -105,7 +105,14 @@ class SaleItem < ApplicationRecord
   delegate :dimension, :of_dimension?, to: :unit
 
   # alias product_nature variant_nature
-  alias_attribute :unit, :conditioning_unit
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def unit
+    conditioning_unit
+  end
+
+  def unit=(value)
+    self.conditioning_unit = value
+  end
 
   acts_as_list scope: :sale
   accepts_nested_attributes_for :subscriptions

@@ -14,6 +14,7 @@ require 'safe_string'
 
 # App-specific libs
 require 'ekylibre'
+Rails.application.deprecators[:ekylibre] = Ekylibre.deprecator
 require 'clients'
 
 require 'working_set'

@@ -53,7 +53,14 @@ class CapIslet < ApplicationRecord
   delegate :name, to: :campaign, prefix: true
   delegate :pacage_number, to: :cap_statement, prefix: false
 
-  alias_attribute :exploitation_name, :farm_name
+  # Not a column: alias_attribute is limited to attributes since Rails 7.2
+  def exploitation_name
+    farm_name
+  end
+
+  def exploitation_name=(value)
+    self.farm_name = value
+  end
 
   scope :of_campaign, lambda { |*campaigns|
     joins(:cap_statement).merge(CapStatement.of_campaign(*campaigns))

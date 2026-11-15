@@ -32,6 +32,8 @@ module Ekylibre
 
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 5.2
+    # Cache entries written with the 7.1 format (6.1 format is removed in Rails 7.2)
+    config.active_support.cache_format_version = 7.1
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers

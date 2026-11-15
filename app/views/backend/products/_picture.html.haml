@@ -1,5 +1,5 @@
-- if resource.picture.exists?
-  .picture.picture-identity= image_tag(resource.picture.url(:identity))
+- if resource.picture.attached?
+  .picture.picture-identity= image_tag(resource.picture.variant(:identity))
 - elsif resource.shape
   = product_mini_map
 - elsif resource.container && resource.container.shape

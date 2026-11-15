@@ -128,7 +128,6 @@ class ProductNatureVariant < ApplicationRecord
   validates :gtin, length: { allow_nil: true, maximum: 14 }
   validates :default_quantity, numericality: { greater_than: 0, less_than: 1_000_000_000_000_000 }
   validate :readings_presence
-  validates_attachment_content_type :picture, content_type: /image/
 
   alias_attribute :commercial_name, :name
 

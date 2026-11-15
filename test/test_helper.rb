@@ -335,7 +335,7 @@ module ActionController
             test_code << "#{record} = #{fixtures_to_use.retrieve(:first)}\n"
             test_code << "assert_equal 1, #{model_name}.where(id: #{record}.id).count\n"
             test_code << "get :#{action}, params: crush_hash(#{sanitized_params[id: RawCode.new('RECORD.id')]})\n"
-            test_code << "if #{record}.picture.file?\n"
+            test_code << "if #{record}.picture.attached?\n"
             test_code << "  assert_response :success, #{context}\n"
             test_code << "  assert_not_nil assigns(:#{record})\n"
             test_code << "end\n"

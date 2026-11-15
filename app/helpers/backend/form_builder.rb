@@ -227,8 +227,8 @@ module Backend
       format = options.delete(:format) || :thumb
       input(attribute_name, options) do
         html = file_field(attribute_name)
-        if @object.send(attribute_name).file?
-          html << @template.content_tag(:div, @template.image_tag(@object.send(attribute_name).url(format)), class: 'preview picture')
+        if @object.send(attribute_name).attached?
+          html << @template.content_tag(:div, @template.image_tag(@object.send(attribute_name).variant(format)), class: 'preview picture')
         end
         html
       end

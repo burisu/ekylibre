@@ -37,7 +37,7 @@ json.array! []
         end
       end
 
-      json.picture true if contact.picture.file?
+      json.picture true if contact.picture.attached?
     end
   end
 end

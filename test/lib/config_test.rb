@@ -1,12 +1,10 @@
 require 'test_helper'
 
 class ConfigTest < Ekylibre::Testing::ApplicationTestCase::WithFixtures
-  test 'paperclip interpolations' do
+  test 'attachments are stored by tenant' do
     tenant = Ekylibre::Tenant.current
     assert_equal 'test', tenant
-    assert_equal Ekylibre::Tenant.private_directory.to_s,
-                 Paperclip::Interpolations.interpolate(':private', nil, nil)
-    assert_equal Ekylibre::Tenant.private_directory.join('attachments').to_s,
-                 Paperclip::Interpolations.interpolate(':tenant', nil, nil)
+    blob = ActiveStorage::Blob.new(filename: 'test.txt', byte_size: 0, checksum: 'x')
+    assert blob.key.start_with?("#{tenant}/"), "Blob key must be prefixed by the tenant: #{blob.key}"
   end
 end

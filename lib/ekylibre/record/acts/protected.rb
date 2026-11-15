@@ -32,8 +32,9 @@ module Ekylibre
               send("before_#{callback}", "raise_exception_unless_#{callback}able?".to_sym)
 
               define_method "raise_exception_unless_#{callback}able?" do
+                # Updates changing only allowed fields are permitted (destroys never are)
                 allowed_fields = options[:"allow_#{callback}_on"] || []
-                bypass = changed.all? { |change| allowed_fields.map(&:to_s).include?(change) }
+                bypass = callback.to_sym == :update && changed.all? { |change| allowed_fields.map(&:to_s).include?(change) }
 
                 unless send("#{callback}able?") || bypass
                   raise "Ekylibre::Record::RecordNot#{callback.to_s.camelcase}able".constantize.new("Record cannot be #{callback}d")

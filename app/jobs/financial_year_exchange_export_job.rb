@@ -21,7 +21,7 @@ class FinancialYearExchangeExportJob < ApplicationJob
           user.notifications.create!(accountant_notified_notification_params)
         else
           # TODO: Change nature of doc ?
-          document = Document.create!(nature: "exchange_accountancy_file_fr", processable_attachment: false, file: tempzip, name: zipname)
+          document = Document.create!(nature: "exchange_accountancy_file_fr", processable_attachment: false, file: { io: tempzip, filename: zipname, content_type: 'application/zip' }, name: zipname)
           user.notifications.create!(valid_generation_notification_params(document.id))
         end
       end

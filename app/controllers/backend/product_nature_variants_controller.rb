@@ -269,8 +269,8 @@ module Backend
         infos[:subscription][:address_id] = address.id if address
       end
 
-      if @product_nature_variant.picture.file?
-        infos[:picture] = @product_nature_variant.picture.url(:thumb)
+      if @product_nature_variant.picture.attached?
+        infos[:picture] = rails_representation_path(@product_nature_variant.picture.variant(:thumb))
       end
 
       if pictogram = @product_nature_variant.category.pictogram

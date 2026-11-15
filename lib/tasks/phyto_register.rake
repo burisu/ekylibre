@@ -40,7 +40,7 @@ namespace :phyto_register do
         Document.where(nature: PhytosanitaryRegisterArchiveJob::DOCUMENT_NATURE).find_each do |doc|
           total += 1
           stored = doc.sha256_fingerprint.to_s
-          path = doc.file.path
+          path = doc.file_path
           if path.nil? || !File.exist?(path)
             missing += 1
             warn "[#{tenant}] #{doc.id} #{doc.name}: file missing on disk"

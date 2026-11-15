@@ -1,0 +1,78 @@
+# Attachments of the document fixtures (see blobs.yml)
+documents_001_file:
+  name: file
+  record_type: Document
+  record_id: 3
+  blob: documents_001_file
+
+documents_002_file:
+  name: file
+  record_type: Document
+  record_id: 4
+  blob: documents_002_file
+
+documents_003_file:
+  name: file
+  record_type: Document
+  record_id: 5
+  blob: documents_003_file
+
+documents_004_file:
+  name: file
+  record_type: Document
+  record_id: 6
+  blob: documents_004_file
+
+documents_005_file:
+  name: file
+  record_type: Document
+  record_id: 7
+  blob: documents_005_file
+
+documents_006_file:
+  name: file
+  record_type: Document
+  record_id: 8
+  blob: documents_006_file
+
+documents_007_file:
+  name: file
+  record_type: Document
+  record_id: 9
+  blob: documents_007_file
+
+documents_008_file:
+  name: file
+  record_type: Document
+  record_id: 10
+  blob: documents_008_file
+
+documents_009_file:
+  name: file
+  record_type: Document
+  record_id: 11
+  blob: documents_009_file
+
+documents_010_file:
+  name: file
+  record_type: Document
+  record_id: 19
+  blob: documents_010_file
+
+documents_011_file:
+  name: file
+  record_type: Document
+  record_id: 20
+  blob: documents_011_file
+
+documents_012_file:
+  name: file
+  record_type: Document
+  record_id: 21
+  blob: documents_012_file
+
+documents_013_file:
+  name: file
+  record_type: Document
+  record_id: 22
+  blob: documents_013_file

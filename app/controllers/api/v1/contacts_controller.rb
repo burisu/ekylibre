@@ -20,13 +20,8 @@ module Api
       def picture
         return unless contact = Entity.find_by(id: params[:contact_id])
 
-        if contact.picture.file?
-
-          unless File.exist?(contact.picture.path(:contact))
-            contact.picture.reprocess! :contact
-          end
-
-          f = File.read(contact.picture.path(:contact))
+        if contact.picture.attached?
+          f = File.binread(contact.picture_path(:contact))
           render json: { picture: Base64.urlsafe_encode64(f) }
         else
           head :not_found

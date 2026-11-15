@@ -56,11 +56,7 @@ class Document < ApplicationRecord
   include Customizable
   belongs_to :template, class_name: 'DocumentTemplate'
   has_many :attachments, dependent: :destroy, inverse_of: :document
-  has_attached_file :file, path: ':tenant/:class/:id_partition/:style.:extension',
-                           styles: {
-                             default:   { format: :pdf, processors: %i[reader counter freezer], clean: true },
-                             thumbnail: { format: :jpg, processors: %i[sketcher thumbnail], geometry: '320x320>' }
-                           }
+  has_file :file, content_type: /\A(application|image|text)/
   refers_to :nature, class_name: 'DocumentNature'
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :file_content_text, :signature, length: { maximum: 500_000 }, allow_blank: true
@@ -74,10 +70,9 @@ class Document < ApplicationRecord
   validates :number, length: { allow_nil: true, maximum: 60 }
   validates :nature, length: { allow_nil: true, maximum: 120 }
   # validates_inclusion_of :nature, in: nature.values
-  # validates_attachment_presence :file
-  validates_attachment_content_type :file, content_type: /(application|image|text)/
 
-  before_post_process :processable_attachment?
+  # Pages count and text content of the new file (PDF text layer or OCR)
+  before_save :read_file_content, if: -> { attachment_changes['file'].present? && processable_attachment? }
 
   delegate :name, to: :template, prefix: true
   acts_as_numbered
@@ -96,8 +91,10 @@ class Document < ApplicationRecord
   end
 
   before_validation do
-    self.name ||= file.original_filename
-    self.key ||= "#{Time.now.to_i}-#{file.original_filename}"
+    if file.attached?
+      self.name ||= file.filename.to_s
+      self.key ||= "#{Time.now.to_i}-#{file.filename}"
+    end
     # DB limitation
     self.file_content_text = file_content_text.truncate(500_000) if file_content_text
   end
@@ -130,6 +127,23 @@ class Document < ApplicationRecord
   # not like this => Document.create!(name: file_name, file: File.open(file_path), processable_attachment: false)
   def processable_attachment?
     processable_attachment
+  end
+
+  def read_file_content
+    path = attachable_path(:file)
+    return unless path
+
+    content = Ekylibre::DocumentManagement::FileContent.new(path, content_type: file.blob.content_type)
+    self.file_pages_count = content.pages_count
+    self.file_content_text = content.text&.truncate(500_000)
+  end
+
+  # Local path of the file (:thumbnail gives a JPEG preview of the first page)
+  def file_path(style = nil)
+    return nil unless file.attached?
+    return file.blob.local_path unless style&.to_sym == :thumbnail
+
+    file.representation(resize_to_limit: [320, 320], format: :jpg).processed.image.blob.local_path
   end
 
   def file_size

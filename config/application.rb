@@ -48,6 +48,8 @@ module Ekylibre
       Rails.root.join('lib', 'generators'),
       Rails.root.join('lib', 'tasks'),
       Rails.root.join('lib', 'templates'),
+      # Loaded by Active Storage from config/storage.yml
+      Rails.root.join('lib', 'active_storage'),
       # Monkey patches, required explicitly (config/initializers/20-start.rb)
       Rails.root.join('lib', 'state_machine'),
       Rails.root.join('lib', 'reporting.rb'),

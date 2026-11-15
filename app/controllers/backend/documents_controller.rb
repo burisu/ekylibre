@@ -103,13 +103,13 @@ module Backend
       respond_to do |format|
         format.html { t3e @document }
         format.json
-        format.xlsx { send_data(File.read(@document.file.path), type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename: @document.file_file_name) }
-        format.ods { send_data(File.read(@document.file.path), type: 'application/vnd.oasis.opendocument.spreadsheet', filename: @document.file_file_name) }
-        format.xml { send_data(File.read(@document.file.path), type: 'application/xml', filename: @document.file_file_name) }
-        format.text { send_data(File.read(@document.file.path), type: 'text/plain', filename: @document.file_file_name) }
-        format.pdf { send_file(@document.file.path(params[:format] != :default ? :original : :default), disposition: 'inline', filename: @document.file_file_name) }
-        format.jpg { send_file(@document.file.path(:thumbnail), disposition: 'inline') }
-        format.zip { send_file(@document.file.path, type: 'application/zip', filename: @document.name) }
+        format.xlsx { send_data(@document.file.download, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename: @document.file_file_name) }
+        format.ods { send_data(@document.file.download, type: 'application/vnd.oasis.opendocument.spreadsheet', filename: @document.file_file_name) }
+        format.xml { send_data(@document.file.download, type: 'application/xml', filename: @document.file_file_name) }
+        format.text { send_data(@document.file.download, type: 'text/plain', filename: @document.file_file_name) }
+        format.pdf { send_file(@document.file_path, disposition: 'inline', filename: @document.file_file_name) }
+        format.jpg { send_file(@document.file_path(:thumbnail), type: 'image/jpeg', disposition: 'inline') }
+        format.zip { send_file(@document.file_path, type: 'application/zip', filename: @document.name) }
       end
     end
 

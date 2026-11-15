@@ -114,8 +114,7 @@ gem 'omniauth-rails_csrf_protection', '~> 1.0'
 gem 'omniauth-oauth2', '~> 1.8'
 
 # Attachments
-gem 'paperclip', '~> 5.3' # replaced by Active Storage at Rails 7.2
-gem 'paperclip-document', '~> 0.0.11'
+gem 'image_processing', '~> 1.13'
 
 # Emailing
 gem 'liquid', '>= 4.0'

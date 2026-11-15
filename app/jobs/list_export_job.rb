@@ -21,8 +21,7 @@ class ListExportJob < ApplicationJob
 
       document = Document.create!(key: "#{Time.now.to_i}-#{file_name.parameterize}",
                                   name: file_name,
-                                  file: file,
-                                  file_file_name: "#{file_name.parameterize}.#{file_extension}")
+                                  file: { io: file, filename: "#{file_name.parameterize}.#{file_extension}" })
 
       user.notifications.create!(success_notification_params(document.id))
     rescue StandardError => error

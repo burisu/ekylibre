@@ -8,6 +8,7 @@ class ApplicationRecord < ActiveRecord::Base
   include Ekylibre::Record::Acts::Affairable
   include Ekylibre::Record::Acts::Numbered
   include Ekylibre::Record::Acts::Picturable
+  include Ekylibre::Record::Acts::Attachable
   include Ekylibre::Record::Acts::Protected
   include Ekylibre::Record::Acts::Reconcilable
   include Ekylibre::Record::Acts::Referable

@@ -326,8 +326,8 @@ module RestfullyManageable
       mod.define_method(:picture) do
         return unless (record = find_and_check(record_name.to_sym))
 
-        if record.picture.file?
-          send_file(record.picture.path(params[:style] || :original))
+        if record.picture.attached?
+          send_file(record.picture_path(params[:style]), disposition: 'inline')
         else
           head :not_found
         end

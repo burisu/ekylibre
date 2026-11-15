@@ -30,9 +30,11 @@ module Api
         end
 
         observation.attachments = base64_pictures.each_with_index.collect do |pic, i|
-          file = Paperclip.io_adapters.for(pic, hash_digest: Digest::MD5)
-          ext = Rack::Mime::MIME_TYPES.invert[file.content_type]
-          file.original_filename = "observation_#{i+1}_#{Time.zone.now.to_i}#{ext}"
+          # Pictures are given as data URIs (data:image/jpeg;base64,...)
+          content_type, data = pic.to_s.match(/\Adata:([^;,]+)?(?:;base64)?,(.*)\z/m)&.captures
+          content_type ||= 'application/octet-stream'
+          ext = Rack::Mime::MIME_TYPES.invert[content_type]
+          file = { io: StringIO.new(Base64.decode64(data.to_s)), filename: "observation_#{i + 1}_#{Time.zone.now.to_i}#{ext}", content_type: content_type }
           Attachment.new(document_attributes: { file: file })
         end
 

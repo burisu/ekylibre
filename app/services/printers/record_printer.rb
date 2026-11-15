@@ -56,7 +56,7 @@ module Printers
       def serialize_company(company)
         hash = company.serializable_hash(methods: %i[full_name siret_number vat_number activity_code])
         hash['address'] = company.default_mail_address&.coordinate
-        hash['picture_path'] = company.picture.path if company.respond_to?(:has_picture?) && company.has_picture?
+        hash['picture_path'] = company.picture_path if company.respond_to?(:has_picture?) && company.has_picture?
         localize(hash)
       end
 

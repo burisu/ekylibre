@@ -88,7 +88,6 @@ DB_USERNAME=ekylibre
 DB_PASSWORD=<mot de passe fort>
 
 # === Redis ===
-REDIS_URL=redis://redis
 
 # Pas de variable LETSENCRYPT_EMAIL ici — Traefik est déjà configuré côté Dokploy.
 

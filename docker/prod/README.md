@@ -537,7 +537,6 @@ Voir `docker/prod/.env.dist` pour la liste exhaustive avec valeurs par défaut c
 Variables groupées en sections :
 - Application (`RAILS_ENV`, `HOST_DOMAIN_NAME`, `ADMIN_*`, `SECRET_KEY_BASE`, `INTEGRATION_CIPHER_BASE64_KEY`, Puma tuning)
 - Database (`DB_*`)
-- Redis (`REDIS_URL`)
 - TLS (`LETSENCRYPT_EMAIL`)
 - Object storage (`MINIO_*`, optionnel)
 - Observability (`ELASTIC_APM_ACTIVE`, optionnel)

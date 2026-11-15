@@ -1,8 +1,8 @@
 namespace :admin do
   namespace :tenant do
-    desc 'Create a new tenant with admin user + optional credentials email (tracks progress in Redis)'
+    desc 'Create a new tenant with admin user + optional credentials email (tracks progress in Ekylibre::TaskStatus)'
     task create: :environment do
-      redis_key = Admin::CreateTenantJob::REDIS_KEY
+      status_key = Admin::CreateTenantJob::STATUS_KEY
 
       name     = ENV.fetch('TENANT_NAME')
       email    = ENV.fetch('TENANT_EMAIL', 'admin@ekylibre.org')
@@ -13,9 +13,7 @@ namespace :admin do
       send_email = ENV['TENANT_SEND_EMAIL'] == '1'
 
       set_status = lambda do |status, message|
-        Sidekiq.redis do |r|
-          r.hmset(redis_key, 'status', status, 'message', message.to_s, 'tenant', name.to_s)
-        end
+        Ekylibre::TaskStatus.update(status_key, status: status, message: message, tenant: name)
       end
 
       begin

@@ -77,7 +77,7 @@ module Ekylibre
         end
 
         def db_config
-          Rails.application.config.database_configuration[Rails.env.to_s]
+          Ekylibre.primary_db_config
         end
 
         def setup_factories

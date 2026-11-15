@@ -2,7 +2,7 @@
 
 # Base class of all jobs. The tenant current at enqueue time is serialized
 # with the job and switched to before performing it (replaces the
-# apartment-sidekiq middleware, works with any ActiveJob backend).
+# apartment-sidekiq middleware; works with any ActiveJob backend).
 class ApplicationJob < ActiveJob::Base
   attr_writer :tenant
 

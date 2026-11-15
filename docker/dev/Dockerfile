@@ -14,7 +14,7 @@ RUN mkdir -p /app/vendor/bundle && \
     useradd --create-home --home-dir /home/ekylibre -s /bin/bash -g $GID -u $UID ekylibre && \
     chown -R ekylibre:ekylibre /app
 
-RUN chmod +x docker/dev/sidekiq_startup.sh
+RUN chmod +x docker/dev/jobs_startup.sh
 
 USER ekylibre
 

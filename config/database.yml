@@ -9,15 +9,47 @@ default: &default
   host: <%= ENV.fetch("DB_HOST","") %>
   port: <%= ENV.fetch("DB_PORT","5432") %>
 
+# Solid Queue, Solid Cache and Solid Cable use their own databases: their
+# connections are not affected by tenant (schema) switching
+solid: &solid
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("DB_POOL", 5) %>
+  username: <%= ENV.fetch("DB_USERNAME","ekylibre") %>
+  password: <%= ENV.fetch("DB_PASSWORD","ekylibre") %>
+  host: <%= ENV.fetch("DB_HOST","") %>
+  port: <%= ENV.fetch("DB_PORT","5432") %>
 
 development:
-  <<: *default
-  database: <%= ENV.fetch("DB_DEV_NAME","eky_development") %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("DB_DEV_NAME","eky_development") %>
+  queue:
+    <<: *solid
+    database: <%= ENV.fetch("DB_DEV_NAME","eky_development") %>_queue
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *solid
+    database: <%= ENV.fetch("DB_DEV_NAME","eky_development") %>_cache
+    migrations_paths: db/cache_migrate
 
 test:
   <<: *default
   database: <%= ENV.fetch("DB_TEST_NAME","eky_test") %>
 
 production:
-  <<: *default
-  database: <%= ENV.fetch("DB_PROD_NAME","eky_production") %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("DB_PROD_NAME","eky_production") %>
+  queue:
+    <<: *solid
+    database: <%= ENV.fetch("DB_PROD_NAME","eky_production") %>_queue
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *solid
+    database: <%= ENV.fetch("DB_PROD_NAME","eky_production") %>_cache
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *solid
+    database: <%= ENV.fetch("DB_PROD_NAME","eky_production") %>_cable
+    migrations_paths: db/cable_migrate

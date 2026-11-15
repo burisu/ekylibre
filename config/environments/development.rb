@@ -77,4 +77,7 @@ Rails.application.configure do
       Bullet.rails_logger = true
     end
   end
+
+  # Jobs run by Solid Queue (bin/jobs), stored in the queue database
+  config.solid_queue.connects_to = { database: { writing: :queue } }
 end

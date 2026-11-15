@@ -73,7 +73,6 @@ gem 'semantic', '~> 1.6'
 # Exception analysis and metrics
 # gem 'elastic-apm', '~> 3.4.0'
 gem 'exception_notification', '~> 4.5'
-gem 'redis-namespace', '~> 1.8'
 
 # Manipulate map data
 gem 'geocoder', '~> 1.6'
@@ -82,9 +81,10 @@ gem 'rgeo-geojson', '~> 2.1'
 gem 'rgeo-proj4', '~> 4.0'
 gem 'rgeo-shapefile', '~> 3.0'
 
-# Background jobs
-gem 'sidekiq', '~> 5.2'
-gem 'sidekiq-cron', '~> 1.2'
+# Background jobs, cache and Action Cable backed by the database (no Redis)
+gem 'solid_cable', '~> 3.0'
+gem 'solid_cache', '~> 1.0'
+gem 'solid_queue', '~> 1.1'
 
 # Reference data
 # Vendored (0.9.8 pins zeitwerk ~> 2.4.0, incompatible with Rails 7)

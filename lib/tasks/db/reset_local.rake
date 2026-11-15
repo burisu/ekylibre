@@ -3,7 +3,7 @@ namespace :db do
   task reset_local: :environment do
     abort "db:reset_local only runs with RAILS_ENV=test (got #{Rails.env.inspect})" unless Rails.env.test?
 
-    cfg = Rails.application.config.database_configuration[Rails.env]
+    cfg = Ekylibre.primary_db_config
     db = cfg.fetch('database')
     host = cfg['host'].to_s
     user = cfg.fetch('username')

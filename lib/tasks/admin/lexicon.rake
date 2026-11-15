@@ -1,17 +1,14 @@
 namespace :admin do
   namespace :lexicon do
-    desc 'Run lexicon action (download/activate/remove) — called from admin UI, tracks status in Redis'
+    desc 'Run lexicon action (download/activate/remove) — called from admin UI, tracks status in Ekylibre::TaskStatus'
     task run: :environment do
-      redis_key = 'ekylibre:admin:lexicon'
+      status_key = 'ekylibre:admin:lexicon'
       action    = ENV['LEX_ACTION'].to_s
       version   = ENV['LEX_VERSION'].to_s
       keep      = ENV['LEX_KEEP'].to_s == 'true'
 
       set_status = lambda do |status, message|
-        Sidekiq.redis do |r|
-          r.hmset(redis_key, 'status', status, 'message', message.to_s,
-                             'action', action, 'version', version)
-        end
+        Ekylibre::TaskStatus.update(status_key, status: status, message: message, action: action, version: version)
       end
 
       begin

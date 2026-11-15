@@ -45,4 +45,4 @@ RUN yarn install --frozen-lockfile
 RUN NODE_OPTIONS=--openssl-legacy-provider \
     SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
 
-RUN chmod +x docker/prod/startup.sh docker/prod/sidekiq_startup.sh
+RUN chmod +x docker/prod/startup.sh docker/prod/jobs_startup.sh

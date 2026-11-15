@@ -1,4 +1,4 @@
-class CallRecordsMaintenance < ApplicationJob
+class CallRecordsMaintenance < ScheduleJob
   queue_as :default
 
   def perform_on_tenant

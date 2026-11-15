@@ -8,8 +8,9 @@ if [ -z "$SECRET_KEY_BASE" ]; then
   exit 1
 fi
 
-echo "==DB CREATE/MIGRATE=="
-bundle exec rake db:create db:migrate
+# Creates/loads or migrates the primary, queue, cache and cable databases
+echo "==DB PREPARE=="
+bundle exec rake db:prepare
 
 DB_URI="postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${DB_PROD_NAME}"
 

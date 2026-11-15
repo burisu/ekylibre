@@ -1,15 +1,15 @@
 namespace :admin do
   namespace :dump do
-    desc 'Dump a tenant archive (called from admin UI, tracks status in Redis)'
+    desc 'Dump a tenant archive (called from admin UI, tracks status in Ekylibre::TaskStatus)'
     task run: :environment do
       require 'ekylibre/tenant'
 
       tenant_name = ENV['TENANT']
-      redis_key   = "ekylibre:admin:dump:#{tenant_name}"
+      status_key   = "ekylibre:admin:dump:#{tenant_name}"
       archive_dir = Rails.root.join('tmp', 'archives')
 
       set_status = lambda do |status, message|
-        Sidekiq.redis { |r| r.hmset(redis_key, 'status', status, 'message', message.to_s) }
+        Ekylibre::TaskStatus.update(status_key, status: status, message: message)
       end
 
       set_status.call('running', "Création de l'archive '#{tenant_name}' en cours...")

@@ -7,11 +7,8 @@ if [ $RAILS_ENV == "development" ]; then
   yarn install --check-files
 fi
 
-echo "==DB CREATE=="
-bundle exec rake db:create
-
-echo "==DB MIGRATE=="
-bundle exec rake db:migrate
+echo "==DB PREPARE=="
+bundle exec rake db:prepare
 
 # if args passed
 if [[ $# -ge 1 ]]; then
@@ -44,8 +41,8 @@ else
 fi
 
 if [ $RAILS_ENV == "production" ]; then
-   echo "==START UNICORN=="
-   bundle exec unicorn -c config/unicorn.rb
+   echo "==START PUMA=="
+   exec bundle exec puma -C config/puma.rb
 fi
 
 if [ $RAILS_ENV == "development" ]; then

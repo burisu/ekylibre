@@ -113,7 +113,7 @@ module Ekylibre
     # config.time_zone = 'Central Time (US & Canada)'
 
     # Confiure ActiveJob queue adapter
-    config.active_job.queue_adapter = :sidekiq
+    config.active_job.queue_adapter = :solid_queue
 
     # Default starting from Rails 5
     # TODO: enable this when all optional belongs_to have been edited with 'optional: true'

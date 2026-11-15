@@ -28,7 +28,6 @@ Puis éditer `docker/dev/.env` et renseigner au minimum :
 |---|---|
 | `RAILS_ENV` | Laisser à `development` |
 | `DB_USERNAME` / `DB_PASSWORD` | Identifiants PostgreSQL |
-| `REDIS_URL` | Doit valoir `redis://redis` |
 | `UID` / `GID` | UID et GID de votre utilisateur hôte (`id` pour les connaître) |
 | `GITLAB_REGISTRY_USER` | Votre username GitLab |
 | `GITLAB_REGISTRY_TOKEN` | Personal Access Token GitLab (`read_registry`) |

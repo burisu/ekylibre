@@ -317,7 +317,7 @@ module Ekylibre
       end
 
       def db_config
-        Rails.application.config.database_configuration[Rails.env.to_s]
+        Ekylibre.primary_db_config
       end
 
       def download_lexicon(out_dir, loader, semantic_version)

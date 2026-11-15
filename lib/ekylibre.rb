@@ -3,6 +3,11 @@ module Ekylibre
   CSV = ::CSV.freeze
 
   class << self
+    # Configuration (string keys) of the primary database of the current environment
+    def primary_db_config
+      ActiveRecord::Base.configurations.configs_for(env_name: Rails.env.to_s, name: 'primary').configuration_hash.stringify_keys
+    end
+
     # Deprecation warnings of the application (see config.active_support.deprecation)
     def deprecator
       @deprecator ||= ActiveSupport::Deprecation.new('next major release', 'Ekylibre')

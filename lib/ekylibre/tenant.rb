@@ -276,7 +276,7 @@ module Ekylibre
       end
 
       def reset_search_path!
-        ActiveRecord::Base.connection.schema_search_path = Ekylibre::Application.config.database_configuration[::Rails.env]['schema_search_path']
+        ActiveRecord::Base.connection.schema_search_path = Ekylibre.primary_db_config['schema_search_path']
       end
 
       def list_tenants_with_migration_problem
@@ -572,7 +572,7 @@ module Ekylibre
         end
 
         def db_config
-          Rails.application.config.database_configuration[Rails.env.to_s]
+          Ekylibre.primary_db_config
         end
 
         def zip_up(archive_path, into:)

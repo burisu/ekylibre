@@ -13,14 +13,11 @@ module Ekylibre
         end
       end
 
-      # Insert the js file to the plugins.js.coffee tmp file.
-      # The plugins.js.coffee file is inserted to application.js.
+      # Adds the js file to the scripts loaded after the application ones
       def insert_js_file(extension_name)
-        script = "# This files contains JS addons from plugins\n"
-        script << "#= require #{extension_name}\n"
-
-        file_path = 'plugins.js.coffee'
-        write_asset_tmp_file('javascript-addons', file_path, script)
+        path = extension_name.to_s
+        path += '.js' unless path.end_with?('.js')
+        Ekylibre::Plugin.javascripts << path unless Ekylibre::Plugin.javascripts.include?(path)
       end
 
       private

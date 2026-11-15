@@ -68,8 +68,12 @@ module Apartment
       def connect_to_new(tenant = nil)
         return reset if tenant.nil?
 
-        raise ActiveRecord::StatementInvalid, "Could not establish connection to database for schema #{tenant}" unless Apartment.connection.active?
-        # end
+        # Connections are established lazily since Rails 7.2: connect if needed
+        begin
+          Apartment.connection.verify!
+        rescue ActiveRecord::ConnectionNotEstablished => e
+          raise ActiveRecord::StatementInvalid, "Could not establish connection to database for schema #{tenant}: #{e.message}"
+        end
 
         unless Apartment.connection.schema_exists? tenant
           raise TenantNotFound, "Could not find schema #{tenant}. Search path: [#{full_search_path}]"

@@ -1,0 +1,4 @@
+// flatpickr/dist/l10n/de@4.5.7 downloaded from https://ga.jspm.io/npm:flatpickr@4.5.7/dist/l10n/de.js
+
+var e={};(function(n,r){r(e)})(e,(function(e){var n="undefined"!==typeof window&&void 0!==window.flatpickr?window.flatpickr:{l10ns:{}};var r={weekdays:{shorthand:["So","Mo","Di","Mi","Do","Fr","Sa"],longhand:["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"]},months:{shorthand:["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],longhand:["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]},firstDayOfWeek:1,weekAbbreviation:"KW",rangeSeparator:" bis ",scrollTitle:"Zum Ändern scrollen",toggleTitle:"Zum Umschalten klicken"};n.l10ns.de=r;var a=n.l10ns;e.German=r;e.default=a;Object.defineProperty(e,"__esModule",{value:true})}));const n=e.German,r=e.__esModule;export default e;export{n as German,r as __esModule};
+

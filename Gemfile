@@ -38,25 +38,20 @@ gem 'scenic'
 # Multi-tenancy
 gem 'ros-apartment', '~> 3.1', require: 'apartment'
 
-# Assets pipeline
-gem 'coffee-rails', '~> 4.1'
-gem 'sassc-rails', '~> 2.0'
-gem 'sprockets', '< 4.0'
-gem 'uglifier', '>= 1.3.0'
-gem 'webpacker', '~> 5.4'
+# Assets: Propshaft serves them, Dart Sass builds the themes, import maps
+# load the JavaScript modules (no Node.js)
+gem 'dartsass-rails', '~> 0.5'
+gem 'importmap-rails', '~> 2.1'
+gem 'propshaft', '~> 1.1'
 
 # CSS
 gem 'agric', github: 'ekylibre/agric', branch: 'master'
-gem 'bootstrap-sass', '~> 3.4.1'
-gem 'font-awesome-sass', '~> 5.15'
+gem 'bootstrap-sass', '~> 3.4.1', require: false # SCSS sources only (see config/initializers/dartsass.rb)
+gem 'font-awesome-sass', '~> 5.15', require: false
 
 # JS
 gem 'cocoon', '~> 1.2'
-gem 'jquery-rails', '~> 4.4'
-gem 'jquery-ui-rails', '~> 6.0'
 gem 'simple_calendar', '~> 2.4.0'
-gem 'turbolinks', '~> 5.2.1'
-gem 'twitter-typeahead-rails', '~> 0.11.1'
 
 # Front
 gem 'kaminari', '~> 1.1'
@@ -118,8 +113,6 @@ gem 'image_processing', '~> 1.13'
 
 # Emailing
 gem 'liquid', '>= 4.0'
-gem 'tinymce-rails'
-gem 'tinymce-rails-langs'
 
 # I18n and localeapp
 gem 'http_accept_language', '~> 2.1'
@@ -154,8 +147,6 @@ gem 'rubyntlm', '>= 0.3.2'
 gem 'savon', '2.12'
 gem 'stripe'
 
-# Using git until we have a proper release system for cartography
-gem 'cartography', github: 'ekylibre/cartography', branch: 'eky'
 
 # Used to convert markdown to html
 gem 'gitlab_kramdown', '~> 0.6'

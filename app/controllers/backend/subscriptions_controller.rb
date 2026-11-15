@@ -44,7 +44,7 @@ module Backend
           c[0] << " AND #{Subscription.table_name}.status IN (?)"
           c << params[:state]
         end
-        if params[:subscribed_on].to_s =~ /Adddd-dd-ddz/.nil?
+        if params[:subscribed_on].to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
           c[0] += " AND ? BETWEEN #{Subscription.table_name}.started_on AND #{Subscription.table_name}.stopped_on"
           c << params[:subscribed_on]
         end

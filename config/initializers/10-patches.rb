@@ -1,5 +1,3 @@
-require 'tilt/coffee'
-
 # i18n-complements core extensions pass options positionally, which Ruby 3
 # no longer converts to keywords
 [::String, ::Symbol].each do |klass|

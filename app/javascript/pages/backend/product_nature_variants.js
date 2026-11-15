@@ -1,7 +1,8 @@
 import { onDomReady } from 'lib/domEventUtils';
 import { MeasureService } from 'services/measureService';
 import { UnitService } from 'services/unitService';
-import { round } from 'lodash';
+import _ from 'lodash';
+const { round } = _;
 
 onDomReady(() => {
     const formElement = document.querySelector('#new_product_nature_variant, #edit_product_nature_variant');

@@ -80,21 +80,20 @@ module Ekylibre
         end
       end
 
-      # Generate a javascript for all plugins which refes by theme to add addons import.
-      # This way permit to use natural sprocket cache approach without ERB filtering
+      # JavaScript files (asset logical paths) added by plugins and extensions,
+      # loaded after the application ones (see ApplicationHelper#legacy_javascript_tags)
+      def javascripts
+        @javascripts ||= []
+      end
+
       def generate_javascript_index
-        base_dir = Rails.root.join('tmp', 'plugins', 'javascript-addons')
-        Rails.application.config.assets.paths << base_dir.to_s
-        script = "# This files contains JS addons from plugins\n"
         each do |plugin|
           plugin.javascripts.each do |path|
-            script << "#= require #{path}\n"
+            path = path.to_s
+            path += '.js' unless path.end_with?('.js')
+            javascripts << path unless javascripts.include?(path)
           end
         end
-        # <base_dir>/plugins.js.coffee
-        file = base_dir.join('plugins.js.coffee')
-        FileUtils.mkdir_p file.dirname
-        File.write(file, script)
       end
 
       # Generate a stylesheet by theme to add addons import.

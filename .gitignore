@@ -120,3 +120,7 @@ nanoclaw-tenants.yml
 /.rubocop-*
 .rbenv-gemsets
 ekylibre-document-ai.json
+
+# Built assets (Dart Sass)
+/app/assets/builds/*
+!/app/assets/builds/.keep

@@ -14,7 +14,18 @@
 = field_set :email_body_customization do
   = label_tag :body.tl
   = f.text_area :body, class: 'tinymce'
-  = tinymce
+  -# TinyMCE (GPL) is self-hosted in public/vendor/tinymce
+  = javascript_include_tag '/vendor/tinymce/tinymce.js'
+  :javascript
+    tinymce.init({
+      selector: 'textarea.tinymce',
+      license_key: 'gpl',
+      base_url: '/vendor/tinymce',
+      suffix: '',
+      plugins: ['image', 'link'],
+      toolbar: ['styles | bold italic | undo redo', 'image | link'],
+      menubar: false
+    });
 
 = field_set :custom_fields do
   - f.object.metadata.each do |k, v|

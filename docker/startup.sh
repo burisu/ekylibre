@@ -3,8 +3,8 @@ set -e
 
 if [ $RAILS_ENV == "development" ]; then
   cp -n docker/dev/.env.dist .env
-  bundle install --path vendor/bundle
-  yarn install --check-files
+  bundle config set --local path vendor/bundle
+  bundle install
 fi
 
 echo "==DB PREPARE=="
@@ -46,6 +46,10 @@ if [ $RAILS_ENV == "production" ]; then
 fi
 
 if [ $RAILS_ENV == "development" ]; then
+   echo "==BUILD THEMES=="
+   bundle exec rake dartsass:build
+   bundle exec rake dartsass:watch &
+
    echo "==START RAILS SERVER=="
    rm -f tmp/pids/server.pid
    ./bin/rails s -p 3000 -b '0.0.0.0';

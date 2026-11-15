@@ -22,17 +22,6 @@ Rails.application.configure do
   # Apache or NGINX already handles this.
   config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present?
 
-  # Compress JavaScripts and CSS.
-  config.assets.configure do |env|
-    env.js_compressor  = Uglifier.new(harmony: true) # or :closure, :yui
-    env.css_compressor = :sass   # or :yui
-  end
-
-  # config.assets.css_compressor = :sass
-
-  # Do not fallback to assets pipeline if a precompiled asset is missed.
-  config.assets.compile = false
-
   # Allow every Ekylibre url to subscribe to actionCable
   config.action_cable.allowed_request_origins = [/https?:\/\/.{1,40}\.#{Regexp.quote(ENV.fetch('HOST_DOMAIN_NAME', 'ekylibre.farm'))}/]
   # `config.assets.precompile` and `config.assets.version` have moved to config/initializers/assets.rb

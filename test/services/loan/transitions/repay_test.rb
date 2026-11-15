@@ -10,7 +10,7 @@ class Loan
 
       test 'should not allow to repay Loan if state is not ongoing' do
         %w[draft repaid].each do |state|
-          mock = MiniTest::Mock.new
+          mock = Minitest::Mock.new
           mock.expect(:state, state)
           mock.expect(:repaid_at, nil)
 

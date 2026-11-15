@@ -1,0 +1,4 @@
+// flatpickr/dist/l10n/es@4.5.7 downloaded from https://ga.jspm.io/npm:flatpickr@4.5.7/dist/l10n/es.js
+
+var e={};(function(o,n){n(e)})(e,(function(e){var o="undefined"!==typeof window&&void 0!==window.flatpickr?window.flatpickr:{l10ns:{}};var n={weekdays:{shorthand:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],longhand:["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"]},months:{shorthand:["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"],longhand:["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]},ordinal:function(){return"º"},firstDayOfWeek:1,rangeSeparator:" a "};o.l10ns.es=n;var r=o.l10ns;e.Spanish=n;e.default=r;Object.defineProperty(e,"__esModule",{value:true})}));const o=e.Spanish,n=e.__esModule;export default e;export{o as Spanish,n as __esModule};
+

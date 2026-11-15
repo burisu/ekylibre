@@ -1,5 +1,3 @@
-//= depend_on variables
-//
 
 @mixin iconics($symbol-name) {
   // buttons
@@ -33,7 +31,8 @@
 
 @each $icon in $symbolic-icons {
   $name: nth($icon, 1);
-  @if $name != "3d-rotation" {
+  // CSS class names cannot start with a digit (3d-rotation, 500px...)
+  @if not str-index("0123456789", str-slice($name, 1, 1)) {
     @include iconics(nth($icon, 1)) {
       &::before { content: nth($icon, 2); }
       &.icn-after {

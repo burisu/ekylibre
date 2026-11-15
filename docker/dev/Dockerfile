@@ -7,8 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       imagemagick ghostscript poppler-utils tesseract-ocr tesseract-ocr-fra \
       gnupg libgpgme-dev libxml2-dev libxslt1-dev libyaml-dev \
       weasyprint python3-pymupdf \
-      nodejs npm \
-    && npm install -g yarn \
     && rm -rf /var/lib/apt/lists/*
 
 ARG UID=1000

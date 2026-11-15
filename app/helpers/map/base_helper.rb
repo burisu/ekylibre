@@ -1,6 +1,5 @@
 module Map
   module BaseHelper
-    include CartographyHelper
 
     def map_config(options = {})
       {

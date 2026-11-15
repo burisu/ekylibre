@@ -4,7 +4,7 @@
             this.list = element;
             this.listSelectorInputs = element.querySelectorAll('input[data-list-selector]');
             this.deleteSelectedRideSetBtn = document.querySelector('#selected-ride-sets');
-            this.deleteSelectedRideSetBtnUrl = this.deleteSelectedRideSetBtn.href;
+            this.deleteSelectedRideSetBtnUrl = this.deleteSelectedRideSetBtn?.href;
         }
 
         init() {

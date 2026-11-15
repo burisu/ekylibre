@@ -8,7 +8,7 @@
 //       .duke-panel__messages
 //       .duke-panel__composer
 
-import { DukeClient } from './client.js';
+import { DukeClient } from 'duke/client';
 
 const I18N = {
   title: 'Duke',

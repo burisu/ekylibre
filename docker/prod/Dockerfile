@@ -7,8 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       imagemagick ghostscript poppler-utils tesseract-ocr tesseract-ocr-fra \
       gnupg libgpgme-dev libxml2-dev libxslt1-dev libyaml-dev \
       weasyprint python3-pymupdf \
-      nodejs npm \
-    && npm install -g yarn \
     && rm -rf /var/lib/apt/lists/*
 
 ARG UID=1000
@@ -47,9 +45,7 @@ RUN bundle config set --local without 'development test' && \
     bundle install -j $(nproc) && \
     bundle clean --force
 
-RUN yarn install --frozen-lockfile
-
-RUN NODE_OPTIONS=--openssl-legacy-provider \
-    SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
+# Builds the themes (Dart Sass) and digests the assets (Propshaft)
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rake assets:precompile
 
 RUN chmod +x docker/prod/startup.sh docker/prod/jobs_startup.sh

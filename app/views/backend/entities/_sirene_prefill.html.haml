@@ -131,7 +131,8 @@
     // Document-level delegation, bound once: robust to Turbolinks and to script
     // re-injection, and guarantees the Enter handler prevents the parent form
     // from submitting.
-    if (!window.__sirenePrefillBound) {
+    function bind() {
+      if (window.__sirenePrefillBound) { return; }
       window.__sirenePrefillBound = true;
       $(document)
         .on('click', '.sirene-prefill [data-role="sirene-search"]', function () {
@@ -143,4 +144,7 @@
           if (e.key === 'Escape') { $widget.find('.sirene-prefill__results').attr('hidden', true).empty(); }
         });
     }
+
+    // jQuery is loaded by deferred scripts: wait for them on first page load
+    if (window.jQuery) { bind(); } else { document.addEventListener('DOMContentLoaded', bind); }
   })();

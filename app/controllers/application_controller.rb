@@ -19,6 +19,7 @@
 class ApplicationController < ActionController::Base
   abstract!
   include NotificationModule
+  include TurbolinksRedirection
 
   before_action :set_theme
   before_action :set_locale

@@ -125,8 +125,6 @@ module Ekylibre
     # config.action_controller.per_form_csrf_tokens = true
     # config.action_controller.forgery_protection_origin_check = true
 
-    # for TinyMCE
-    config.tinymce.install = :copy
 
     # Configure defaults for generators
     config.generators do |g|
@@ -153,16 +151,6 @@ module Ekylibre
 
     initializer :register_core_plugin, before: :load_config_initializers do
       Ekylibre::Application.instance.plugins << Ekylibre::Core::Plugin.new
-    end
-
-    initializer :after_append_asset_paths, group: :all, after: :append_assets_path do
-      { 'jquery-ui-rails' => ['app/assets/images'],
-        'bootstrap-sass' => ['assets/images', 'assets/fonts'] }.each do |gem, paths|
-        root = Pathname.new(Gem.loaded_specs[gem].full_gem_path)
-        paths.each do |path|
-          config.assets.paths.delete_if { |p| p.to_s == root.join(path).to_s }
-        end
-      end
     end
   end
 end

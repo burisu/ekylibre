@@ -7,17 +7,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       imagemagick ghostscript poppler-utils tesseract-ocr tesseract-ocr-fra \
       gnupg libgpgme-dev libxml2-dev libxslt1-dev libyaml-dev \
       weasyprint python3-pymupdf \
-      nodejs npm \
-    && npm install -g yarn \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app
 WORKDIR /app
 
-COPY Gemfile Gemfile.lock package.json yarn.lock /app/
+COPY Gemfile Gemfile.lock /app/
 RUN bundle config --local build.sassc --disable-march-tune-native && \
     bundle config set --local path vendor/ruby && \
-    bundle install -j $(nproc) && \
-    yarn
+    bundle install -j $(nproc)
 
 COPY . /app

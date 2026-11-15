@@ -47,7 +47,7 @@
 # Mirroring on credit record is managed by model, but some errors can happen
 # if the coder don't check everything. The destruction process is fragile.
 class DebtTransfer < ApplicationRecord
-  enumerize :nature, in: %i[sale_regularization purchase_regularization], predicates: true
+  has_enum :nature, in: %i[sale_regularization purchase_regularization], predicates: true
 
   attribute :reflect, :boolean, default: false
 

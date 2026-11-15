@@ -48,12 +48,12 @@
 class WorkerContract < ApplicationRecord
   include Customizable
   include Attachable
-  enumerize :distribution_key, in: %i[gross_margin percentage], default: :gross_margin, predicates: true
+  has_enum :distribution_key, in: %i[gross_margin percentage], default: :gross_margin, predicates: true
   belongs_to :entity, class_name: 'Entity', inverse_of: :worker_contracts
   belongs_to :contract_nature, primary_key: :reference_name, class_name: 'MasterDoerContract', foreign_key: :reference_name
   has_many :economic_cash_indicators, class_name: 'EconomicCashIndicator', inverse_of: :worker_contract, dependent: :destroy
   has_many :distributions, class_name: 'WorkerContractDistribution', dependent: :destroy, inverse_of: :worker_contract
-  enumerize :nature, in: %i[permanent_worker temporary_worker external_staff], default: :permanent_worker, predicates: true
+  has_enum :nature, in: %i[permanent_worker temporary_worker external_staff], default: :permanent_worker, predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :contract_end, :name, :reference_name, length: { maximum: 500 }, allow_blank: true
   validates :description, length: { maximum: 500_000 }, allow_blank: true

@@ -1,6 +1,6 @@
 namespace :diagrams do
   task all: :environment do
-    models = YAML.load_file(Rails.root.join('db', 'models.yml')).map(&:classify).map(&:constantize).delete_if do |m|
+    models = YAML.safe_load_file(Rails.root.join('db', 'models.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).map(&:classify).map(&:constantize).delete_if do |m|
       m.superclass != ApplicationRecord
     end
     graph = Diagram::Model.relational(*models, name: 'all')
@@ -9,7 +9,7 @@ namespace :diagrams do
 
   task relational: :environment do
     {
-      product: YAML.load_file(Rails.root.join('db', 'models.yml')).select do |m|
+      product: YAML.safe_load_file(Rails.root.join('db', 'models.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).select do |m|
         m =~ /^product($|_)/ && m !~ /^product_(group|nature)/ && m.pluralize == m.classify.constantize.table_name
       end.map(&:classify).map(&:constantize) + [Tracking],
       cash: [Cash, CashSession, CashTransfer, BankStatement, BankStatementItem, Deposit, IncomingPaymentMode, OutgoingPaymentMode, Loan, LoanRepayment],
@@ -48,7 +48,7 @@ namespace :diagrams do
   end
 
   task physical: :environment do
-    graph = Diagram::Schema.physical(YAML.load_file(Rails.root.join('db', 'tables.yml')))
+    graph = Diagram::Schema.physical(YAML.safe_load_file(Rails.root.join('db', 'tables.yml'), permitted_classes: [Date, Time, Symbol], aliases: true))
     graph.write
   end
 end

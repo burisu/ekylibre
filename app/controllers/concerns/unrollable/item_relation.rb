@@ -66,10 +66,10 @@ module Unrollable
     end
 
     # Forwarding the unknown to the AR::Relation
-    def method_missing(method, *args, &block)
+    def method_missing(method, ...)
       return super unless @items.respond_to?(method)
 
-      result = @items.send(method, *args, &block)
+      result = @items.send(method, ...)
       result.respond_to?(:to_sql) ? self.class.new(result) : result
     end
 

@@ -19,7 +19,7 @@ namespace :db do
       raise 'Cannot load db/structure.sql' unless $?.success?
 
       ActiveRecord::Base.establish_connection(config)
-      ActiveRecord::InternalMetadata[:environment] = 'test'
+      ActiveRecord::Base.connection_pool.internal_metadata[:environment] = 'test'
       puts "Test database #{database} loaded from db/structure.sql"
     end
   end

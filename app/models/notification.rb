@@ -44,7 +44,7 @@
 # Column message expect a string which is more an ID. It permits to be i18nized.
 # Notifications are used to inform users asynchronously.
 class Notification < ApplicationRecord
-  enumerize :level, in: %i[information success warning error], default: :information
+  has_enum :level, in: %i[information success warning error], default: :information
   belongs_to :recipient, class_name: 'User'
   belongs_to :target, polymorphic: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
@@ -56,7 +56,7 @@ class Notification < ApplicationRecord
 
   # take care of desactivate this after_create for action cable during local test mode because of SocketError: getaddrinfo
   after_create do
-    ActionCable.server.broadcast("main_#{recipient.email}", event: 'new_notification')
+    ActionCable.server.broadcast("main_#{recipient.email}", { event: 'new_notification' })
   end
 
   def read!

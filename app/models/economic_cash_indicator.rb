@@ -49,9 +49,9 @@
 #  worker_contract_id        :integer(4)
 #
 class EconomicCashIndicator < ApplicationRecord
-  enumerize :direction, in: %i[revenue expense], predicates: true
-  enumerize :origin, in: %i[manual itk automatic contract loan], predicates: true
-  enumerize :nature, in: %i[static dynamic permanent_worker temporary_worker external_staff], predicates: true
+  has_enum :direction, in: %i[revenue expense], predicates: true
+  has_enum :origin, in: %i[manual itk automatic contract loan], predicates: true
+  has_enum :nature, in: %i[static dynamic permanent_worker temporary_worker external_staff], predicates: true
 
   belongs_to :campaign
   belongs_to :activity

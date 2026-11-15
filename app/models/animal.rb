@@ -104,9 +104,9 @@ class Animal < Bioproduct
   validates :identification_number, presence: true
   validates :identification_number, uniqueness: true
 
-  enumerize :birth_date_completeness, in: %i[year month_year full_date]
-  enumerize :filiation_status, in: %i[unknown certified uncertified]
-  enumerize :end_of_life_reason, in: %i[death slaughter cutting_up calculated_date]
+  has_enum :birth_date_completeness, in: %i[year month_year full_date]
+  has_enum :filiation_status, in: %i[unknown certified uncertified]
+  has_enum :end_of_life_reason, in: %i[death slaughter cutting_up calculated_date]
 
   def status
     if dead_at?

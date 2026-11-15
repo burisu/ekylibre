@@ -26,9 +26,12 @@ module Ekylibre
             reflection = Onoma::Reflection.new(self, name, options)
             @nomenclature_reflections ||= {}.with_indifferent_access
             @nomenclature_reflections[reflection.name] = reflection
-            enumerize reflection.foreign_key, in: reflection.all(reflection.scope),
-                      predicates: options[:predicates],
-                      i18n_scope: ["nomenclatures.#{reflection.nomenclature}.items"]
+            # Nomenclatures have hundreds of items: an inclusion validation
+            # instead of a database enum
+            has_enum reflection.foreign_key, in: reflection.all(reflection.scope),
+                                             predicates: options[:predicates],
+                                             i18n_scope: ["nomenclatures.#{reflection.nomenclature}.items"],
+                                             rails_enum: false
 
             if reflection.foreign_key != reflection.name
               define_method name do

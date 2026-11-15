@@ -1,7 +1,7 @@
 module Ekylibre
   module FirstRun
     class Base
-      LOADERS = YAML.load_file(Pathname.new(__FILE__).dirname.join('loaders.yml')).deep_symbolize_keys.freeze
+      LOADERS = YAML.safe_load_file(Pathname.new(__FILE__).dirname.join('loaders.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys.freeze
 
       attr_reader :max, :verbose, :mode, :force
 
@@ -44,7 +44,7 @@ module Ekylibre
         local = @path.join('loaders.yml')
         return LOADERS unless local.exist?
 
-        YAML.load_file(local).deep_symbolize_keys
+        YAML.safe_load_file(local, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
       end
 
       # Execute all loaders for a given base

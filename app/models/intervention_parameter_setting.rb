@@ -44,7 +44,7 @@ class InterventionParameterSetting < ApplicationRecord
   belongs_to :intervention
   belongs_to :intervention_parameter, optional: true
   has_many :settings, class_name: 'InterventionSettingItem', dependent: :destroy
-  enumerize :nature, in: %i[spraying]
+  has_enum :nature, in: %i[spraying]
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :name, presence: true, length: { maximum: 500 }

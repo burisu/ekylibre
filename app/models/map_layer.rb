@@ -47,7 +47,7 @@
 #  url            :string           not null
 #
 class MapLayer < ApplicationRecord
-  enumerize :nature, in: %i[background overlay], default: :background, predicates: true
+  has_enum :nature, in: %i[background overlay], default: :background, predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :attribution, :reference_name, :subdomains, length: { maximum: 500 }, allow_blank: true
   validates :by_default, :enabled, :managed, :tms, inclusion: { in: [true, false] }

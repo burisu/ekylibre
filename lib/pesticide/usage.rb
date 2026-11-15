@@ -15,8 +15,8 @@ module Pesticide
       end
     end
 
-    def self.human_attribute_name(*args)
-      ProductNatureVariant.human_attribute_name(*args)
+    def self.human_attribute_name(...)
+      ProductNatureVariant.human_attribute_name(...)
     end
 
     def subject_name

@@ -68,7 +68,7 @@ class RideSet < ApplicationRecord
   has_interval :duration, :sleep_duration
 
   acts_as_numbered :number
-  enumerize :nature, in: %i[road work]
+  has_enum :nature, in: %i[road work]
 
   scope :between, lambda { |started_at, stopped_at|
     where(started_at: started_at..stopped_at)

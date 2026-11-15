@@ -44,7 +44,7 @@ class InterventionWorkingPeriod < ApplicationRecord
   belongs_to :intervention
   belongs_to :intervention_participation
   has_one    :intervention_participated_to, through: :intervention_participation, source: :intervention
-  enumerize :nature, in: %i[preparation travel intervention pause]
+  has_enum :nature, in: %i[preparation travel intervention pause]
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :duration, presence: true, numericality: { only_integer: true, greater_than: -2_147_483_649, less_than: 2_147_483_648 }
   validates :started_at, presence: true, timeliness: { on_or_after: -> { Time.new(1, 1, 1).in_time_zone }, on_or_before: -> { Time.zone.now + 100.years } }

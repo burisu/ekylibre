@@ -8,7 +8,7 @@ module Ekylibre
       def initialize(path, options = {})
         @verbose = !options[:verbose].is_a?(FalseClass)
         @path = Pathname.new(path)
-        manifest = YAML.load_file(@path.join('manifest.yml')).deep_symbolize_keys
+        manifest = YAML.safe_load_file(@path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
         @version = manifest[:version]
         unless @version == VERSION
           raise "Incompatible first-run folder: #{@version.inspect}." \

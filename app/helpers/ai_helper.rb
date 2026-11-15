@@ -1,6 +1,6 @@
 module AiHelper
   INSTRUCTIONS_INDEX = Rails.root.join('db', 'nomenclatures', 'ai_context.yml').freeze
-  INSTRUCTIONS = (INSTRUCTIONS_INDEX.exist? ? YAML.load_file(INSTRUCTIONS_INDEX) : {}).freeze
+  INSTRUCTIONS = (INSTRUCTIONS_INDEX.exist? ? YAML.safe_load_file(INSTRUCTIONS_INDEX, permitted_classes: [Date, Time, Symbol], aliases: true) : {}).freeze
 
   def item_ai_instruction(nature)
     instruction = INSTRUCTIONS[nature.to_s]

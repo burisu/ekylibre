@@ -37,11 +37,11 @@
 #
 
 class Version < ActiveRecord::Base
-  extend Enumerize
+  extend Ekylibre::Record::HasEnum
   cattr_accessor :current_user
   belongs_to :creator, class_name: 'User'
   belongs_to :item, polymorphic: true
-  enumerize :event, in: %i[create update destroy], predicates: true
+  has_enum :event, in: %i[create update destroy], predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   # ]VALIDATORS]
 

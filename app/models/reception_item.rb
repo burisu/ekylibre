@@ -80,7 +80,7 @@ class ReceptionItem < ParcelItem
   has_one :storage, through: :reception
   has_one :contract, through: :reception
 
-  enumerize :role, in: %i[merchandise fees service], predicates: true
+  has_enum :role, in: %i[merchandise fees service], predicates: true
 
   validates :product_name, :product_identification_number, presence: { if: -> { product_is_identifiable? } }
   validates :conditioning_unit, :conditioning_quantity, presence: { unless: :merchandise? }

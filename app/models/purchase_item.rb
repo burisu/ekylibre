@@ -85,7 +85,7 @@ class PurchaseItem < ApplicationRecord
   has_many :products, through: :parcels_purchase_invoice_items, source: :product
   has_one :product_nature_category, through: :variant, source: :category
 
-  enumerize :role, in: %i[merchandise service fees], predicates: true
+  has_enum :role, in: %i[merchandise service fees], predicates: true
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :accounting_label, length: { maximum: 500 }, allow_blank: true

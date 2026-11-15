@@ -70,7 +70,7 @@
 class Reception < Parcel
   include Transitionable
 
-  enumerize :state, in: %i[draft given], predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
+  has_enum :state, in: %i[draft given], predicates: true, i18n_scope: "models.#{model_name.param_key}.states"
 
   belongs_to :purchase_order, foreign_key: :purchase_id, class_name: 'PurchaseOrder', inverse_of: :parcels
   belongs_to :intervention, class_name: 'Intervention'

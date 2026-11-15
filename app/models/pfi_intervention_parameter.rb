@@ -41,7 +41,7 @@ class PfiInterventionParameter < ApplicationRecord
   belongs_to :input, class_name: 'InterventionInput', inverse_of: :pfi_input
   belongs_to :target, class_name: 'InterventionTarget', inverse_of: :pfi_targets
   belongs_to :campaign
-  enumerize :nature, in: %i[intervention crop]
+  has_enum :nature, in: %i[intervention crop]
 
   PFI_BASE_URL = if Rails.env.production?
                    "https://alim.agriculture.gouv.fr/"

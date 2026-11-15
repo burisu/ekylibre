@@ -1,1 +1,1 @@
-Rails.application.config.sorting_reference = YAML.load(File.read(Rails.root.join('config','sorting_reference.yml')))
+Rails.application.config.sorting_reference = YAML.safe_load(File.read(Rails.root.join('config','sorting_reference.yml')), permitted_classes: [Date, Time, Symbol], aliases: true)

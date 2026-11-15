@@ -66,7 +66,7 @@
 class SaleItem < ApplicationRecord
   include PeriodicCalculable
   attr_readonly :sale_id
-  enumerize :compute_from, in: %i[unit_pretax_amount pretax_amount amount],
+  has_enum :compute_from, in: %i[unit_pretax_amount pretax_amount amount],
                            default: :unit_pretax_amount, predicates: { prefix: true }
   refers_to :currency
   belongs_to :account

@@ -77,9 +77,9 @@ class Intervention < ApplicationRecord
   attr_readonly :procedure_name, :production_id, :currency
   refers_to :currency
   store_accessor :weather_conditions, :weather_condition_code, :temperature, :wind, :humidity
-  enumerize :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures'], predicates: true, scope: true
-  enumerize :nature, in: %i[request record], default: :record, predicates: true, scope: true
-  enumerize :state, in: %i[in_progress done validated rejected], default: :done, predicates: true
+  has_enum :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures'], predicates: true, scope: true
+  has_enum :nature, in: %i[request record], default: :record, predicates: true, scope: true
+  has_enum :state, in: %i[in_progress done validated rejected], default: :done, predicates: true
   belongs_to :event, dependent: :destroy, inverse_of: :intervention
   belongs_to :request_intervention, -> { where(nature: :request) }, class_name: 'Intervention'
   belongs_to :issue

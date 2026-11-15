@@ -154,7 +154,7 @@ module Ekylibre
         if !archive_path.join('manifest.yml').exist?
           raise 'Cannot not handle this archive'
         else
-          manifest = YAML.load_file(archive_path.join('manifest.yml')).symbolize_keys
+          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).symbolize_keys
           # Bugfix
           if manifest[:tenant] == 'Ekylibre::Tenant'
             Dir.chdir(archive_path) do
@@ -222,7 +222,7 @@ module Ekylibre
       end
 
       def load!
-        @list = (File.exist?(config_file) ? YAML.load_file(config_file) : {})
+        @list = (File.exist?(config_file) ? YAML.safe_load_file(config_file, permitted_classes: [Date, Time, Symbol], aliases: true) : {})
         @list ||= {}
       end
 
@@ -252,7 +252,7 @@ module Ekylibre
         if tenant_list.any?
           agg_list = tenant_list
         elsif File.exist?(config_file)
-          agg_list = YAML.load_file(config_file)
+          agg_list = YAML.safe_load_file(config_file, permitted_classes: [Date, Time, Symbol], aliases: true)
         else
           agg_list = {}
         end
@@ -467,7 +467,7 @@ module Ekylibre
           tables_path = archive_path.join('tables')
           files_path = archive_path.join('files')
 
-          manifest = YAML.load_file(archive_path.join('manifest.yml')).symbolize_keys
+          manifest = YAML.safe_load_file(archive_path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).symbolize_keys
 
           database_version = manifest[:database_version].to_i
           if database_version > ActiveRecord::Migrator.current_version

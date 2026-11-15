@@ -73,7 +73,7 @@
 class ParcelItem < ApplicationRecord
   attr_readonly :parcel_id
   attr_accessor :product_nature_variant_id
-  enumerize :delivery_mode, in: %i[transporter us third none], predicates: { prefix: true }, scope: true, default: :us
+  has_enum :delivery_mode, in: %i[transporter us third none], predicates: { prefix: true }, scope: true, default: :us
   belongs_to :analysis
   belongs_to :parcel, inverse_of: :items
   belongs_to :localization, inverse_of: :shipment_items, class_name: 'ProductLocalization', foreign_key: :source_product_id, primary_key: :product_id

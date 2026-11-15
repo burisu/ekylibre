@@ -47,7 +47,7 @@
 class Crumb < ApplicationRecord
   include Providable
 
-  enumerize :nature, in: %i[point start stop pause resume scan hard_start hard_stop], predicates: true
+  has_enum :nature, in: %i[point start stop pause resume scan hard_start hard_stop], predicates: true
   belongs_to :user
   belongs_to :intervention_participation
   belongs_to :intervention_parameter, class_name: 'InterventionProductParameter'

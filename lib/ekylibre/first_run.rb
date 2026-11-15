@@ -38,7 +38,7 @@ module Ekylibre
         else
           raise ArgumentError.new('Need at least :path or :folder option')
         end
-        manifest = YAML.load_file(path.join('manifest.yml'))
+        manifest = YAML.safe_load_file(path.join('manifest.yml'), permitted_classes: [Date, Time, Symbol], aliases: true)
         sentence = 'Launch first run'
         sentence << " in tenant #{name}" if name
         sentence << " from #{path.relative_path_from(Rails.root)}"

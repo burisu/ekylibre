@@ -43,8 +43,8 @@
 #  work_number            :string
 #
 class ProjectTask < ApplicationRecord
-  enumerize :forecast_duration_unit, in: %i[hour day], default: :hour, predicates: { prefix: true }
-  enumerize :billing_method, in: %i[elapsed_time fixed], default: :fixed, predicates: { prefix: true }
+  has_enum :forecast_duration_unit, in: %i[hour day], default: :hour, predicates: { prefix: true }
+  has_enum :billing_method, in: %i[elapsed_time fixed], default: :fixed, predicates: { prefix: true }
   belongs_to :project
   belongs_to :responsible, class_name: 'User'
   belongs_to :sale_contract_item, inverse_of: :project_tasks

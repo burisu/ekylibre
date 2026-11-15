@@ -35,7 +35,7 @@
 #  updater_id   :integer(4)
 #
 class CropGroup < ApplicationRecord
-  enumerize :target, in: %i[plant land_parcel], predicates: true, default: :plant
+  has_enum :target, in: %i[plant land_parcel], predicates: true, default: :plant
 
   has_many :labellings, class_name: 'CropGroupLabelling', dependent: :destroy
   has_many :items, class_name: 'CropGroupItem', dependent: :destroy

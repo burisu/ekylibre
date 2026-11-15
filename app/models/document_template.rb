@@ -45,10 +45,10 @@
 
 # Sources are stored in :private/reporting/:id/content.xml
 class DocumentTemplate < ApplicationRecord
-  enumerize :archiving, in: %i[none_of_template first_of_template last_of_template none first last], default: :none, predicates: { prefix: true }
+  has_enum :archiving, in: %i[none_of_template first_of_template last_of_template none first last], default: :none, predicates: { prefix: true }
   # html: Liquid HTML template rendered by WeasyPrint
   # odt, xml: legacy odf-report and Jasper templates (no longer printable)
-  enumerize :file_extension, in: %i[html xml odt], default: :html, predicates: true
+  has_enum :file_extension, in: %i[html xml odt], default: :html, predicates: true
   refers_to :language
   refers_to :nature, class_name: 'DocumentNature'
   has_many :documents, class_name: 'Document', foreign_key: :template_id, dependent: :nullify, inverse_of: :template

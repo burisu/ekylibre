@@ -85,9 +85,9 @@ class Activity < ApplicationRecord
   refers_to :grading_sizes_indicator, -> { where(datatype: :measure) }, class_name: 'Indicator'
   refers_to :grading_sizes_unit, -> { where(dimension: :distance) }, class_name: 'Unit'
   refers_to :production_system
-  enumerize :nature, in: %i[main auxiliary standalone], default: :main, predicates: true
-  enumerize :production_cycle, in: %i[annual perennial], default: :annual, predicates: true
-  enumerize :distribution_key, in: %i[gross_margin percentage equipment_intervention_duration], default: :gross_margin, predicates: true
+  has_enum :nature, in: %i[main auxiliary standalone], default: :main, predicates: true
+  has_enum :production_cycle, in: %i[annual perennial], default: :annual, predicates: true
+  has_enum :distribution_key, in: %i[gross_margin percentage equipment_intervention_duration], default: :gross_margin, predicates: true
   with_options dependent: :destroy, inverse_of: :activity do
     has_many :budgets, class_name: 'ActivityBudget'
     has_many :distributions, class_name: 'ActivityDistribution'

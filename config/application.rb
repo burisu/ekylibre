@@ -49,7 +49,6 @@ module Ekylibre
       Rails.root.join('lib', 'tasks'),
       Rails.root.join('lib', 'templates'),
       # Monkey patches, required explicitly (config/initializers/20-start.rb)
-      Rails.root.join('lib', 'enumerize'),
       Rails.root.join('lib', 'state_machine'),
       Rails.root.join('lib', 'reporting.rb'),
       Rails.root.join('lib', 'safe_string.rb'),

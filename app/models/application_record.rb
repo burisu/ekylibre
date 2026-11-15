@@ -27,8 +27,8 @@ class ApplicationRecord < ActiveRecord::Base
 
   self.abstract_class = true
 
-  # Permits to use enumerize in all models
-  extend Enumerize
+  # Enumerated attributes (see Ekylibre::Record::HasEnum)
+  extend Ekylibre::Record::HasEnum
 
   # Make all models stampables
   stampable
@@ -53,8 +53,8 @@ class ApplicationRecord < ActiveRecord::Base
     customizable? && self.class.custom_fields.any?
   end
 
-  def human_attribute_name(*args)
-    self.class.human_attribute_name(*args)
+  def human_attribute_name(...)
+    self.class.human_attribute_name(...)
   end
 
   # Returns a relation for all other records

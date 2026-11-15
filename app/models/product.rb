@@ -187,7 +187,7 @@ class Product < ApplicationRecord
   has_geometry :initial_shape, type: :multi_polygon
   has_geometry :initial_geolocation, type: :point
 
-  enumerize :type_of_occupancy, in: %i[owner rent sharecropper], predicates: true
+  has_enum :type_of_occupancy, in: %i[owner rent sharecropper], predicates: true
 
   serialize :specie_variety, coder: HashSerializer
   store_accessor :specie_variety, :specie_variety_name

@@ -5,7 +5,7 @@ module ReadingStorable
 
   included do
     refers_to :indicator
-    enumerize :indicator_datatype, in: %i[string integer decimal boolean choice measure point geometry multi_polygon], predicates: { prefix: true }
+    has_enum :indicator_datatype, in: %i[string integer decimal boolean choice measure point geometry multi_polygon], predicates: { prefix: true }
     refers_to :measure_value_unit, class_name: 'Unit'
 
     has_geometry :geometry_value

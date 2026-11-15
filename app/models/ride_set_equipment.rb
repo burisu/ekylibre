@@ -42,7 +42,7 @@ class RideSetEquipment < ApplicationRecord
   belongs_to :ride_set, inverse_of: :equipments
   belongs_to :product
 
-  enumerize :nature, in: %i[main additional]
+  has_enum :nature, in: %i[main additional]
   delegate :name, to: :product
 
   scope :of_nature, ->(nature) {

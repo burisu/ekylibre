@@ -91,8 +91,8 @@ class Cash < ApplicationRecord
            through: :suspense_account, source: :journal_entry_items
   has_one :last_bank_statement, -> { order(stopped_on: :desc) }, class_name: 'BankStatement'
 
-  enumerize :nature, in: %i[bank_account cash_box associate_account], default: :bank_account, predicates: true
-  enumerize :mode, in: %i[iban bban], default: :iban, predicates: { prefix: true }
+  has_enum :nature, in: %i[bank_account cash_box associate_account], default: :bank_account, predicates: true
+  has_enum :mode, in: %i[iban bban], default: :iban, predicates: { prefix: true }
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :bank_account_holder_name, :bank_account_key, :bank_account_number, :bank_agency_code, :bank_code, :bank_identifier_code, :bank_name, :iban, :spaced_iban, length: { maximum: 500 }, allow_blank: true

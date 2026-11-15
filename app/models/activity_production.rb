@@ -823,12 +823,12 @@ class ActivityProduction < ApplicationRecord
     end
   end
 
-  def get(*args)
+  def get(...)
     if support.blank?
       raise StandardError.new("No support defined. Got: #{support.inspect}")
     end
 
-    support.get(*args)
+    support.get(...)
   end
 
   # # Returns value of an indicator if its name correspond to

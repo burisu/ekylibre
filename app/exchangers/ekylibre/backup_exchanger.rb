@@ -35,7 +35,7 @@ module Ekylibre
         end
 
         def schema
-          @schema ||= YAML.load_file(Pathname.new(__FILE__).dirname.join('backup', 'schema-0.4.yml')).deep_symbolize_keys.freeze
+          @schema ||= YAML.safe_load_file(Pathname.new(__FILE__).dirname.join('backup', 'schema-0.4.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys.freeze
         end
       end
 
@@ -77,8 +77,8 @@ module Ekylibre
         backup
       end
 
-      def initialize(*args)
-        super(*args)
+      def initialize(...)
+        super
         @matchings = {}.with_indifferent_access
         @indexes = {}.with_indifferent_access
       end

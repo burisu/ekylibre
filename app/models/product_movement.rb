@@ -56,7 +56,7 @@ class ProductMovement < ApplicationRecord
   validates :product, presence: true
   # ]VALIDATORS]
 
-  enumerize :description, in: %i[birth purchase loan butchery consumption sale death]
+  has_enum :description, in: %i[birth purchase loan butchery consumption sale death]
 
   before_validation do
     # NOTE: -! Deprecated !- only there for it to work until 3.0

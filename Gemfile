@@ -98,7 +98,6 @@ gem 'acts_as_list', '~> 1.0'
 gem 'awesome_nested_set', '~> 3.5'
 gem 'deep_cloneable', '~> 3.2'
 gem 'draper', '~> 4.0'
-gem 'enumerize', '~> 2.4'
 gem 'paranoia', '~> 3.0' # Hide and restore records without actually deleting them
 gem 'state_machines-activerecord', '~> 0.9'
 # 0.100+ runs transitions in fibers, which deadlocks with ActiveRecord's connection lock

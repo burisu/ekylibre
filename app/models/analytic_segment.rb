@@ -36,7 +36,7 @@
 class AnalyticSegment < ApplicationRecord
   belongs_to :analytic_sequence
 
-  enumerize :name, in: %i[activities project_budgets teams equipments]
+  has_enum :name, in: %i[activities project_budgets teams equipments]
 
   before_create do
     last_segment = analytic_sequence.segments.last

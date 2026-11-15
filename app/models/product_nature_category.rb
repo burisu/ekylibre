@@ -65,7 +65,7 @@ class ProductNatureCategory < ApplicationRecord
   include Providable
   include Categorizable
 
-  enumerize :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "VariantCategories::#{t}Category" }
+  has_enum :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "VariantCategories::#{t}Category" }
   # refers_to :pictogram, class_name: 'ProductPictograms'
   belongs_to :fixed_asset_account, class_name: 'Account'
   belongs_to :fixed_asset_allocation_account, class_name: 'Account'

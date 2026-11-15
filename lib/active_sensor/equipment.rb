@@ -26,7 +26,7 @@ module ActiveSensor
       def register_many(path, _options = {})
         raise "Cannot find #{path}" unless Pathname(path).exist?
 
-        sensors = YAML.load_file(path).deep_symbolize_keys
+        sensors = YAML.safe_load_file(path, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
         sensors.each do |vendor, models|
           models.each do |model, options|
             register(vendor, model, options)

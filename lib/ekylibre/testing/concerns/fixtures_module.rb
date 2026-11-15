@@ -32,7 +32,7 @@ module Ekylibre
             elements = label.to_s.split('_')
             model = elements[0...-1].join('_').classify.constantize
             @@fixtures ||= {}
-            @@fixtures[model.table_name] ||= YAML.load_file(Rails.root.join('test', 'fixtures', "#{model.table_name}.yml"))
+            @@fixtures[model.table_name] ||= YAML.safe_load_file(Rails.root.join('test', 'fixtures', "#{model.table_name}.yml"), permitted_classes: [Date, Time, Symbol], aliases: true)
             unless attrs = @@fixtures[model.table_name][label.to_s]
               raise "Unknown fixture #{label}"
             end

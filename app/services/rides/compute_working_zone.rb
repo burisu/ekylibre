@@ -4,8 +4,8 @@ module Rides
   DEFAULT_TOOL_WIDTH = 3.5
 
   class ComputeWorkingZone
-    def self.call(*args)
-      new(*args).call
+    def self.call(...)
+      new(...).call
     end
 
     def initialize(rides:)

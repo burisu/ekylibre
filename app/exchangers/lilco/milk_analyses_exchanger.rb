@@ -6,7 +6,7 @@ module Lilco
     vendor :lilco
 
     def import
-      analyser_attributes = YAML.load_file(File.join(File.dirname(__FILE__), 'organization.yml'))
+      analyser_attributes = YAML.safe_load_file(File.join(File.dirname(__FILE__), 'organization.yml'), permitted_classes: [Date, Time, Symbol], aliases: true)
 
       unless analyser = Entity.find_by(siret_number: analyser_attributes[:siret_number])
         analyser = Entity.create!(analyser_attributes)

@@ -49,7 +49,7 @@ class PlantCounting < ApplicationRecord
   belongs_to :plant_density_abacus_item
   has_one :activity, through: :plant_density_abacus
   has_many :items, class_name: 'PlantCountingItem', dependent: :delete_all, inverse_of: :plant_counting
-  enumerize :nature, in: %i[sowing germination]
+  has_enum :nature, in: %i[sowing germination]
 
   validates :nature, presence: true
   validates :rows_count_value, numericality: { greater_than: 0 }, allow_blank: true

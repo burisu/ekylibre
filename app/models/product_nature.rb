@@ -84,8 +84,8 @@ class ProductNature < ApplicationRecord
 
   refers_to :variety
   refers_to :derivative_of, class_name: 'Variety'
-  enumerize :population_counting, in: %i[unitary integer decimal], predicates: { prefix: true }
-  enumerize :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "VariantTypes::#{t}Type" }
+  has_enum :population_counting, in: %i[unitary integer decimal], predicates: { prefix: true }
+  has_enum :type, in: %w[Animal Article Crop Equipment Service Worker Zone].map { |t| "VariantTypes::#{t}Type" }
   belongs_to :subscription_nature
   has_many :subscriptions, through: :subscription_nature
   has_many :products, foreign_key: :nature_id, dependent: :restrict_with_exception

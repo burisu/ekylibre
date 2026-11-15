@@ -9,7 +9,7 @@ module Map
       Map::Layer.load path
       assert !Map::Layer.items.empty?, 'No Layers loaded'
 
-      fixtures = YAML.load_file(path).deep_symbolize_keys
+      fixtures = YAML.safe_load_file(path, permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
 
       # All providers are registered ?
       fixtures.each do |k, v|

@@ -7,7 +7,7 @@ module AgroSystemes
 
     def import
       here = Pathname.new(__FILE__).dirname
-      analyser_attributes = YAML.load_file(here.join('entity.yml'))
+      analyser_attributes = YAML.safe_load_file(here.join('entity.yml'), permitted_classes: [Date, Time, Symbol], aliases: true)
 
       land_parcels_transcode = {}
 

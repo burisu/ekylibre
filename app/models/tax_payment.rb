@@ -49,7 +49,7 @@ class TaxPayment < ApplicationRecord
   include Letterable
   attr_readonly :currency
   refers_to :currency
-  enumerize :nature, in: %i[incoming_payment outgoing_payment advance_payment], predicates: true
+  has_enum :nature, in: %i[incoming_payment outgoing_payment advance_payment], predicates: true
   belongs_to :cash
   belongs_to :financial_year
   belongs_to :journal_entry, dependent: :destroy

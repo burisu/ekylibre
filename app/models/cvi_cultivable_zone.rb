@@ -51,7 +51,7 @@ class CviCultivableZone < CviShapedRecord
   has_many :registered_postal_zone, through: :locations
   validates_presence_of :name
 
-  enumerize :land_parcels_status, in: %i[not_started started not_created created completed], predicates: true
+  has_enum :land_parcels_status, in: %i[not_started started not_created created completed], predicates: true
 
   after_save :set_calculated_area, if: :shape_changed?
 

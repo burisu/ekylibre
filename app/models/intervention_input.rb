@@ -83,7 +83,7 @@ class InterventionInput < InterventionProductParameter
   has_one :pfi_input, -> { where(nature: 'intervention') }, class_name: 'PfiInterventionParameter', foreign_key: :input_id, dependent: :destroy
   has_many :pfi_inputs, -> { where(nature: 'crop') }, class_name: 'PfiInterventionParameter', foreign_key: :input_id, dependent: :destroy
 
-  enumerize :application_mode, in: APPLICATION_MODES, i18n_scope: 'enumerize.intervention_input.application_mode', predicates: { prefix: true }
+  has_enum :application_mode, in: APPLICATION_MODES, i18n_scope: 'enumerize.intervention_input.application_mode', predicates: { prefix: true }
   validates :quantity_population, :product, presence: true
   validates :spray_volume_value, presence: true, if: -> { CONCENTRATION_HANDLER.include?(quantity_handler)}
 

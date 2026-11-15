@@ -46,7 +46,7 @@
 
 class CviStatement < ApplicationRecord
   composed_of :total_area, class_name: 'Measure', mapping: [%w[total_area_value to_d], %w[total_area_unit unit]]
-  enumerize :state, in: %i[to_convert converted], default: :to_convert, predicates: true
+  has_enum :state, in: %i[to_convert converted], default: :to_convert, predicates: true
 
   belongs_to :campaign
   has_many :cvi_cadastral_plants, dependent: :destroy

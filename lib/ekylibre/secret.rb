@@ -5,7 +5,7 @@ module Ekylibre
     @@secret_file = Rails.root.join('config', 'api.yml')
 
     def self.store
-      @@store ||= (secret_file.exist? ? YAML.load_file(secret_file) : {}).deep_symbolize_keys
+      @@store ||= (secret_file.exist? ? YAML.safe_load_file(secret_file, permitted_classes: [Date, Time, Symbol], aliases: true) : {}).deep_symbolize_keys
     end
 
     def self.env

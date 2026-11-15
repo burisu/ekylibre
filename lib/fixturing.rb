@@ -149,7 +149,7 @@ module Fixturing
       # Load and prepare fixtures
       data = {}
       Ekylibre::Schema.tables.each do |table, _columns|
-        records = YAML.load_file(directory.join("#{table}.yml"))
+        records = YAML.safe_load_file(directory.join("#{table}.yml"), permitted_classes: [Date, Time, Symbol], aliases: true)
         ids = records.values.collect { |a| a['id'] }.compact.map(&:to_i)
         records.each do |record, attributes|
           next if attributes['id']
@@ -226,7 +226,7 @@ module Fixturing
       data = {}
       model_ids = {}
       Ekylibre::Schema.tables.each do |table, _columns|
-        records = YAML.load_file(directory.join("#{table}.yml"))
+        records = YAML.safe_load_file(directory.join("#{table}.yml"), permitted_classes: [Date, Time, Symbol], aliases: true)
         base_model = table.to_s.classify
         counter = {}
         data[table.to_s] = records.values.sort { |a, b| [a['type'] || base_model, a['id']] <=> [b['type'] || base_model, b['id']] }.each_with_object({}) do |attributes, hash|
@@ -305,7 +305,7 @@ module Fixturing
       data = {}
       model_ids = {}
       Ekylibre::Schema.tables.each do |table, _columns|
-        records = YAML.load_file(path.join("#{table}.yml"))
+        records = YAML.safe_load_file(path.join("#{table}.yml"), permitted_classes: [Date, Time, Symbol], aliases: true)
         base_model = table.to_s.classify
         counter = {}
         data[table.to_s] = records.values.sort { |a, b| [a['type'] || base_model, a['id']] <=> [b['type'] || base_model, b['id']] }.each_with_object({}) do |attributes, hash|

@@ -216,9 +216,9 @@ module Geo
       @feature = new_feature
     end
 
-    def method_missing(name, *args, &block)
+    def method_missing(name, ...)
       target = to_rgeo
-      return target.send(name, *args, &block) if target.respond_to?(name)
+      return target.send(name, ...) if target.respond_to?(name)
 
       super
     end

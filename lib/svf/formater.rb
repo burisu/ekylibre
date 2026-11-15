@@ -4,7 +4,7 @@ module SVF
 
     def initialize(name, file)
       @name = name
-      source = YAML.load_file(file)
+      source = YAML.safe_load_file(file, permitted_classes: [Date, Time, Symbol], aliases: true)
       @lines = {}
       @encoding = source['encoding'] || 'ISO8859-1'
       source['lines'].each do |name, line|

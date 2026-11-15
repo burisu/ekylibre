@@ -44,7 +44,7 @@
 
 class Preference < ApplicationRecord
   # attr_accessible :nature, :name, :value
-  enumerize :nature, in: %i[accounting_system country currency boolean
+  has_enum :nature, in: %i[accounting_system country currency boolean
                             decimal language integer record fiscal_position
                             spatial_reference_system string], predicates: true
   @@conversions = { float: :decimal, true_class: :boolean, false_class: :boolean, fixnum: :integer }

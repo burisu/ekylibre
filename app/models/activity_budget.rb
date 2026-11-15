@@ -50,7 +50,7 @@ class ActivityBudget < ApplicationRecord
   has_many :purchase_items, dependent: :nullify
   has_many :sale_items, dependent: :nullify
 
-  enumerize :nature, in: %i[manual compute_from_lexicon], default: :manual, predicates: true
+  has_enum :nature, in: %i[manual compute_from_lexicon], default: :manual, predicates: true
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :currency, presence: true, length: { maximum: 500 }

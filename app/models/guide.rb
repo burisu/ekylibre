@@ -47,8 +47,8 @@ class Guide < ApplicationRecord
   has_many :analyses, class_name: 'GuideAnalysis', dependent: :destroy
   has_one :last_analysis, -> { where(latest: true) }, class_name: 'GuideAnalysis'
   refers_to :nature, class_name: 'GuideNature'
-  enumerize :frequency, in: %i[hourly daily weekly monthly yearly decadely none], default: :none
-  enumerize :reference_name, in: []
+  has_enum :frequency, in: %i[hourly daily weekly monthly yearly decadely none], default: :none
+  has_enum :reference_name, in: []
 
   has_attached_file :reference_source, path: ':tenant/:class/:id/source.xml'
 

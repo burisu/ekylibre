@@ -53,10 +53,10 @@ class FinancialYear < ApplicationRecord
   attr_readonly :currency
   refers_to :currency
   refers_to :accounting_system, class_name: 'AccountingSystem'
-  enumerize :tax_declaration_frequency, in: %i[monthly quaterly yearly none],
+  has_enum :tax_declaration_frequency, in: %i[monthly quaterly yearly none],
             default: :monthly, predicates: { prefix: true }
-  enumerize :tax_declaration_mode, in: %i[debit payment none], default: :none, predicates: { prefix: true }
-  enumerize :state, in: %i[opened closure_in_preparation closing closed locked], default: :opened, predicates: true
+  has_enum :tax_declaration_mode, in: %i[debit payment none], default: :none, predicates: { prefix: true }
+  has_enum :state, in: %i[opened closure_in_preparation closing closed locked], default: :opened, predicates: true
   belongs_to :last_journal_entry, class_name: 'JournalEntry'
   belongs_to :accountant, class_name: 'Entity'
   belongs_to :closer, class_name: 'User'

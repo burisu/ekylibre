@@ -7,7 +7,7 @@ module Ekylibre
 
     # Create or updates main settings of folder
     def import
-      @manifest = YAML.load_file(file) || {}
+      @manifest = YAML.safe_load_file(file, permitted_classes: [Date, Time, Symbol], aliases: true) || {}
       @manifest.deep_symbolize_keys!
 
       @manifest[:company] ||= {}

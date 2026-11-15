@@ -36,7 +36,7 @@ module Ekylibre
         def normalize(value)
           if value.is_a?(Integer)
             unless @@truc[@table]
-              @@truc[@table] = YAML.load_file(Rails.root.join('test', 'fixtures', "#{@table}.yml")).each_with_object({}) do |pair, hash|
+              @@truc[@table] = YAML.safe_load_file(Rails.root.join('test', 'fixtures', "#{@table}.yml"), permitted_classes: [Date, Time, Symbol], aliases: true).each_with_object({}) do |pair, hash|
                 hash[pair.second['id'].to_i] = pair.first.to_sym
                 hash
               end

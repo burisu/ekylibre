@@ -54,7 +54,7 @@
 class Analysis < ApplicationRecord
   include Attachable
   include Customizable
-  enumerize :retrieval_status, in: %i[ok controller_error internal_error sensor_error error], predicates: true
+  has_enum :retrieval_status, in: %i[ok controller_error internal_error sensor_error error], predicates: true
   refers_to :nature, class_name: 'AnalysisNature'
   belongs_to :analyser, class_name: 'Entity'
   belongs_to :cultivable_zone, class_name: 'CultivableZone'

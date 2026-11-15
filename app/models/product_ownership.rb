@@ -45,7 +45,7 @@ class ProductOwnership < ApplicationRecord
   include Taskable
   belongs_to :owner, class_name: 'Entity'
   belongs_to :product
-  enumerize :nature, in: %i[unknown own other], default: :unknown, predicates: true
+  has_enum :nature, in: %i[unknown own other], default: :unknown, predicates: true
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :nature, :product, presence: true
   validates :originator_type, length: { maximum: 500 }, allow_blank: true

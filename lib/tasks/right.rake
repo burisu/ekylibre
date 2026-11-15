@@ -10,7 +10,7 @@ task :right do
   }
   # %w(fungi gaps georeadings guide_analyses guides identifiers imports incoming_deliveries incoming_payment_modes incoming_payments integrations interventions inventories issues journal_draft journal_entries journals labels land_parcels listings loans manure_management_plans map_backgrounds matters myselves net_services observations outgoing_deliveries outgoing_payment_lists outgoing_payment_modes purchase_payments plant_countings plants postal_zones prescriptions product_groups product_nature_categories product_nature_variants product_natures productions products purchase_natures purchases roles sale_natures sales sensors sequences settings settlements subscription_natures subscriptions supervisions tasks tax_declarations taxes teams trackings transports users wine_tanks workers)
   # first_run myselves
-  resources = YAML.load_file('config/rights.yml')
+  resources = YAML.safe_load_file('config/rights.yml', permitted_classes: [Date, Time, Symbol], aliases: true)
   puts resources.keys.sort.join(' ')
 
   scopes = partitions.each_with_object({}) do |(part, res), h|

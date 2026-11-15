@@ -104,7 +104,7 @@ class Account < ApplicationRecord
   validates :auxiliary_number, presence: true, format: { without: /\A(0*)\z/ }, if: :auxiliary?
   validates :centralizing_account_name, presence: true, if: :auxiliary?
 
-  enumerize :nature, in: %i[general auxiliary], default: :general, predicates: true
+  has_enum :nature, in: %i[general auxiliary], default: :general, predicates: true
 
   # default_scope order(:number, :name)
   scope :of_usage, lambda { |usage|

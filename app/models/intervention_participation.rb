@@ -38,8 +38,8 @@
 #  updater_id        :integer(4)
 #
 class InterventionParticipation < ApplicationRecord
-  enumerize :state, in: %i[in_progress done validated]
-  enumerize :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures']
+  has_enum :state, in: %i[in_progress done validated]
+  has_enum :procedure_name, in: Procedo.procedure_names, i18n_scope: ['procedures']
   belongs_to :intervention
   belongs_to :product
 

@@ -5,8 +5,8 @@ module ToolbarHelper
       @template = template
     end
 
-    def authorized?(*args)
-      @template.authorized?(*args)
+    def authorized?(...)
+      @template.authorized?(...)
     end
 
     def group(options = {}, &_block)

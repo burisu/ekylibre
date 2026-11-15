@@ -235,9 +235,9 @@ class User < ApplicationRecord
   end
 
   # Notify all administrators
-  def self.notify_administrators(*args)
+  def self.notify_administrators(...)
     User.administrators.each do |user|
-      user.notify(*args)
+      user.notify(...)
     end
   end
 

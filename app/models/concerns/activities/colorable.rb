@@ -5,7 +5,7 @@ module Activities
     extend ActiveSupport::Concern
 
     COLORS_INDEX = Rails.root.join('db', 'nomenclatures', 'colors.yml').freeze
-    COLORS = (COLORS_INDEX.exist? ? YAML.load_file(COLORS_INDEX) : {}).freeze
+    COLORS = (COLORS_INDEX.exist? ? YAML.safe_load_file(COLORS_INDEX, permitted_classes: [Date, Time, Symbol], aliases: true) : {}).freeze
 
     class_methods do
       def color(family, variety)

@@ -46,8 +46,8 @@
 
 class CustomField < ApplicationRecord
   attr_readonly :nature
-  enumerize :nature, in: %i[text decimal boolean date datetime choice], predicates: true
-  enumerize :customized_type, in: Ekylibre::Schema.model_names, i18n_scope: ['activerecord.models']
+  has_enum :nature, in: %i[text decimal boolean date datetime choice], predicates: true
+  has_enum :customized_type, in: Ekylibre::Schema.model_names, i18n_scope: ['activerecord.models']
   has_many :choices, -> { order(:position) }, class_name: 'CustomFieldChoice', dependent: :delete_all, inverse_of: :custom_field
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :active, :required, inclusion: { in: [true, false] }

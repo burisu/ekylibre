@@ -2,7 +2,7 @@ module Ekylibre
   module Access
     # autoload :Resource, 'ekylibre/access/resource'
     CATEGORIES_RIGHT_NAMES_FILE = Rails.root.join('db', 'nomenclatures', 'right_categories.yml').freeze
-    CATEGORIES_RIGHT_NAMES = (CATEGORIES_RIGHT_NAMES_FILE.exist? ? YAML.load_file(CATEGORIES_RIGHT_NAMES_FILE) : {}).deep_symbolize_keys.freeze
+    CATEGORIES_RIGHT_NAMES = (CATEGORIES_RIGHT_NAMES_FILE.exist? ? YAML.safe_load_file(CATEGORIES_RIGHT_NAMES_FILE, permitted_classes: [Date, Time, Symbol], aliases: true) : {}).deep_symbolize_keys.freeze
     RIGHT_NAMES_CATEGORIES = CATEGORIES_RIGHT_NAMES.each_with_object({}) { |(k, v), h| v.map{|f| h[f] = k};  }.deep_symbolize_keys
 
     class << self
@@ -12,7 +12,7 @@ module Ekylibre
 
       # Load a right definition file
       def load_file(file, origin = :unknown)
-        YAML.load_file(file).each do |resource, interactions|
+        YAML.safe_load_file(file, permitted_classes: [Date, Time, Symbol], aliases: true).each do |resource, interactions|
           interactions.each do |interaction, options|
             add_right(resource, interaction, options.symbolize_keys.merge(origin: origin))
           end

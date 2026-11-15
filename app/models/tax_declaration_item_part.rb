@@ -44,7 +44,7 @@ class TaxDeclarationItemPart < ApplicationRecord
   belongs_to :account
   belongs_to :tax_declaration_item
   belongs_to :journal_entry_item
-  enumerize :direction, in: %i[deductible collected fixed_asset_deductible intracommunity_payable]
+  has_enum :direction, in: %i[deductible collected fixed_asset_deductible intracommunity_payable]
 
   # [VALIDATORS[ Do not edit these lines directly. Use `rake clean:validations`.
   validates :account, :direction, :journal_entry_item, :tax_declaration_item, presence: true

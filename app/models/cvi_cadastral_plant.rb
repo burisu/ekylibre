@@ -57,8 +57,8 @@ class CviCadastralPlant < ApplicationRecord
   composed_of :inter_row_distance, class_name: 'Measure', mapping: [%w[inter_row_distance_value to_d], %w[inter_row_distance_unit unit]]
   composed_of :inter_vine_plant_distance, class_name: 'Measure', mapping: [%w[inter_vine_plant_distance_value to_d], %w[inter_vine_plant_distance_unit unit]]
 
-  enumerize :state, in: %i[planted removed_with_authorization], predicates: true
-  enumerize :type_of_occupancy, in: %i[tenant_farming owner], predicates: true
+  has_enum :state, in: %i[planted removed_with_authorization], predicates: true
+  has_enum :type_of_occupancy, in: %i[tenant_farming owner], predicates: true
 
   belongs_to :cvi_cultivable_zone
   belongs_to :cvi_statement

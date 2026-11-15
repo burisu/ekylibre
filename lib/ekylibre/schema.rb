@@ -60,12 +60,12 @@ module Ekylibre
       protected
 
         def read_models
-          YAML.load_file(root.join('models.yml')).map(&:to_sym)
+          YAML.safe_load_file(root.join('models.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).map(&:to_sym)
         end
 
         def read_tables
           hash = begin
-                   YAML.load_file(root.join('tables.yml')).deep_symbolize_keys
+                   YAML.safe_load_file(root.join('tables.yml'), permitted_classes: [Date, Time, Symbol], aliases: true).deep_symbolize_keys
                  rescue
                    {}
                  end

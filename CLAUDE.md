@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Ekylibre is a multi-tenant Farm Management Information System (FMIS) built on Rails 5.2 / Ruby 2.6 / PostgreSQL+PostGIS. Each farm is an isolated PostgreSQL schema (tenant) managed by the `apartment` gem.
+Ekylibre is a multi-tenant Farm Management Information System (FMIS) built on Rails 8.1 / Ruby 4.0 / PostgreSQL+PostGIS. Each farm is an isolated PostgreSQL schema (tenant) managed by the `ros-apartment` gem. No Java, no Node.js and no Redis are needed.
 
 ## Development Environment
 
 All development runs inside Docker:
 
 ```bash
-# Start the full stack (Rails on :3000, PostgreSQL on :5431, Redis, Sidekiq)
+# Start the full stack (Rails on :3000, PostgreSQL on :5431, Solid Queue jobs)
 docker compose -f docker/dev/docker-compose.yml up
 
 # Shell in the app container
@@ -27,6 +27,8 @@ docker compose -f docker/dev/docker-compose.yml logs -f app
 The app container runs `bundle install` automatically on startup. Plugins from `Gemfile.local` are loaded via the main `Gemfile` (no rebuild needed to add plugins).
 
 ## Running Tests
+
+Tests need the theme stylesheets (`bin/rails dartsass:build`, run by `test:prepare`). `LEXICON_KEEP=true` reuses an already loaded test lexicon (saves ~10 minutes).
 
 ```bash
 # All tests
@@ -87,6 +89,8 @@ Three namespaces: `backend` (authenticated ERP), `api/v1` and `api/v2` (token au
 - `app/models/lexicon/` contains `Master*` and `Registered*` read-only reference models (backed by the shared `lexicon` PostgreSQL schema, never modified at runtime).
 - `app/models/bookkeepers/` contains accounting journal entry writers (called from model callbacks via `Ekylibre::Record::Bookkeep`).
 - `lib/ekylibre/record/` contains model mixins: `Autosave`, `Bookkeep`, `HasShape`, `Sums`, etc.
+- Enumerated attributes use `has_enum` (`Ekylibre::Record::HasEnum`): Rails enums of string values with a presentation layer (`record.state.text`, `Model.state.values/options`, `state == :draft`, predicates). Translations stay under `enumerize.*` keys. Nomenclature references (`refers_to`) use an inclusion validation.
+- No `eval` of generated code: use `define_method`/`define_singleton_method`.
 
 ### Exchangers
 `app/exchangers/` contains data import/export adapters for 30+ agricultural software formats (Isagri, Telepac, Vinifera, etc.). Each exchanger subclasses `ActiveExchanger::Base` and implements `import` or `export`.
@@ -148,6 +152,22 @@ The `kartoza/postgis:13` image re-runs `docker/db/init.sql` on every restart. Wi
 
 Templates use **HAML**. The backend layout (`app/views/layouts/backend.html.haml`) uses a beehive/cell dashboard system. Dialog/popover layouts exist for modal content. The admin interface uses a plain `app/views/layouts/admin.html.haml` with no tenant dependencies.
 
+### Assets (no Node.js)
+
+- **Propshaft** serves `app/assets`, `app/javascript` and `vendor/javascript`.
+- **Stylesheets**: themes (`app/themes/<theme>/stylesheets`, linked in `app/assets/stylesheets/themes`) are built by **Dart Sass** (`dartsass-rails`, see `config/initializers/dartsass.rb`) into `app/assets/builds` — run `bin/rails dartsass:build` (or `dartsass:watch`). Bootstrap 3 / Font Awesome SCSS come from their gems (not required at runtime), npm CSS is vendored in `vendor/stylesheets`. Use `image-url()`/`font-url()` (defined in `_asset_urls.scss`) or absolute `url("/logical/path")`.
+- **JavaScript modules** (`app/javascript`) are loaded with **import maps** (`config/importmap.rb`). Libraries are vendored with `bin/importmap pin <package>@<version>`. Use bare specifiers (`services/i18n`, never relative paths). HTTP calls go through `lib/http` (fetch).
+- **Legacy jQuery scripts** (`app/assets/javascripts`, former CoffeeScript, and third party code in `vendor/javascript/legacy`) are classic deferred scripts loaded in the order of `config/legacy_javascripts.yml`, after the `legacy_globals` module which exposes `ekylibre`, `L`, `_`, `moment`, `I18n`… on `window` (see `JavascriptsHelper#javascript_tags`). Inline scripts using them must wait for `DOMContentLoaded`.
+- Images needed by JS get digested paths through `window.EkylibreAssets`.
+
+## Attachments
+
+Active Storage (`has_picture` and `has_file`, see `lib/ekylibre/record/acts/{picturable,attachable}.rb`). Blob keys are prefixed by the tenant and the `TenantDisk` service stores files in `private/storage/<tenant>/` (`STORAGE_PATH`). Former Paperclip files are copied with `rake attachments:migrate_to_active_storage`. Document text and pages count are read with poppler/tesseract.
+
+## Printing
+
+Documents are Liquid HTML templates converted to PDF by **WeasyPrint** (`lib/ekylibre/document_management`). Aggregators (`lib/aggeratio`) are plain Ruby classes registered in `Aggeratio::AGGREGATORS`.
+
 ## Translations
 
 The app supports `eng` (default, reference) and `fra` — declared in `config/initializers/i18n.rb`. Other directories under `config/locales/` (`ita`, `por`, `cmn`, `jpn`, `arb`, `deu`, `spa`) are dormant archives, not loaded at runtime.
@@ -192,7 +212,7 @@ The DeepL script protects `%{...}` and `{{...}}` placeholders, escapes XML chars
 
 ## Background Jobs
 
-Sidekiq 4.x with `apartment-sidekiq` middleware, which switches to the correct tenant schema before each job. Jobs that must run **without** a tenant context (e.g. admin tasks) must not go through Sidekiq — use `Process.spawn` with a rake task instead to avoid the middleware conflict.
+**Solid Queue** (`bin/jobs`), with its own `queue` database (Solid Cache and Solid Cable also have their own `cache`/`cable` databases, see `config/database.yml`): their connections are not affected by tenant switching. `ApplicationJob` serializes the current tenant and switches to it around `perform`. Recurring jobs are in `config/recurring.yml`; `ScheduleJob` subclasses run on every tenant. Progress of admin tasks (tenant creation, dumps…) is shared between processes with `Ekylibre::TaskStatus` (Solid Cache). Inspect jobs with `rake job:status`.
 
 ## Performance Hotspots (known issues)
 
@@ -225,9 +245,9 @@ Only **1 occurrence** of `includes`/`preload`/`eager_load` across the 7 hottest 
 
 `app/controllers/backend/interventions_controller.rb:100,111,116` filters with `EXTRACT(YEAR FROM started_at) = ?` — full scan. Use `started_at BETWEEN ... AND ...` or add a functional index.
 
-### Sidekiq config
+### Jobs
 
-`config/sidekiq.yml` sets `concurrency: 5` and `config/initializers/sidekiq.rb:18` sets `max_retries: 0` (failures are silent). Some jobs (e.g. `app/jobs/pfi_calculation_job.rb:18`) use `.each` instead of `find_each`.
+Some jobs (e.g. `app/jobs/pfi_calculation_job.rb:18`) use `.each` instead of `find_each`.
 
 ### HAML partial rendering
 

@@ -58,10 +58,10 @@ docker compose -f docker/dev/docker-compose.yml up
 
 A. Au **premier démarrage**, le container `app` va automatiquement :
 
-1. Installer les gems (`bundle install`)
-2. Installer les packages JS (`yarn install`)
-3. Créer et migrer la base de données (`db:create`, `db:migrate`)
-4. Charger le lexicon (`lexicon:load`) mentionné dans le fichier .lexicon-version — cette étape peut prendre plusieurs minutes
+1. Installer les gems (`bundle install`) — pas de Node.js ni de yarn
+2. Créer ou migrer les bases de données (`db:prepare` : base principale, `queue` et `cache`)
+3. Charger le lexicon (`lexicon:load`) mentionné dans le fichier .lexicon-version — cette étape peut prendre plusieurs minutes
+4. Compiler les thèmes (`dartsass:build`, puis `dartsass:watch` en tâche de fond)
 5. Démarrer le serveur Rails sur le port `3000`
 
 L'interface d'administration est accessible sur [http://localhost:3000/admin](http://localhost:3000/admin) (ou en HTTPS via `https://ekylibre.localhost/admin` après avoir suivi la **section 8**).
@@ -89,8 +89,7 @@ docker compose -f docker/dev/docker-compose.yml exec app bundle exec rake first_
 | `app` | `3000` | Serveur Rails |
 | `app` | `8808` | Rack Mini Profiler |
 | `db` | `5431` | PostgreSQL 13 (PostGIS) |
-| `redis` | — | Redis 7 (interne) |
-| `sidekiq` | — | Worker de jobs en arrière-plan |
+| `jobs` | — | Worker de jobs en arrière-plan (Solid Queue, `bin/jobs`) |
 | `caddy` | `127.0.0.1:80` / `127.0.0.1:443` | Reverse-proxy HTTPS pour `duke.ekylibre.localhost` (→ duke local) et `(*.)ekylibre.localhost` (→ app:3000) |
 
 Connexion directe à la base depuis l'hôte :
@@ -246,16 +245,6 @@ Puis supprimer les volumes et rebuilder :
 ```bash
 docker volume rm dev_bundle-volume dev_docker-dev
 docker compose -f docker/dev/docker-compose.yml build --no-cache
-```
-
-### Warning Redis `Memory overcommit`
-
-Appliquer sur l'hôte Linux :
-
-```bash
-sudo sysctl vm.overcommit_memory=1
-# Pour persister après reboot, ajouter dans /etc/sysctl.conf :
-# vm.overcommit_memory = 1
 ```
 
 ### Image de base inaccessible (`403 Forbidden`)

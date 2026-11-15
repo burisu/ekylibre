@@ -22,23 +22,6 @@ Ce mode est une **alternative** au déploiement standalone documenté dans `READ
   *.example.com     A    <IP_serveur>
   ```
 
-### Configuration sysctl du serveur
-
-À faire **une fois** sur l'hôte avant le premier déploiement (en SSH root) :
-
-```bash
-# vm.overcommit_memory=1 : recommandé par Redis pour eviter les echecs de BGSAVE
-# sous pression memoire. Sans, Redis logue "WARNING Memory overcommit must be enabled".
-echo "vm.overcommit_memory = 1" > /etc/sysctl.d/99-redis-overcommit.conf
-sysctl --system
-
-# Verification
-sysctl vm.overcommit_memory
-# vm.overcommit_memory = 1
-```
-
-Non-bloquant : Redis fonctionne sans, mais le warning persiste dans les logs et un BGSAVE peut échouer en cas de forte pression mémoire (rare avec 8 GB RAM et Redis < 100 MB).
-
 ---
 
 ## 1. Créer le projet Dokploy
@@ -87,7 +70,6 @@ DB_PROD_NAME=eky_production
 DB_USERNAME=ekylibre
 DB_PASSWORD=<mot de passe fort>
 
-# === Redis ===
 
 # Pas de variable LETSENCRYPT_EMAIL ici — Traefik est déjà configuré côté Dokploy.
 
@@ -245,7 +227,7 @@ Accessible sur `https://acme.example.com` après quelques secondes (provisioning
 
 ## 7. Activer Duke / Ollama / NanoClaw (optionnel)
 
-Sans profile, seul le stack de base (`app`, `sidekiq`, `caddy-tls`, `db`, `redis`) est démarré.
+Sans profile, seul le stack de base (`app`, `jobs`, `caddy-tls`, `db`) est démarré.
 
 Dans l'onglet **General** de la compose app, saisir la liste des profiles à activer dans **Compose Profiles** :
 
@@ -369,19 +351,10 @@ Si tu vois `urn:ietf:params:acme:error:rateLimited` dans les logs Caddy, tu as d
 - Vérifier que `HASH_SECRET` et au moins une clé LLM sont renseignés
 - Logs : Terminal → sélectionner `duke-api`
 
-### Redis : `WARNING Memory overcommit must be enabled`
+### Les jobs ne sont pas traités
 
-Non-bloquant. Fix permanente sur l'hôte :
-```bash
-echo "vm.overcommit_memory = 1" > /etc/sysctl.d/99-redis-overcommit.conf
-sysctl --system
-```
-Voir section "Prérequis" → "Configuration sysctl du serveur".
-
-### Sidekiq ne traite pas les jobs
-
-- Vérifier que `redis` est healthy
-- Logs Sidekiq dans l'UI
+- Vérifier que le service `jobs` tourne (`rake job:status`)
+- Logs du service `jobs`
 
 ---
 

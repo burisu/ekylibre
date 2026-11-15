@@ -20,10 +20,6 @@ Déploiement Ekylibre en production sur un serveur unique avec HTTPS automatique
 À faire **une fois** sur l'hôte avant le premier déploiement (en SSH root) :
 
 ```bash
-# vm.overcommit_memory=1 : recommandé par Redis pour éviter les échecs de BGSAVE
-# sous pression mémoire. Sans, Redis logue "WARNING Memory overcommit must be enabled".
-echo "vm.overcommit_memory = 1" > /etc/sysctl.d/99-redis-overcommit.conf
-sysctl --system
 ```
 
 ---
@@ -58,10 +54,9 @@ docker compose -f docker/prod/docker-compose.yml pull
 ```
 
 Les images tirées :
-- `ghcr.io/ekylibre/ekylibre/app:latest` (Rails + Sidekiq, image partagée)
+- `ghcr.io/ekylibre/ekylibre/app:latest` (Rails + jobs Solid Queue, image partagée)
 - `caddy:2-alpine` (reverse-proxy)
 - `kartoza/postgis:13` (PostgreSQL)
-- `redis:7-alpine`
 
 > Pour pinner une version stable, éditer `EKYLIBRE_IMAGE_TAG` dans `.env` (ex: `EKYLIBRE_IMAGE_TAG=v5.0.0`).
 
@@ -179,10 +174,9 @@ docker compose -f docker/prod/docker-compose.yml exec -e TENANT=acme app bundle 
 | Service | Image | Rôle |
 |---|---|---|
 | `app` | `ghcr.io/ekylibre/ekylibre/app:latest` | Serveur Rails (Puma), port 3000 interne |
-| `sidekiq` | `ghcr.io/ekylibre/ekylibre/app:latest` | Worker de jobs (même image, command différente) |
+| `jobs` | `ghcr.io/ekylibre/ekylibre/app:latest` | Worker de jobs Solid Queue (même image, `bin/jobs`) |
 | `caddy` | `caddy:2-alpine` | Reverse-proxy HTTPS, ports 80/443 publics |
 | `db` | `kartoza/postgis:13` | PostgreSQL + PostGIS, port NON exposé |
-| `redis` | `redis:7-alpine` | Cache + Sidekiq, port NON exposé |
 
 Services optionnels (activés via `--profile` Compose) :
 
@@ -194,7 +188,7 @@ Services optionnels (activés via `--profile` Compose) :
 | `ollama-pull` | `ollama/ollama:latest` | `duke-llm-local` (ou `ollama`) | §10 |
 | `nanoclaw` | `ghcr.io/ekylibre/nanoclaw-ekylibre:latest` | `nanoclaw` | §10c |
 
-Sans profile, `docker compose up -d` ne démarre que le stack de base (`app`, `sidekiq`, `caddy`, `db`, `redis`). Les services optionnels ne sont pull ni démarrés — aucune image parasite n'est tirée sur des installations qui n'en ont pas besoin.
+Sans profile, `docker compose up -d` ne démarre que le stack de base (`app`, `jobs`, `caddy`, `db`). Les services optionnels ne sont pull ni démarrés — aucune image parasite n'est tirée sur des installations qui n'en ont pas besoin.
 
 Aucun port DB n'est exposé sur l'hôte. Pour un accès direct à la DB depuis le serveur :
 
@@ -211,7 +205,7 @@ docker compose -f docker/prod/docker-compose.yml exec db psql -U ekylibre eky_pr
 docker compose -f docker/prod/docker-compose.yml down
 
 # Logs
-docker compose -f docker/prod/docker-compose.yml logs -f app sidekiq
+docker compose -f docker/prod/docker-compose.yml logs -f app jobs
 
 # Shell dans le container
 docker compose -f docker/prod/docker-compose.yml exec app bash
@@ -399,7 +393,7 @@ Si non renseignés, le lexicon est chargé depuis le snapshot embarqué dans l'i
 Ekylibre signe certains documents (clôtures d'exercice, archives) avec une clé GPG via la gem `gpgme`. Renseigner `GPG_EMAIL` dans `.env` et monter le keyring :
 
 ```yaml
-# Dans docker-compose.yml, services app ET sidekiq :
+# Dans docker-compose.yml, services app ET jobs :
 volumes:
   - ./secrets/gnupg:/home/ekylibre/.gnupg:ro
 ```
@@ -513,7 +507,7 @@ docker compose -f docker/prod/docker-compose.yml exec db pg_isready -U ekylibre
 
 ### `OpenSSL::Cipher::CipherError: key length too short` sur les intégrations
 
-`INTEGRATION_CIPHER_BASE64_KEY` est vide ou mal encodée. Régénérer avec `openssl rand 32 | base64 | tr '+/' '-_' | tr -d '='` et redémarrer `app` + `sidekiq`. **Ne changer cette clé qu'avant la première intégration** — sinon les credentials déjà chiffrés en base sont perdus.
+`INTEGRATION_CIPHER_BASE64_KEY` est vide ou mal encodée. Régénérer avec `openssl rand 32 | base64 | tr '+/' '-_' | tr -d '='` et redémarrer `app` + `jobs`. **Ne changer cette clé qu'avant la première intégration** — sinon les credentials déjà chiffrés en base sont perdus.
 
 ---
 

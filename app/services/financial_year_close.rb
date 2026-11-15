@@ -634,7 +634,7 @@ class FinancialYearClose
         levels: []
       )
 
-      printer = Printers::TrialBalancePrinter.new(full_params)
+      printer = Printers::TrialBalancePrinter.new(**full_params)
 
       document = print_and_archive(template, printer)
 
@@ -669,7 +669,7 @@ class FinancialYearClose
         template: template
       )
 
-      printer = Printers::JournalLedgerPrinter.new(full_params)
+      printer = Printers::JournalLedgerPrinter.new(**full_params)
 
       document = print_and_archive(template, printer)
 

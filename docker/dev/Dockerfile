@@ -1,5 +1,15 @@
-# FROM registry.gitlab.com/ekylibre/docker-base-images/ruby2.6:2
-FROM ghcr.io/ekylibre/docker-base-images/ruby2.6:latest
+# Ruby 4 on Debian trixie: no Java nor LibreOffice (PDF printing by WeasyPrint)
+FROM ruby:4.0-trixie
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libgeos-dev libproj-dev proj-data \
+      libpq-dev postgresql-client \
+      imagemagick ghostscript poppler-utils tesseract-ocr tesseract-ocr-fra \
+      gnupg libgpgme-dev libxml2-dev libxslt1-dev libyaml-dev \
+      weasyprint python3-pymupdf \
+      nodejs npm \
+    && npm install -g yarn \
+    && rm -rf /var/lib/apt/lists/*
 
 ARG UID=1000
 ARG GID=1000
@@ -18,10 +28,6 @@ RUN chmod +x docker/dev/jobs_startup.sh
 
 USER ekylibre
 
-# Lecture locale des justificatifs (plugin Qonto) : PyMuPDF ; tesseract et python3 sont dans l'image de base.
-RUN pip3 install --user --no-cache-dir pymupdf==1.26.5
-
-# Impression PDF : templates HTML (Liquid) convertis par WeasyPrint.
-RUN pip3 install --user --no-cache-dir weasyprint==62.3
-ENV PATH="/home/ekylibre/.local/bin:${PATH}"
+# Impression PDF : templates HTML (Liquid) convertis par WeasyPrint ;
+# lecture locale des justificatifs (plugin Qonto) : PyMuPDF (paquets Debian).
  

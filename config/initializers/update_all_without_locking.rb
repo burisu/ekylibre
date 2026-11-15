@@ -11,7 +11,8 @@ module UpdateAllWithoutLocking
     if klass.locking_enabled? && updates.is_a?(Hash)
       column = klass.locking_column
       unless updates.key?(column) || updates.key?(column.to_sym)
-        updates = updates.merge(column => Arel.sql(klass.connection.quote_column_name(column)))
+        # Qualified: update_all can join other tables having the same column
+        updates = updates.merge(column => Arel.sql("#{klass.quoted_table_name}.#{klass.connection.quote_column_name(column)}"))
       end
     end
     super(updates)

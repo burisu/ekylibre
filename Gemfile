@@ -12,11 +12,11 @@ git_source(:gitlab) do |repo_name|
   "https://gitlab.com/#{repo_name}.git"
 end
 
-ruby '>= 3.3', '< 3.4'
+ruby '>= 4.0'
 
 gem 'actionpack-xml_parser', '~> 2.0'
 gem 'rack-cors' # CORS policy
-gem 'rails', '~> 7.2.2'
+gem 'rails', '~> 8.1.0'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
@@ -31,7 +31,7 @@ gem 'ffaker', '~> 2.0' # Should not be present in production. Is used to generat
 
 # Database
 gem 'activemodel-serializers-xml', '~> 1.0'
-gem 'activerecord-postgis-adapter', '~> 10.0'
+gem 'activerecord-postgis-adapter', '>= 11.0'
 gem 'pg', '~> 1.0'
 gem 'scenic'
 
@@ -76,9 +76,9 @@ gem 'exception_notification', '~> 4.5'
 
 # Manipulate map data
 gem 'geocoder', '~> 1.6'
-gem 'rgeo', '~> 3.0'
+gem 'rgeo', '~> 3.1'
 gem 'rgeo-geojson', '~> 2.1'
-gem 'rgeo-proj4', '~> 4.0'
+gem 'rgeo-proj4', '~> 5.0'
 gem 'rgeo-shapefile', '~> 3.0'
 
 # Background jobs, cache and Action Cable backed by the database (no Redis)
@@ -133,7 +133,6 @@ gem 'i18n-js', '~> 3.8'
 gem 'caxlsx'
 gem 'charlock_holmes', '~> 0.7.7'
 gem 'combine_pdf', '~> 1.0'
-gem 'ekylibre-ofx-parser', '~> 1.2'
 gem 'gpgme', '~> 2.0'
 gem 'holidays' # Deal with statutory and other holidays
 gem 'luhn', '~> 1.0'
@@ -165,6 +164,15 @@ gem 'gitlab_kramdown', '~> 0.6'
 gem 'lexicon-common', '~> 0.2.0'
 
 # Gems removed from the Ruby standard library
+gem 'base64'
+gem 'benchmark'
+gem 'bigdecimal'
+gem 'csv'
+gem 'drb'
+gem 'mutex_m'
+gem 'nkf'
+gem 'observer'
+gem 'ostruct'
 gem 'rss'
 
 
@@ -193,9 +201,6 @@ group :development do
 end
 
 group :development, :test do
-  # Used by better_errors and test/lib PseudoEnvironment
-  gem 'binding_of_caller', '~> 1.0'
-
   gem 'dotenv', '~> 2.7'
 
   gem 'pry', '~> 0.14'
@@ -218,7 +223,7 @@ group :test do
 
   gem 'database_cleaner-active_record', '~> 2.0'
 
-  gem 'minitest', "~> 5.17.0"
+  gem 'minitest', '~> 5.25'
   gem 'minitest-reporters', '~> 1.4'
 
   gem 'factory_bot', '< 5'

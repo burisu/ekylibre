@@ -1,16 +1,23 @@
-FROM registry.gitlab.com/ekylibre/docker-base-images/ruby2.6:2
+# Ruby 4 on Debian trixie: no Java nor LibreOffice (PDF printing by WeasyPrint)
+FROM ruby:4.0-trixie
 
-# HARICA Root CA 2021 — base image's ca-certificates 20210119 misses it,
-# breaking TLS to alim*.api.agriculture.gouv.fr (PFI API).
-COPY docker/certs/HARICA-TLS-Root-2021-RSA.crt /usr/local/share/ca-certificates/
-RUN update-ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libgeos-dev libproj-dev proj-data \
+      libpq-dev postgresql-client \
+      imagemagick ghostscript poppler-utils tesseract-ocr tesseract-ocr-fra \
+      gnupg libgpgme-dev libxml2-dev libxslt1-dev libyaml-dev \
+      weasyprint python3-pymupdf \
+      nodejs npm \
+    && npm install -g yarn \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /app
 WORKDIR /app
 
 COPY Gemfile Gemfile.lock package.json yarn.lock /app/
 RUN bundle config --local build.sassc --disable-march-tune-native && \
-    bundle install -j $(nproc) --path vendor/ruby && \
+    bundle config set --local path vendor/ruby && \
+    bundle install -j $(nproc) && \
     yarn
 
 COPY . /app
